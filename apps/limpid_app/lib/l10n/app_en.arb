@@ -1,0 +1,404 @@
+{
+  "@@locale": "en",
+  "appTitle": "Limpid",
+  "appTagline": "The whole book, in a single workshop.",
+  "navDashboard": "Dashboard",
+  "navLibrary": "Books",
+  "navWrite": "Write",
+  "navAccount": "Account",
+  "actionContinue": "Continue",
+  "actionCancel": "Cancel",
+  "actionCreate": "Create",
+  "actionSave": "Save",
+  "actionSendLink": "Get my access link",
+  "actionRetry": "Try again",
+  "actionSignOut": "Sign out",
+  "actionLater": "Later",
+  "actionNewProject": "New project",
+  "actionOpen": "Open",
+  "signInTitle": "Good to see you again",
+  "signInSubtitle": "Sign in to find your books, even while offline.",
+  "signInSendLink": "Get my access link",
+  "signInUsePassword": "Use a password",
+  "signInNoAccount": "No account yet?",
+  "signInCreateAccount": "Create an account",
+  "signUpTitle": "Create your account",
+  "signUpSubtitle": "Free, no card required. Your projects stay exportable on every plan.",
+  "signUpHaveAccount": "Already have an account?",
+  "signUpSignIn": "Sign in",
+  "fieldEmail": "E-mail address",
+  "fieldPassword": "Password",
+  "fieldAuthorName": "Author name",
+  "fieldAuthorNameHint": "The name shown on your public pages and your books.",
+  "linkSentTitle": "Check your inbox",
+  "linkSentMessage": "An access link was just sent to {email}. It stays valid for one hour.",
+  "@linkSentMessage": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "linkSentResend": "Send the link again",
+  "linkSentChangeAddress": "Use another address",
+  "errorInvalidEmail": "This e-mail address is invalid.",
+  "errorEmptyEmail": "Enter your e-mail address.",
+  "errorEmptyName": "Enter your author name.",
+  "errorGeneric": "Something went wrong. Try again.",
+  "demoModeTitle": "Demo mode",
+  "demoModeMessage": "No remote service is configured. The session opens locally, without sending any data.",
+  "onboardingTitle": "What do you want to write?",
+  "onboardingSubtitle": "We will start there. You can change the template at any time.",
+  "onboardingStepOf": "Step {current} of {total}",
+  "@onboardingStepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingNext": "Next",
+  "onboardingCreateProject": "Create the project",
+  "onboardingTemplateNovel": "Novel",
+  "onboardingTemplateNovelHint": "Long fiction, characters, plot",
+  "onboardingTemplateShort": "Stories and novellas",
+  "onboardingTemplateShortHint": "Free form, several texts",
+  "onboardingTemplateEssay": "Essay",
+  "onboardingTemplateEssayHint": "Arguments, sources, notes",
+  "onboardingTemplatePoetry": "Poetry",
+  "onboardingTemplatePoetryHint": "Short form, stanzas",
+  "onboardingTemplateTechnical": "Technical",
+  "onboardingTemplateTechnicalHint": "Documentation, code, how-to",
+  "onboardingTemplateImport": "From a file",
+  "onboardingTemplateImportHint": "DOCX, Markdown, existing EPUB",
+  "onboardingProjectTitle": "Book title",
+  "onboardingGoalTitle": "Your rhythm",
+  "onboardingGoalSubtitle": "How many words per day? You can adjust this at any time.",
+  "onboardingGoalWords": "{count} words per day",
+  "@onboardingGoalWords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingGoalLight": "Light",
+  "onboardingGoalLightHint": "500 words per day",
+  "onboardingGoalRegular": "Regular",
+  "onboardingGoalRegularHint": "1 500 words per day",
+  "onboardingGoalIntense": "Intense",
+  "onboardingGoalIntenseHint": "3 000 words per day",
+  "dashboardTitle": "Dashboard",
+  "dashboardGreeting": "Hello {name}",
+  "@dashboardGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardTodayWords": "Words today",
+  "dashboardGoalOf": "of {goal} · {percent} %",
+  "@dashboardGoalOf": {
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardStreak": "Current streak",
+  "dashboardStreakUnit": "days in a row",
+  "dashboardManuscript": "Manuscript",
+  "dashboardReadings": "Readings at 30 %",
+  "dashboardResumeTitle": "Resume writing",
+  "dashboardResumeAction": "Resume",
+  "dashboardSeePlan": "See the outline",
+  "dashboardActivityTitle": "Writing activity",
+  "dashboardGoalTitle": "Today's goal",
+  "dashboardTodoTitle": "To do",
+  "dashboardTodoEmpty": "Nothing to do. Good time to write.",
+  "dashboardAddTask": "Add a task",
+  "dashboardSuggestionTitle": "Suggestion",
+  "dashboardWeeklyWords": "This week",
+  "dashboardBestDay": "Best day",
+  "dashboardRemaining": "{count} words left",
+  "@dashboardRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardAboutMinutes": "≈ {minutes} min",
+  "@dashboardAboutMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryTitle": "Library",
+  "librarySubtitle": "{count} projects · {published} published",
+  "@librarySubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "published": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryFilterAll": "All statuses",
+  "libraryFilterWriting": "In progress",
+  "libraryFilterDraft": "Draft",
+  "libraryFilterPublished": "Published",
+  "libraryEmptyTitle": "Your library is empty",
+  "libraryEmptyMessage": "Create a first project: it stays exportable, on every plan.",
+  "libraryWords": "{count} words",
+  "@libraryWords": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryReadings": "{count} readings",
+  "@libraryReadings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectStatusWriting": "In progress",
+  "projectStatusDraft": "Draft",
+  "projectStatusPublished": "Published",
+  "projectProgress": "Progress",
+  "projectProgressOf": "of the target",
+  "projectChaptersTitle": "Chapters",
+  "projectChapterCount": "{count} chapters",
+  "publicationTitle": "Showcase",
+  "publicationContents": "Contents",
+  "publicationExcerpt": "Excerpt",
+  "publicationRead": "Read",
+  "publicationNotPublished": "This book is not published",
+  "publicationNotPublishedMessage": "The showcase of a book opens when it is published.",
+  "publicationAuthorTitle": "Published books",
+  "publicationAuthorEmpty": "This author has published no book",
+  "publicationAuthorEmptyMessage": "The page of an author opens when the first book is published.",
+  "publicationAuthorBookCount": "{count} published books",
+  "@publicationAuthorBookCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@projectChapterCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectVolumeLabel": "Volume",
+  "projectMetadataTitle": "Publication metadata",
+  "projectActivityTitle": "Recent activity",
+  "projectContinueWriting": "Continue writing",
+  "projectExport": "Export",
+  "projectPublicPage": "Public page",
+  "projectChapterStateDone": "Proofread",
+  "projectChapterStateDraft": "In progress",
+  "projectChapterStateTodo": "To write",
+  "projectMetadataIsbn": "ISBN",
+  "projectMetadataFormat": "Target format",
+  "projectMetadataLanguage": "Language",
+  "projectMetadataPrice": "Price",
+  "projectPublishAction": "Publish",
+  "projectUnpublishAction": "Remove from the showcase",
+  "projectPublishConfirmTitle": "Publish the book?",
+  "projectPublishConfirmMessage": "The book becomes published and appears in the showcase.",
+  "projectPublishConfirmAction": "Publish the book",
+  "projectUnpublishConfirmTitle": "Remove the book from the showcase?",
+  "projectUnpublishConfirmMessage": "The book stays published, but it is no longer visible in the showcase.",
+  "projectUnpublishConfirmAction": "Remove the book",
+  "projectPublicationStateDraft": "Not published yet",
+  "projectPublicationStatePublished": "Published, outside the showcase",
+  "projectPublicationStateShowcase": "In the showcase",
+  "projectPublicationFailed": "The publication failed.",
+  "writingTitle": "Writing",
+  "writingPlan": "Outline",
+  "writingManuscript": "Write",
+  "writingReview": "Review",
+  "writingBible": "Bible",
+  "writingComingSoon": "The manuscript editor lands in lot 1. The book structure is already in place.",
+  "writingSceneLabel": "Chapter {chapter} · Scene {scene}",
+  "@writingSceneLabel": {
+    "placeholders": {
+      "chapter": {
+        "type": "String"
+      },
+      "scene": {
+        "type": "String"
+      }
+    }
+  },
+  "writingWords": "{count} words",
+  "@writingWords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "writingReadingTime": "{minutes} min read",
+  "editorAutosave": "Automatic saving",
+  "editorSaving": "Saving…",
+  "editorSaved": "Saved",
+  "editorOutline": "Outline",
+  "editorOutlineEmpty": "No scene yet",
+  "editorOutlineScene": "Scene",
+  "editorSelection": "Selection",
+  "editorReadMode": "Reading mode",
+  "revisionTitle": "Revision",
+  "revisionRoleOwner": "Owner",
+  "revisionRoleCoAuthor": "Co-author",
+  "revisionRoleBetaReader": "Beta reader",
+  "revisionRoleReader": "Reader",
+  "revisionResolve": "Resolve the thread",
+  "revisionResolved": "Resolved",
+  "revisionEmptyMessage": "No comment yet.",
+  "revisionMembers": "Collaborators",
+  "editorAiTitle": "Assistant",
+  "editorAiPlaceholder": "Ask, rewrite, summarise…",
+  "editorAiSend": "Send",
+  "editorAiRewrite": "Rewrite",
+  "editorAiShorten": "Shorten",
+  "editorAiSimplify": "Simplify",
+  "editorAiChangeTone": "Change the tone",
+  "editorAiTranslate": "Translate",
+  "editorAiExpand": "Expand",
+  "editorAiThinking": "Thinking…",
+  "editorOffline": "Offline — your changes stay on this device",
+  "exportTitle": "Export",
+  "exportStart": "Start the export",
+  "exportRunning": "Export in progress…",
+  "exportReady": "Your export is ready",
+  "exportFailed": "The export failed",
+  "exportDownload": "Download",
+  "exportFormatEpub": "EPUB",
+  "exportFormatPdf": "PDF",
+  "exportFormatDocx": "DOCX",
+  "exportFormatHtml": "HTML",
+  "exportFormatMarkdown": "Markdown",
+  "syncPending": "Offline — {count} change pending",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPendingPlural": "Offline — {count} changes pending",
+  "@syncPendingPlural": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncLastSync": "Last synchronisation: {when}",
+  "@syncLastSync": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "syncRetry": "Try again",
+  "dataEmptyTitle": "Nothing to show yet",
+  "dataEmptyMessage": "Create a project to start writing.",
+  "@writingReadingTime": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "settingsSectionProfile": "Profile",
+  "settingsSectionEditor": "Editor",
+  "settingsSectionSync": "Synchronisation",
+  "settingsSectionDevices": "Devices",
+  "settingsSectionSecurity": "Security",
+  "settingsSectionData": "Data and privacy",
+  "settingsTheme": "Theme",
+  "settingsThemePaper": "Paper",
+  "settingsThemeSepia": "Sepia",
+  "settingsThemeNight": "Night",
+  "settingsThemeContrast": "High contrast",
+  "settingsPlan": "Plan",
+  "settingsSignedInAs": "Signed in as {email}",
+  "@settingsSignedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsExportData": "Export my data",
+  "settingsDeleteAccount": "Delete my account",
+  "settingsExportPersonalData": "Export all my data",
+  "settingsExportPersonalDataSubtitle": "Your projects, your comments, your audit log.",
+  "settingsExportPersonalDataReady": "Your data is ready",
+  "settingsExportPersonalDataFailed": "The export failed.",
+  "settingsExportPersonalDataUnavailable": "This service is not configured on this machine.",
+  "settingsDeleteAccountConfirm": "Delete my account",
+  "settingsDeleteAccountWarning": "Your data will be deleted on {date}.",
+  "@settingsDeleteAccountWarning": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsDeleteAccountScheduled": "The deletion of your account is scheduled.",
+  "settingsAccountDeletionDate": "Deletion on {date}",
+  "@settingsAccountDeletionDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAccountDeletionUnavailable": "Account deletion is not available on this machine.",
+  "settingsEraseLocalDataTitle": "Erase the local data",
+  "settingsEraseLocalDataMessage": "The manuscripts, the scenes, the comments and the pending operations of this machine will be erased. Your account, on the other hand, stays on the server.",
+  "settingsEraseLocalDataConfirm": "Erase",
+  "settingsEraseLocalDataKeep": "Keep",
+  "settingsLocalDataErased": "The local data of the account was erased from this machine.",
+  "settingsLocalDataEraseFailed": "The local data could not be erased from this machine.",
+  "settingsLocalDataEraseUnavailable": "This machine cannot erase the local data.",
+  "syncStatusSynced": "Synced",
+  "syncStatusSyncing": "Syncing…",
+  "syncStatusOffline": "Offline · {count} pending",
+  "@syncStatusOffline": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusConflict": "Conflict resolved",
+  "revisionResolveFailed": "The thread could not be resolved.",
+  "commonWords": "words",
+  "commonMinutes": "min",
+  "settingsExportManuscriptsSubtitle": "Your manuscripts, in the format you choose."
+}

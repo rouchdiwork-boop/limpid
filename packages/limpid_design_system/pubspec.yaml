@@ -1,0 +1,20 @@
+name: limpid_design_system
+description: >-
+  Limpid design system: the canonical design tokens (colors, typography,
+  spacing, radii, elevation, motion), the four themes and the reusable
+  Limpid* widget set for the Limpid writing studio.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

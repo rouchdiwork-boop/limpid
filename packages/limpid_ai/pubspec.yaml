@@ -1,0 +1,19 @@
+name: limpid_ai
+description: >-
+  Passerelle IA multi-fournisseurs de Limpid : Anthropic, tout endpoint
+  compatible OpenAI, Ollama en mode local. Streaming SSE, gouvernance des
+  couts, construction de contexte et RAG local.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  # Transport HTTP (client + lecture de flux pour le streaming SSE).
+  http: ^1.2.0
+  # Hachage deterministe pour l'embedder de reference (RAG hors-ligne).
+  crypto: ^3.0.3
+
+dev_dependencies:
+  test: ^1.25.0

@@ -1,0 +1,404 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Limpid",
+  "appTagline": "Le livre entier, dans un seul atelier.",
+  "navDashboard": "Bureau",
+  "navLibrary": "Livres",
+  "navWrite": "Écrire",
+  "navAccount": "Compte",
+  "actionContinue": "Continuer",
+  "actionCancel": "Annuler",
+  "actionCreate": "Créer",
+  "actionSave": "Enregistrer",
+  "actionSendLink": "Recevoir mon lien d'accès",
+  "actionRetry": "Réessayer",
+  "actionSignOut": "Se déconnecter",
+  "actionLater": "Plus tard",
+  "actionNewProject": "Nouveau projet",
+  "actionOpen": "Ouvrir",
+  "signInTitle": "Ravi de vous revoir",
+  "signInSubtitle": "Connectez-vous pour retrouver vos livres, même hors connexion.",
+  "signInSendLink": "Recevoir mon lien d'accès",
+  "signInUsePassword": "Utiliser un mot de passe",
+  "signInNoAccount": "Pas encore de compte ?",
+  "signInCreateAccount": "Créer un compte",
+  "signUpTitle": "Créer votre compte",
+  "signUpSubtitle": "Gratuit, sans carte bancaire. Vos projets restent exportables quel que soit le plan.",
+  "signUpHaveAccount": "Vous avez déjà un compte ?",
+  "signUpSignIn": "Se connecter",
+  "fieldEmail": "Adresse e-mail",
+  "fieldPassword": "Mot de passe",
+  "fieldAuthorName": "Nom d'auteur",
+  "fieldAuthorNameHint": "C'est le nom affiché sur vos pages publiques et vos livres.",
+  "linkSentTitle": "Vérifiez votre boîte e-mail",
+  "linkSentMessage": "Un lien d'accès vient d'être envoyé à {email}. Il reste valable une heure.",
+  "@linkSentMessage": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "linkSentResend": "Renvoyer le lien",
+  "linkSentChangeAddress": "Utiliser une autre adresse",
+  "errorInvalidEmail": "Cette adresse e-mail est invalide.",
+  "errorEmptyEmail": "Saisissez votre adresse e-mail.",
+  "errorEmptyName": "Saisissez votre nom d'auteur.",
+  "errorGeneric": "Une erreur est survenue. Réessayez.",
+  "demoModeTitle": "Mode démonstration",
+  "demoModeMessage": "Aucun service distant n'est configuré. La session s'ouvrira localement, sans envoi de données.",
+  "onboardingTitle": "Que voulez-vous écrire ?",
+  "onboardingSubtitle": "On partira de là. Vous pourrez changer de modèle à tout moment.",
+  "onboardingStepOf": "Étape {current} sur {total}",
+  "@onboardingStepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingNext": "Suivant",
+  "onboardingCreateProject": "Créer le projet",
+  "onboardingTemplateNovel": "Roman",
+  "onboardingTemplateNovelHint": "Longue fiction, personnages, intrigue",
+  "onboardingTemplateShort": "Récit et nouvelles",
+  "onboardingTemplateShortHint": "Forme libre, plusieurs textes",
+  "onboardingTemplateEssay": "Essai",
+  "onboardingTemplateEssayHint": "Arguments, sources, notes",
+  "onboardingTemplatePoetry": "Poésie",
+  "onboardingTemplatePoetryHint": "Forme courte, strophes",
+  "onboardingTemplateTechnical": "Technique",
+  "onboardingTemplateTechnicalHint": "Documentation, code, how-to",
+  "onboardingTemplateImport": "À partir d'un fichier",
+  "onboardingTemplateImportHint": "DOCX, Markdown, EPUB existant",
+  "onboardingProjectTitle": "Titre du livre",
+  "onboardingGoalTitle": "Votre rythme",
+  "onboardingGoalSubtitle": "Combien de mots par jour ? Vous pourrez ajuster ce rythme à tout moment.",
+  "onboardingGoalWords": "{count} mots par jour",
+  "@onboardingGoalWords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingGoalLight": "Léger",
+  "onboardingGoalLightHint": "500 mots par jour",
+  "onboardingGoalRegular": "Régulier",
+  "onboardingGoalRegularHint": "1 500 mots par jour",
+  "onboardingGoalIntense": "Intense",
+  "onboardingGoalIntenseHint": "3 000 mots par jour",
+  "dashboardTitle": "Bureau",
+  "dashboardGreeting": "Bonjour {name}",
+  "@dashboardGreeting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardTodayWords": "Mots aujourd'hui",
+  "dashboardGoalOf": "sur {goal} · {percent} %",
+  "@dashboardGoalOf": {
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardStreak": "Série en cours",
+  "dashboardStreakUnit": "jours consécutifs",
+  "dashboardManuscript": "Manuscrit",
+  "dashboardReadings": "Lectures à 30 %",
+  "dashboardResumeTitle": "Reprendre l'écriture",
+  "dashboardResumeAction": "Reprendre",
+  "dashboardSeePlan": "Voir le plan",
+  "dashboardActivityTitle": "Activité d'écriture",
+  "dashboardGoalTitle": "Objectif du jour",
+  "dashboardTodoTitle": "À faire",
+  "dashboardTodoEmpty": "Rien à faire. Profitez-en pour écrire.",
+  "dashboardAddTask": "Ajouter une tâche",
+  "dashboardSuggestionTitle": "Suggestion",
+  "dashboardWeeklyWords": "Cette semaine",
+  "dashboardBestDay": "Meilleur jour",
+  "dashboardRemaining": "{count} mots restants",
+  "@dashboardRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardAboutMinutes": "≈ {minutes} min",
+  "@dashboardAboutMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryTitle": "Bibliothèque",
+  "librarySubtitle": "{count} projets · {published} publiés",
+  "@librarySubtitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "published": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryFilterAll": "Tous les statuts",
+  "libraryFilterWriting": "En écriture",
+  "libraryFilterDraft": "Brouillon",
+  "libraryFilterPublished": "Publié",
+  "libraryEmptyTitle": "Votre bibliothèque est vide",
+  "libraryEmptyMessage": "Créez un premier projet : il reste exportable, quel que soit le plan.",
+  "libraryWords": "{count} mots",
+  "@libraryWords": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryReadings": "{count} lectures",
+  "@libraryReadings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectStatusWriting": "En écriture",
+  "projectStatusDraft": "Brouillon",
+  "projectStatusPublished": "Publié",
+  "projectProgress": "Avancement",
+  "projectProgressOf": "de la cible",
+  "projectChaptersTitle": "Chapitres",
+  "projectChapterCount": "{count} chapitres",
+  "publicationTitle": "Vitrine",
+  "publicationContents": "Sommaire",
+  "publicationExcerpt": "Extrait",
+  "publicationRead": "Lire",
+  "publicationNotPublished": "Ce livre n’est pas publié",
+  "publicationNotPublishedMessage": "La vitrine d’un livre s’ouvre à sa publication.",
+  "publicationAuthorTitle": "Livres publiés",
+  "publicationAuthorEmpty": "Cet auteur n’a publié aucun livre",
+  "publicationAuthorEmptyMessage": "La page d’un auteur s’ouvre à la publication de son premier livre.",
+  "publicationAuthorBookCount": "{count} livres publiés",
+  "@publicationAuthorBookCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@projectChapterCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectVolumeLabel": "Tome",
+  "projectMetadataTitle": "Métadonnées de publication",
+  "projectActivityTitle": "Activité récente",
+  "projectContinueWriting": "Continuer l'écriture",
+  "projectExport": "Exporter",
+  "projectPublicPage": "Page publique",
+  "projectChapterStateDone": "Relecturé",
+  "projectChapterStateDraft": "En écriture",
+  "projectChapterStateTodo": "À écrire",
+  "projectMetadataIsbn": "ISBN",
+  "projectMetadataFormat": "Format cible",
+  "projectMetadataLanguage": "Langue",
+  "projectMetadataPrice": "Prix",
+  "projectPublishAction": "Publier",
+  "projectUnpublishAction": "Retirer de la vitrine",
+  "projectPublishConfirmTitle": "Publier le livre ?",
+  "projectPublishConfirmMessage": "Le livre devient publié et apparaît dans la vitrine.",
+  "projectPublishConfirmAction": "Publier le livre",
+  "projectUnpublishConfirmTitle": "Retirer le livre de la vitrine ?",
+  "projectUnpublishConfirmMessage": "Le livre reste publié, mais il n’est plus visible dans la vitrine.",
+  "projectUnpublishConfirmAction": "Retirer le livre",
+  "projectPublicationStateDraft": "Pas encore publié",
+  "projectPublicationStatePublished": "Publié, hors vitrine",
+  "projectPublicationStateShowcase": "Dans la vitrine",
+  "projectPublicationFailed": "La publication a échoué.",
+  "writingTitle": "Écriture",
+  "writingPlan": "Plan",
+  "writingManuscript": "Écrire",
+  "writingReview": "Relire",
+  "writingBible": "Bible",
+  "writingComingSoon": "L'éditeur de manuscrit arrive au lot 1. La structure du livre est déjà en place.",
+  "writingSceneLabel": "Chapitre {chapter} · Scène {scene}",
+  "@writingSceneLabel": {
+    "placeholders": {
+      "chapter": {
+        "type": "String"
+      },
+      "scene": {
+        "type": "String"
+      }
+    }
+  },
+  "writingWords": "{count} mots",
+  "@writingWords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "writingReadingTime": "{minutes} min de lecture",
+  "editorAutosave": "Enregistrement automatique",
+  "editorSaving": "Enregistrement…",
+  "editorSaved": "Enregistré",
+  "editorOutline": "Plan",
+  "editorOutlineEmpty": "Aucune scène pour l'instant",
+  "editorOutlineScene": "Scène",
+  "editorSelection": "Sélection",
+  "editorReadMode": "Mode lecture",
+  "revisionTitle": "Révision",
+  "revisionRoleOwner": "Propriétaire",
+  "revisionRoleCoAuthor": "Co-auteur",
+  "revisionRoleBetaReader": "Bêta-lecteur",
+  "revisionRoleReader": "Lecteur",
+  "revisionResolve": "Résoudre le fil",
+  "revisionResolved": "Résolus",
+  "revisionEmptyMessage": "Aucun commentaire pour l’instant.",
+  "revisionMembers": "Collaborateurs",
+  "editorAiTitle": "Assistant",
+  "editorAiPlaceholder": "Demandez, réécrivez, résumez…",
+  "editorAiSend": "Envoyer",
+  "editorAiRewrite": "Réécrire",
+  "editorAiShorten": "Raccourcir",
+  "editorAiSimplify": "Simplifier",
+  "editorAiChangeTone": "Changer le ton",
+  "editorAiTranslate": "Traduire",
+  "editorAiExpand": "Développer",
+  "editorAiThinking": "Réflexion…",
+  "editorOffline": "Hors ligne — vos modifications restent sur cet appareil",
+  "exportTitle": "Exporter",
+  "exportStart": "Lancer l'export",
+  "exportRunning": "Export en cours…",
+  "exportReady": "Votre export est prêt",
+  "exportFailed": "L'export a échoué",
+  "exportDownload": "Télécharger",
+  "exportFormatEpub": "EPUB",
+  "exportFormatPdf": "PDF",
+  "exportFormatDocx": "DOCX",
+  "exportFormatHtml": "HTML",
+  "exportFormatMarkdown": "Markdown",
+  "syncPending": "Hors ligne — {count} modification en attente",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPendingPlural": "Hors ligne — {count} modifications en attente",
+  "@syncPendingPlural": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncLastSync": "Dernière synchronisation : {when}",
+  "@syncLastSync": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "syncRetry": "Réessayer",
+  "dataEmptyTitle": "Rien à afficher pour l'instant",
+  "dataEmptyMessage": "Créez un projet pour commencer à écrire.",
+  "@writingReadingTime": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsTitle": "Réglages",
+  "settingsSectionProfile": "Profil",
+  "settingsSectionEditor": "Éditeur",
+  "settingsSectionSync": "Synchronisation",
+  "settingsSectionDevices": "Appareils",
+  "settingsSectionSecurity": "Sécurité",
+  "settingsSectionData": "Données et RGPD",
+  "settingsTheme": "Thème",
+  "settingsThemePaper": "Papier",
+  "settingsThemeSepia": "Sépia",
+  "settingsThemeNight": "Nuit",
+  "settingsThemeContrast": "Contraste élevé",
+  "settingsPlan": "Abonnement",
+  "settingsSignedInAs": "Connecté en tant que {email}",
+  "@settingsSignedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsExportData": "Exporter mes données",
+  "settingsDeleteAccount": "Supprimer mon compte",
+  "settingsExportPersonalData": "Exporter toutes mes données",
+  "settingsExportPersonalDataSubtitle": "Vos projets, vos commentaires, votre journal d’audit.",
+  "settingsExportPersonalDataReady": "Vos données sont prêtes",
+  "settingsExportPersonalDataFailed": "L’export a échoué.",
+  "settingsExportPersonalDataUnavailable": "Ce service n’est pas configuré sur ce poste.",
+  "settingsDeleteAccountConfirm": "Supprimer mon compte",
+  "settingsDeleteAccountWarning": "Vos données seront supprimées le {date}.",
+  "@settingsDeleteAccountWarning": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsDeleteAccountScheduled": "La suppression de votre compte est programmée.",
+  "settingsAccountDeletionDate": "Suppression le {date}",
+  "@settingsAccountDeletionDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAccountDeletionUnavailable": "La suppression du compte n’est pas disponible sur ce poste.",
+  "settingsEraseLocalDataTitle": "Effacer les données locales",
+  "settingsEraseLocalDataMessage": "Les manuscrits, les scènes, les commentaires et les opérations en attente de ce poste seront effacés. Votre compte, lui, reste sur le serveur.",
+  "settingsEraseLocalDataConfirm": "Effacer",
+  "settingsEraseLocalDataKeep": "Conserver",
+  "settingsLocalDataErased": "Les données locales du compte ont été effacées de ce poste.",
+  "settingsLocalDataEraseFailed": "Les données locales n’ont pas pu être effacées de ce poste.",
+  "settingsLocalDataEraseUnavailable": "Ce poste ne peut pas effacer les données locales.",
+  "syncStatusSynced": "Synchronisé",
+  "syncStatusSyncing": "Synchronisation…",
+  "syncStatusOffline": "Hors ligne · {count} en attente",
+  "@syncStatusOffline": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusConflict": "Conflit résolu",
+  "revisionResolveFailed": "Le fil n’a pas pu être résolu.",
+  "commonWords": "mots",
+  "commonMinutes": "min",
+  "settingsExportManuscriptsSubtitle": "Vos manuscrits, au format que vous choisissez."
+}

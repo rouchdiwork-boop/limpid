@@ -1,0 +1,19 @@
+name: limpid_export
+description: >-
+  Moteur d'export de livres de Limpid. Generateurs natifs Dart, hors-ligne,
+  sans service externe : EPUB 3, PDF (reflowable et print-ready), DOCX, HTML,
+  Markdown et ODT.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  archive: ^4.5.2
+  pdf: ^3.13.1
+  xml: ^7.0.1
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.2

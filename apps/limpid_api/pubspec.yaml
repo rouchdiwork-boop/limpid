@@ -1,0 +1,43 @@
+name: limpid_api
+description: >-
+  API Dart (shelf) de Limpid : monolithe modulaire deploye sur Railway.
+  Expose le contrat REST + WebSocket decrit dans docs/ARCHITECTURE.md.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  # Modele de domaine et moteur CRDT partages avec le client Flutter.
+  limpid_core:
+    path: ../../packages/limpid_core
+  # Passerelle IA multi-fournisseurs (Anthropic par defaut).
+  limpid_ai:
+    path: ../../packages/limpid_ai
+  # Generateurs d'export EPUB / PDF / DOCX / HTML / MD / ODT.
+  limpid_export:
+    path: ../../packages/limpid_export
+
+  # Serveur HTTP et routage.
+  shelf: ^1.4.3
+  shelf_router: ^1.1.5
+  shelf_web_socket: ^3.0.0
+  # Canal du relais temps reel (relais des operations de synchronisation).
+  web_socket_channel: ^3.0.3
+  # Acces Postgres (pool, requetes parametrees).
+  postgres: ^3.5.20
+  # Base SQLite de developpement (moteur par defaut hors production).
+  # Dart pur, aucune liaison Flutter, aucune dependance a
+  # `sqlite3_flutter_libs`.
+  sqlite3: ^3.8.0
+  # Transport HTTP sortant (Stripe, Cloudflare R2, JWKS).
+  http: ^1.6.0
+  # SHA-256 et HMAC-SHA256 (signature SigV4 pour R2, empreinte RS256).
+  crypto: ^3.0.7
+  # Lecture des migrations SQL versionnees.
+  path: ^1.9.1
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.31.0

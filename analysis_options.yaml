@@ -1,0 +1,22 @@
+# Shared analysis configuration of the Limpid monorepo.
+#
+# Every package owns its own analysis_options.yaml, which takes precedence
+# over this file. The root configuration therefore applies to:
+#
+#   * the Dart files that live outside any package (tool/, scripts, code
+#     generation entry points);
+#   * the packages that do not declare an analysis_options.yaml yet.
+#
+# The rules below are deliberately conservative: they must not introduce a
+# single new diagnostic in a package that already analyses cleanly. The
+# stricter rule sets live in the packages themselves, where they can be
+# reviewed together with the code they govern.
+
+include: package:lints/recommended.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
+  errors:
+    todo: ignore

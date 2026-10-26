@@ -1,0 +1,42 @@
+name: limpid_sync
+description: >-
+  Client de synchronisation CRDT de Limpid : transport REST + WebSocket, file
+  d'attente locale hors-ligne persistante, instantanes et detection de
+  conflits. Dart pur, testable sans Flutter ni reseau.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  # Modele partage et moteur CRDT (D-04). Dependance de chemin : le package
+  # vit dans le monorepo et n'est jamais publie.
+  limpid_core:
+    path: ../limpid_core
+  # Transport REST (push/pull) et WebSocket (temps reel).
+  http: ^1.6.0
+  web_socket_channel: ^3.0.3
+  # Persistance locale de la file d'attente et des instantanes.
+  # `sqlite3` est utilise en Dart pur : aucune dependance a
+  # `sqlite3_flutter_libs` (qui est specifique Flutter). L'ouverture de la
+  # base est la responsabilite de l'application appelante.
+  drift: ^2.35.3
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.33.0
+  # Generation du code Drift (`sync_database.g.dart`).
+  drift_dev: ^2.35.2
+  build_runner: ^2.17.1
+  # `StreamChannelMixin` sert a imiter un `WebSocketChannel` dans les tests.
+  stream_channel: ^2.1.4
+  # `sqlite3` n'est PAS une dependance du package : Drift laisse l'ouverture
+  # de la base a l'application appelante. Il n'est donc necessaire qu'aux
+  # tests, via `package:drift/native.dart`.
+  #
+  # La version est bornee par celle que l'application Flutter resout
+  # (`drift_flutter` -> `sqlite3 3.5.2`). Une version plus recente tire
+  # `hooks 2.2` -> `record_use 1.x` -> `meta 1.19`, que le SDK Flutter
+  # epingle a `meta 1.18.0` : la resolution echouerait. Voir D-30.
+  sqlite3: '>=3.5.2 <3.8.0'

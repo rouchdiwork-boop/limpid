@@ -1,0 +1,76 @@
+name: limpid_app
+description: Limpid — studio d'écriture et d'organisation de livres.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # État et navigation
+  flutter_riverpod: '>=3.0.3 <3.1.0'
+  riverpod_annotation: 3.0.3
+  go_router: ^18.1.1
+
+  # Persistance locale
+  drift: ^2.35.3
+  drift_flutter: ^0.3.1
+  path_provider: ^2.1.5
+  # `sqlite3` est fourni par l'application, pas par Drift : la version est
+  # bornée par celle que le SDK Flutter peut résoudre (`meta 1.18.0`). Voir D-30.
+  sqlite3: '>=3.5.2 <3.8.0'
+
+  # Authentification
+  supabase_flutter: ^2.18.3
+
+  # Internationalisation
+  # La version est épinglée par flutter_localizations (SDK Flutter).
+  intl: ^0.20.2
+
+  # Icônes Cupertino. Aucune n'est utilisée explicitement, mais Flutter
+  # référence la famille `packages/cupertino_icons/CupertinoIcons` dès qu'un
+  # widget Cupertino entre dans l'arbre : sans ce paquet, la construction web
+  # signale des fontes manquantes.
+  cupertino_icons: ^1.0.8
+
+  # Client HTTP de l'API (projets, synchronisation, IA, exports).
+  http: ^1.6.0
+
+  # Paquets internes
+  limpid_core:
+    path: ../../packages/limpid_core
+  limpid_design_system:
+    path: ../../packages/limpid_design_system
+  # Éditeur de manuscrit : le widget de scène, le menu slash, les actions IA.
+  limpid_quill:
+    path: ../../packages/limpid_quill
+  # Client de synchronisation : file d'attente durable, transports, snapshots.
+  limpid_sync:
+    path: ../../packages/limpid_sync
+  # Passerelle IA : les fournisseurs et le format des événements.
+  limpid_ai:
+    path: ../../packages/limpid_ai
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  # riverpod_generator 3.0.3 exige `build < 5.0.0` et `analyzer < 9.0.0` ; les
+  # build_runner au-delà de 2.7 exigent `build >= 5.0.0`. Les deux séries sont
+  # incompatibles : on reste sur build_runner 2.4–2.6. En contrepartie,
+  # riverpod_generator 3.0.3 épingle riverpod à 3.0.3 — d'où la borne
+  # flutter_riverpod ci-dessus. Voir D-27.
+  build_runner: ">=2.4.0 <2.7.0"
+  riverpod_generator: 3.0.3
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/

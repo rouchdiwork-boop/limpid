@@ -1,0 +1,28 @@
+name: limpid_quill
+description: >-
+  The manuscript editor of Limpid: a scene level editor built on top of
+  flutter_quill (Delta), extended with a slash menu, drag handles, inline AI
+  actions, comment anchors and an adapter to the limpid_core CRDT model.
+version: 0.1.0
+publish_to: none
+
+# The editor uses the Material icons of the design system.
+uses-material-design: true
+
+environment:
+  sdk: ^3.12.0
+  flutter: ">=3.44.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_quill: ^11.6.0
+  limpid_core:
+    path: ../limpid_core
+  limpid_design_system:
+    path: ../limpid_design_system
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

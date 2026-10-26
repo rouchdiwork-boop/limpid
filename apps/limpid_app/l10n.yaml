@@ -1,0 +1,9 @@
+arb-dir: lib/l10n
+template-arb-file: app_fr.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+output-dir: lib/l10n/generated
+nullable-getter: false
+# Les apostrophes françaises sont écrites telles quelles dans l'ARB : le
+# générateur se charge de les échapper pour ICU.
+use-escaping: false

@@ -1,0 +1,65 @@
+# Root package of the Limpid monorepo.
+#
+# This package contains no application code. It is the tooling and analysis
+# root of the monorepo: it hosts the shared lint dependencies, the pinned
+# version of melos and the declaration of the Dart pub workspace.
+#
+# The bootstrap, verification and deployment workflows are documented in
+# docs/DEVELOPMENT.md.
+
+name: limpid
+description: >-
+  Root package of the Limpid monorepo: shared tooling, shared analysis
+  configuration and Dart pub workspace declaration. No application code.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dev_dependencies:
+  # Shared lint set, referenced by the root analysis_options.yaml.
+  lints: ^6.1.0
+  # Melos 6.x is the last series that reads melos.yaml and that bootstraps
+  # the packages independently of each other. Melos 7 and above moved the
+  # configuration into the root pubspec.yaml and require the pub workspace
+  # migration described in docs/DEVELOPMENT.md.
+  melos: ">=6.3.0 <7.0.0"
+
+# ---------------------------------------------------------------------------
+# Dart pub workspace
+#
+# Dart 3.6+ supports pub workspaces. The root package lists its members under
+# `workspace:` and each member opts in with `resolution: workspace` in its own
+# pubspec.yaml. pub then resolves the whole workspace from the root and keeps
+# a single pubspec.lock at the root.
+#
+# The list below is the target topology of the monorepo (D-23). It is not
+# active yet, on purpose:
+#
+#   * apps/limpid_api, packages/limpid_sync and packages/limpid_quill are
+#     being created and are not stable;
+#   * packages/limpid_core, packages/limpid_design_system, packages/limpid_ai
+#     and packages/limpid_export already own their pubspec.lock and are
+#     tested against it. As soon as a package opts in, pub deletes its own
+#     lock file and re-resolves the whole workspace, which would break the
+#     tested state of those packages.
+#
+# Enabling the workspace is therefore done package by package, each one
+# adding `resolution: workspace` to its own pubspec.yaml. The exact recipe is
+# in docs/DEVELOPMENT.md ("Workspace Dart : migration"). Until the last
+# package opts in, the monorepo is resolved package by package, which is
+# what `melos bootstrap` and tool/bootstrap.sh do.
+#
+# workspace:
+#   - packages/limpid_core
+#   - packages/limpid_design_system
+#   - packages/limpid_ai
+#   - packages/limpid_export
+#   - packages/limpid_sync
+#   - packages/limpid_quill
+#   - apps/limpid_api
+#
+# apps/limpid_app is deliberately absent from that list: it is a Flutter
+# application whose dependency resolution belongs to the Flutter tool, and it
+# keeps its own committed pubspec.lock. See docs/DEVELOPMENT.md.

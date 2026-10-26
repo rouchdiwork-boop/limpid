@@ -1,0 +1,284 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+import 'package:limpid_api/limpid_api.dart';
+
+import 'test_keys.dart';
+
+/// An audit journal kept in memory, for the test suite.
+final class InMemoryAuditLog implements AuditLog {
+  /// The recorded entries.
+  final List<AuditEntry> entries = <AuditEntry>[];
+
+  @override
+  Future<void> record(AuditEntry entry) async {
+    entries.add(entry);
+  }
+
+  @override
+  Future<List<AuditEntry>> entriesOf({
+    required String userId,
+    required int limit,
+    String? action,
+  }) async {
+    final List<AuditEntry> matching =
+        entries
+            .where(
+              (AuditEntry entry) =>
+                  entry.userId == userId &&
+                  (action == null || entry.action == action),
+            )
+            .toList(growable: false)
+          ..sort((AuditEntry left, AuditEntry right) {
+            final int byDate = _momentOf(right).compareTo(_momentOf(left));
+            if (byDate != 0) return byDate;
+            return right.targetId.compareTo(left.targetId);
+          });
+    return matching.take(limit).toList(growable: false);
+  }
+
+  static DateTime _momentOf(AuditEntry entry) =>
+      entry.createdAt?.toUtc() ??
+      DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+}
+
+/// A key set held in memory, for the test suite.
+final class StaticJwksProvider implements JwksProvider {
+  /// Creates a provider serving [entries].
+  StaticJwksProvider(this.entries);
+
+  /// The keys, indexed by identifier.
+  final Map<String, JsonWebKey> entries;
+
+  /// The number of refreshes.
+  int refreshCount = 0;
+
+  @override
+  Future<Map<String, JsonWebKey>> keys() async => entries;
+
+  @override
+  Future<Map<String, JsonWebKey>> refresh() async {
+    refreshCount += 1;
+    return entries;
+  }
+}
+
+/// An AI gateway returning canned answers, for the test suite.
+final class StubAiGateway implements AiGateway {
+  /// Creates a gateway.
+  StubAiGateway({this.tokens = const <String>['Texte ', 'généré.']});
+
+  /// The fragments returned by the gateway.
+  final List<String> tokens;
+
+  @override
+  Stream<AiEvent> generate(AiGenerateRequest request) => _answer();
+
+  @override
+  Stream<AiEvent> inline(AiInlineRequest request) => _answer();
+
+  @override
+  Stream<AiEvent> query(AiQueryRequest request) => _answer();
+
+  Stream<AiEvent> _answer() async* {
+    final StringBuffer buffer = StringBuffer();
+    for (final String token in tokens) {
+      buffer.write(token);
+      yield AiTokenEvent(token);
+    }
+    yield AiDoneEvent(
+      text: buffer.toString(),
+      inputTokens: 10,
+      outputTokens: 5,
+      estimatedCostUsd: 0.001,
+    );
+  }
+}
+
+/// The API running on an ephemeral port, with in-memory dependencies.
+final class TestServer {
+  TestServer._({
+    required this.server,
+    required this.dependencies,
+    required this.issuer,
+    required this.keyPair,
+    required this.logLines,
+  });
+
+  /// The running server.
+  final HttpServer server;
+
+  /// The dependencies of the server.
+  final AppDependencies dependencies;
+
+  /// The issuer of the test tokens.
+  final TestTokenIssuer issuer;
+
+  /// The key pair signing the test tokens.
+  final TestRsaKeyPair keyPair;
+
+  /// The lines written by the logger.
+  final List<String> logLines;
+
+  /// The base URL of the server.
+  String get baseUrl => 'http://127.0.0.1:${server.port}';
+
+  /// The store of the projects.
+  InMemoryProjectStore get projects =>
+      dependencies.projects as InMemoryProjectStore;
+
+  /// The store of the sync journal.
+  InMemorySyncStore get sync => dependencies.sync as InMemorySyncStore;
+
+  /// The audit journal.
+  InMemoryAuditLog get audit => dependencies.audit as InMemoryAuditLog;
+
+  /// The payment gateway.
+  StubPaymentGateway get payments =>
+      dependencies.payments as StubPaymentGateway;
+
+  /// The storage of the artefacts.
+  InMemoryObjectStorage get storage =>
+      dependencies.storage as InMemoryObjectStorage;
+
+  /// The key/value store.
+  InMemoryKeyValueStore get keyValue =>
+      dependencies.keyValue as InMemoryKeyValueStore;
+
+  /// A valid token for [userId].
+  String tokenFor(
+    String userId, {
+    Duration lifetime = const Duration(hours: 1),
+  }) {
+    return issuer.issue(
+      userId: userId,
+      expiresAt: DateTime.now().toUtc().add(lifetime),
+    );
+  }
+
+  /// Performs a GET request.
+  Future<http.Response> get(
+    String path, {
+    Map<String, String> headers = const <String, String>{},
+  }) {
+    return http.get(Uri.parse('$baseUrl$path'), headers: headers);
+  }
+
+  /// Performs a POST request.
+  Future<http.Response> post(
+    String path, {
+    Object? body,
+    Map<String, String> headers = const <String, String>{},
+  }) {
+    return http.post(
+      Uri.parse('$baseUrl$path'),
+      headers: <String, String>{'content-type': 'application/json', ...headers},
+      body: body == null ? null : jsonEncode(body),
+    );
+  }
+
+  /// Performs a PATCH request.
+  Future<http.Response> patch(
+    String path, {
+    Object? body,
+    Map<String, String> headers = const <String, String>{},
+  }) {
+    return http.patch(
+      Uri.parse('$baseUrl$path'),
+      headers: <String, String>{'content-type': 'application/json', ...headers},
+      body: body == null ? null : jsonEncode(body),
+    );
+  }
+
+  /// Performs a DELETE request.
+  Future<http.Response> delete(
+    String path, {
+    Object? body,
+    Map<String, String> headers = const <String, String>{},
+  }) {
+    return http.delete(
+      Uri.parse('$baseUrl$path'),
+      headers: <String, String>{'content-type': 'application/json', ...headers},
+      body: body == null ? null : jsonEncode(body),
+    );
+  }
+
+  /// Stops the server.
+  Future<void> stop() async {
+    await server.close(force: true);
+  }
+}
+
+/// The configuration of the test server.
+AppConfig testConfig({Map<String, String> overrides = const {}}) {
+  return AppConfig.fromEnvironment(<String, String>{
+    'PORT': '0',
+    'DATABASE_URL': 'postgres://user:pass@localhost:5432/limpid',
+    'SUPABASE_URL': 'https://project.test',
+    'SUPABASE_ANON_KEY': 'test-anon-key',
+    'REDIS_URL': 'redis://localhost:6379/0',
+    'R2_ACCOUNT_ID': 'test-account',
+    'R2_ACCESS_KEY_ID': 'test-access-key',
+    'R2_SECRET_ACCESS_KEY': 'test-secret-key',
+    'R2_BUCKET': 'test-bucket',
+    'ANTHROPIC_API_KEY': 'test-anthropic-key',
+    'STRIPE_SECRET_KEY': 'sk_test_key',
+    'LOG_LEVEL': 'warning',
+    'CORS_ALLOWED_ORIGINS': 'https://app.test',
+    'AI_RATE_LIMIT_CAPACITY': '3',
+    'AI_RATE_LIMIT_REFILL_PER_SECOND': '0.01',
+    ...overrides,
+  });
+}
+
+/// Starts the API on an ephemeral port, with in-memory dependencies.
+Future<TestServer> startTestServer({
+  Map<String, String> configOverrides = const {},
+  int keyBits = 2048,
+}) async {
+  final TestRsaKeyPair keyPair = generateTestKeyPair(bits: keyBits);
+  final TestTokenIssuer issuer = TestTokenIssuer(keyPair);
+  final StaticJwksProvider jwks = StaticJwksProvider(<String, JsonWebKey>{
+    issuer.kid: JsonWebKey.fromJson(keyPair.toJwk(issuer.kid))!,
+  });
+
+  final List<String> logLines = <String>[];
+  final Logger logger = Logger(level: LogLevel.warning, sink: logLines.add);
+
+  final InMemoryAuditLog audit = InMemoryAuditLog();
+  final AppDependencies dependencies = AppDependencies(
+    projects: InMemoryProjectStore(),
+    sync: InMemorySyncStore(),
+    audit: audit,
+    comments: InMemoryCommentStore(),
+    purge: InMemoryAccountPurgeStore(entries: audit.entries),
+    ai: StubAiGateway(),
+    payments: StubPaymentGateway(),
+    storage: InMemoryObjectStorage(),
+    keyValue: InMemoryKeyValueStore(),
+    jwtVerifier: JwtVerifier(
+      jwks: jwks,
+      expectedIssuer: 'https://project.test/auth/v1',
+    ),
+    logger: logger,
+    databaseProbe: const AlwaysHealthyProbe(),
+    syncHub: SyncHub(),
+    shutdown: () async {},
+  );
+
+  final AppConfig config = testConfig(overrides: configOverrides);
+  final HttpServer server = await createServer(
+    config,
+    dependencies: dependencies,
+  );
+
+  return TestServer._(
+    server: server,
+    dependencies: dependencies,
+    issuer: issuer,
+    keyPair: keyPair,
+    logLines: logLines,
+  );
+}

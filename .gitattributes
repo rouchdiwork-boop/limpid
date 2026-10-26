@@ -1,0 +1,36 @@
+# Normalisation des fins de ligne : LF partout dans le dépôt, y compris sur
+# Windows. La configuration du dépôt (core.autocrlf=false, core.safecrlf=false)
+# va dans le même sens : les fichiers sont stockés tels qu'ils sont écrits.
+* text=auto eol=lf
+
+# ─── Dart / Flutter ─────────────────────────────────────────────────────────
+
+*.dart        text eol=lf
+*.yaml        text eol=lf
+*.yml         text eol=lf
+*.json        text eol=lf
+*.md          text eol=lf
+*.txt         text eol=lf
+*.html        text eol=lf
+*.css         text eol=lf
+*.sql         text eol=lf
+*.sh          text eol=lf
+*.ps1         text eol=lf diff=powershell
+
+# ─── Fichiers binaires ──────────────────────────────────────────────────────
+
+*.png         binary
+*.jpg         binary
+*.jpeg        binary
+*.gif         binary
+*.ico         binary
+*.webp        binary
+*.pdf         binary
+*.zip         binary
+*.gz          binary
+*.woff        binary
+*.woff2       binary
+*.ttf         binary
+*.otf         binary
+*.exe         binary
+*.dll         binary

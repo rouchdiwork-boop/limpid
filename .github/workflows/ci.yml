@@ -1,0 +1,540 @@
+name: CI
+
+# D-21 : analyse → tests → build web → build desktop → build mobile (sur tag)
+# → déploiement Railway. Chaque pull request ouvre un preview web.
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Permissions minimales : la CI n'écrit jamais dans le dépôt.
+permissions:
+  contents: read
+
+# Un seul run actif par branche : un nouveau push annule le run précédent.
+# Les runs déclenchés par un tag ne sont jamais annulés : ils construisent
+# les artefacts de publication.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+
+env:
+  FLUTTER_VERSION: "3.44.4"
+  DART_VERSION: "3.12.2"
+  # Chaque job est plafonné : une suite de tests qui bloque ne doit pas
+  # consommer les runners de GitHub toute la nuit.
+  JOB_TIMEOUT_MINUTES: "30"
+  TEST_TIMEOUT: "5m"
+
+jobs:
+  # ─── Découverte des paquets ────────────────────────────────────────────────
+  #
+  # La liste est calculée à l'exécution : un paquet absent du dépôt est
+  # simplement ignoré, ce qui garde la CI verte pendant la construction du
+  # monorepo.
+  discover:
+    name: Discover packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      packages: ${{ steps.discover.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: List the packages of the monorepo
+        id: discover
+        run: |
+          packages='[]'
+          for dir in packages/* apps/*; do
+            [ -f "$dir/pubspec.yaml" ] || continue
+            if grep -q "sdk: flutter" "$dir/pubspec.yaml"; then
+              tool="flutter"
+            else
+              tool="dart"
+            fi
+            packages=$(echo "$packages" | jq --arg path "$dir" --arg tool "$tool" \
+              '. + [{"path": $path, "tool": $tool}]')
+          done
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+          echo "Packages detected : $packages"
+
+  # ─── Analyse statique et formatage ────────────────────────────────────────
+  analyze:
+    name: Analyze
+    needs: discover
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.JOB_TIMEOUT_MINUTES }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Print the SDK versions
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Resolve the dependencies of every package
+        run: |
+          set -euo pipefail
+          for dir in packages/* apps/*; do
+            [ -f "$dir/pubspec.yaml" ] || continue
+            if grep -q "sdk: flutter" "$dir/pubspec.yaml"; then
+              tool="flutter"
+            else
+              tool="dart"
+            fi
+            echo "→ $dir ($tool pub get)"
+            (cd "$dir" && "$tool" pub get)
+          done
+
+      - name: Generate the localizations
+        run: |
+          set -euo pipefail
+          for dir in packages/* apps/*; do
+            [ -f "$dir/l10n.yaml" ] || continue
+            echo "→ $dir (flutter gen-l10n)"
+            (cd "$dir" && flutter gen-l10n)
+          done
+
+      - name: Analyze every package
+        run: |
+          set -euo pipefail
+          for dir in packages/* apps/*; do
+            [ -f "$dir/pubspec.yaml" ] || continue
+            if grep -q "sdk: flutter" "$dir/pubspec.yaml"; then
+              tool="flutter"
+            else
+              tool="dart"
+            fi
+            echo "→ $dir ($tool analyze --fatal-infos)"
+            (cd "$dir" && "$tool" analyze --fatal-infos)
+          done
+
+      - name: Check the formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+  # ─── Tests ────────────────────────────────────────────────────────────────
+  test:
+    name: Test (${{ matrix.package.path }})
+    needs: [discover, analyze]
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.JOB_TIMEOUT_MINUTES }}
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.discover.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Resolve the dependencies
+        working-directory: ${{ matrix.package.path }}
+        run: ${{ matrix.package.tool }} pub get
+
+      - name: Generate the localizations
+        if: matrix.package.tool == 'flutter'
+        working-directory: ${{ matrix.package.path }}
+        run: |
+          if [ -f l10n.yaml ]; then
+            flutter gen-l10n
+          fi
+
+      - name: Run the tests
+        working-directory: ${{ matrix.package.path }}
+        run: ${{ matrix.package.tool }} test --timeout=${{ env.TEST_TIMEOUT }}
+
+  # ─── Migrations de base de données ───────────────────────────────────────
+  #
+  # Les migrations existent en deux dialectes : PostgreSQL (production) et
+  # SQLite (développement, D-29). Ce job applique les deux jeux et compare les
+  # schémas obtenus. Un dialecte qui dérive de l'autre doit casser la CI, pas
+  # l'application.
+  db-migrations:
+    name: Database migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: limpid
+          POSTGRES_PASSWORD: limpid
+          POSTGRES_DB: limpid
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U limpid -d limpid"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: limpid
+      PGPASSWORD: limpid
+      PGDATABASE: limpid
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply the PostgreSQL migrations
+        run: |
+          set -euo pipefail
+          if [ ! -d apps/limpid_api/db/migrations ]; then
+            echo "No migration directory: the check is skipped."
+            exit 0
+          fi
+          for migration in apps/limpid_api/db/migrations/*.sql; do
+            [ -e "$migration" ] || continue
+            echo "→ $migration"
+            psql -v ON_ERROR_STOP=1 -f "$migration"
+          done
+
+      - name: Apply the SQLite migrations
+        run: |
+          set -euo pipefail
+          if [ ! -d apps/limpid_api/db/migrations/sqlite ]; then
+            echo "No SQLite migration directory: the check is skipped."
+            exit 0
+          fi
+          rm -f /tmp/limpid.db
+          for migration in apps/limpid_api/db/migrations/sqlite/*.sql; do
+            [ -e "$migration" ] || continue
+            echo "→ $migration"
+            sqlite3 /tmp/limpid.db < "$migration"
+          done
+
+      - name: Compare the two schemas
+        run: |
+          set -euo pipefail
+          psql -t -A -F'|' \
+            -c "SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name <> 'schema_migrations' ORDER BY table_name, column_name" \
+            | sort > /tmp/postgres.columns
+
+          : > /tmp/sqlite.columns
+          sqlite3 /tmp/limpid.db \
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name <> 'schema_migrations' ORDER BY name;" \
+            > /tmp/sqlite.tables
+          while read -r table; do
+            [ -n "$table" ] || continue
+            sqlite3 /tmp/limpid.db "PRAGMA table_info('$table');" \
+              | cut -d'|' -f2 \
+              | while read -r column; do
+                  echo "$table|$column" >> /tmp/sqlite.columns
+                done
+          done < /tmp/sqlite.tables
+          sort -o /tmp/sqlite.columns /tmp/sqlite.columns
+
+          if ! diff -u /tmp/postgres.columns /tmp/sqlite.columns; then
+            echo "::error::The PostgreSQL and the SQLite schemas differ."
+            exit 1
+          fi
+          echo "The two schemas carry the same tables and the same columns."
+
+  # ─── Maquettes ────────────────────────────────────────────────────────────
+  #
+  # Les maquettes HTML sont générées à partir des mêmes tokens que le design
+  # system (D-11). Deux fautes de balisage y ont déjà fait déstructurer la
+  # mise en page : lesScripts les vérifient, la CI les exécute.
+  mockups:
+    name: Mockups
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check the markup of the mockups
+        run: |
+          set -euo pipefail
+          cd mockups
+          node tools/check-html.js
+          node tools/check-colors.js
+
+  # ─── Build web ────────────────────────────────────────────────────────────
+  #
+  # Conditionnel : l'application Flutter n'existe pas encore dans le dépôt,
+  # le job ne doit pas casser la CI pendant sa construction.
+  build-web:
+    name: Build web
+    if: github.event_name == 'push'
+    needs: [analyze, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.JOB_TIMEOUT_MINUTES }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Check the application
+        id: app
+        run: |
+          if [ -f apps/limpid_app/pubspec.yaml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "apps/limpid_app does not exist yet: build skipped."
+          fi
+
+      - name: Resolve the dependencies
+        if: steps.app.outputs.exists == 'true'
+        working-directory: apps/limpid_app
+        run: flutter pub get
+
+      - name: Build the web application
+        if: steps.app.outputs.exists == 'true'
+        working-directory: apps/limpid_app
+        run: flutter build web --release
+
+      - name: Upload the web build
+        if: steps.app.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: limpid-web
+          path: apps/limpid_app/build/web
+          retention-days: 14
+
+  # ─── Preview web des pull requests ────────────────────────────────────────
+  preview-web:
+    name: Preview web
+    if: github.event_name == 'pull_request'
+    needs: [analyze, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.JOB_TIMEOUT_MINUTES }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Check the application
+        id: app
+        run: |
+          if [ -f apps/limpid_app/pubspec.yaml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve the dependencies
+        if: steps.app.outputs.exists == 'true'
+        working-directory: apps/limpid_app
+        run: flutter pub get
+
+      - name: Build the web preview
+        if: steps.app.outputs.exists == 'true'
+        working-directory: apps/limpid_app
+        run: flutter build web --release --dart-define=PREVIEW=true
+
+      - name: Upload the preview
+        if: steps.app.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: limpid-preview-web
+          path: apps/limpid_app/build/web
+          retention-days: 7
+
+  # ─── Build desktop ────────────────────────────────────────────────────────
+  build-desktop:
+    name: Build desktop
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [analyze, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.JOB_TIMEOUT_MINUTES }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Check the application
+        id: app
+        run: |
+          if [ -f apps/limpid_app/pubspec.yaml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "apps/limpid_app does not exist yet: build skipped."
+          fi
+
+      - name: Resolve the dependencies
+        if: steps.app.outputs.exists == 'true'
+        working-directory: apps/limpid_app
+        run: flutter pub get
+
+      - name: Build the desktop application
+        if: steps.app.outputs.exists == 'true'
+        working-directory: apps/limpid_app
+        run: flutter build windows --release
+
+      - name: Upload the desktop build
+        if: steps.app.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: limpid-desktop
+          path: apps/limpid_app/build/windows
+          retention-days: 14
+
+  # ─── Build Android ────────────────────────────────────────────────────────
+  build-android:
+    name: Build Android
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [analyze, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.JOB_TIMEOUT_MINUTES }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Check the application
+        id: app
+        run: |
+          if [ -f apps/limpid_app/pubspec.yaml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "apps/limpid_app does not exist yet: build skipped."
+          fi
+
+      - name: Resolve the dependencies
+        if: steps.app.outputs.exists == 'true'
+        working-directory: apps/limpid_app
+        run: flutter pub get
+
+      - name: Build the Android application
+        if: steps.app.outputs.exists == 'true'
+        working-directory: apps/limpid_app
+        run: flutter build apk --release
+
+      - name: Upload the Android build
+        if: steps.app.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: limpid-android
+          path: apps/limpid_app/build/app/outputs/flutter-apk
+          retention-days: 14
+
+  # ─── Déploiement de l'API sur Railway ─────────────────────────────────────
+  #
+  # Le déploiement ne part que sur `main`, et uniquement si les secrets de
+  # déploiement sont présents dans le dépôt. Aucun secret n'est écrit en clair.
+  deploy-api:
+    name: Deploy the API
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [analyze, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check the API and the deployment secrets
+        id: api
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
+        run: |
+          if [ ! -f apps/limpid_api/pubspec.yaml ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "apps/limpid_api does not exist yet: deployment skipped."
+            exit 0
+          fi
+          if [ -z "$RAILWAY_TOKEN" ] || [ -z "$RAILWAY_PROJECT_ID" ] || [ -z "$RAILWAY_SERVICE" ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Deployment secrets are missing: deployment skipped."
+            exit 0
+          fi
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve the dependencies of the API
+        if: steps.api.outputs.exists == 'true'
+        working-directory: apps/limpid_api
+        run: dart pub get
+
+      - name: Apply the database migrations
+        if: steps.api.outputs.exists == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Les migrations PostgreSQL vivent dans le dépôt, à côté de l'API
+          # (D-29). Le sous-dossier `sqlite/` n'est pas un dialecte PostgreSQL :
+          # le glob ci-dessous ne le traverse pas.
+          if [ ! -d apps/limpid_api/db/migrations ]; then
+            echo "No migration directory: migrations skipped."
+            exit 0
+          fi
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL is missing: migrations skipped."
+            exit 0
+          fi
+          for migration in apps/limpid_api/db/migrations/*.sql; do
+            [ -e "$migration" ] || continue
+            echo "→ $migration"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+          done
+
+      - name: Deploy to Railway
+        if: steps.api.outputs.exists == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
+          RAILWAY_ENVIRONMENT: production
+        run: |
+          npm install -g @railway/cli
+          railway up --service "$RAILWAY_SERVICE" --detach
