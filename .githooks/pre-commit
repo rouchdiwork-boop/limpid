@@ -21,13 +21,22 @@ if [ -z "$changed" ]; then
   exit 0
 fi
 
-unformatted=$(dart format --output=none --set-exit-if-changed $changed 2>&1)
-if [ $? -ne 0 ]; then
+# La ligne de commande de Windows est courte : les fichiers sont verifies
+# par paquets de quarante, sinon l'appel echoue sur la longueur de la ligne
+# et le crochet refuse un commit dont le code est parfaitement formate.
+output=$(printf '%s\n' "$changed" | xargs -d '\n' -n 40 dart format --output=none --set-exit-if-changed 2>&1)
+status=$?
+if [ "$status" -ne 0 ]; then
   echo "" >&2
   echo "Ces fichiers ne sont pas au format Dart :" >&2
-  echo "$unformatted" | grep -E "Changed" >&2
+  unformatted=$(echo "$output" | grep -E "^Changed " || true)
+  if [ -n "$unformatted" ]; then
+    echo "$unformatted" >&2
+  else
+    echo "$output" >&2
+  fi
   echo "" >&2
-  echo "  dart format $changed" >&2
+  echo "  dart format ." >&2
   exit 1
 fi
 
