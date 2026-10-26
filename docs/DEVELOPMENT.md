@@ -240,6 +240,28 @@ Les jobs de build et de déploiement **vérifient l'existence de l'application
 avant de s'exécuter** : tant que `apps/limpid_app` et `apps/limpid_api`
 n'existent pas, la CI reste verte.
 
+### 5.1 Deux pièges de GitHub Actions
+
+**Le contexte `env` n'existe pas dans `jobs.<job_id>.timeout-minutes`.**
+Écrire `timeout-minutes: ${{ env.JOB_TIMEOUT_MINUTES }}` ne fait pas échouer
+ce job : GitHub **rejette le fichier entier**, avant le moindre job. Le run
+apparaît alors « failure » en 0 s, avec **zéro job**, et le nom du workflow
+tombe sur son chemin (`.github/workflows/ci.yml`) au lieu de son `name:`.
+Le plafond d'exécution s'écrit donc en dur, et `env` ne sert plus qu'aux
+étapes, où il existe.
+
+**Un run à zéro job ne veut pas dire un test rouge.** C'est un fichier
+rejeté à la validation. L'erreur exacte se lit dans l'annotation de la page
+du run, que l'API REST n'expose pas :
+
+```bash
+TOKEN=$(gh auth token)
+curl -s -H "Authorization: Bearer $TOKEN" -H "Accept: text/html" \
+  "https://github.com/<propre>/<dépôt>/actions/runs/<id>" -o run.html
+```
+
+Le message attendu ressemble à `Unrecognized named-value: 'env'`.
+
 Les secrets de déploiement (`RAILWAY_TOKEN`, `RAILWAY_PROJECT_ID`,
 `RAILWAY_SERVICE`, `SUPABASE_ACCESS_TOKEN`, `DATABASE_URL`) ne sont lus que
 par le job `deploy-api`, jamais par les autres, et jamais en clair.

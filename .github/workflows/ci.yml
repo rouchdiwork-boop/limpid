@@ -59,8 +59,10 @@ jobs:
             else
               tool="dart"
             fi
-            packages=$(echo "$packages" | jq --arg path "$dir" --arg tool "$tool" \
-              '. + [{"path": $path, "tool": $tool}]')
+            # `jq -c` sort le JSON sur une seule ligne : une sortie
+            # multi-lignes est refusée par `$GITHUB_OUTPUT`.
+            packages=$(echo "$packages" | jq -c --arg path "$dir" --arg tool "$tool" \
+              '. + [{"path": $path, "tool": $tool}]' | tr -d '\n')
           done
           echo "packages=$packages" >> "$GITHUB_OUTPUT"
           echo "Packages detected : $packages"
