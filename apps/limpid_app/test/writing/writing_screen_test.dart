@@ -177,6 +177,15 @@ void main() {
 
     expect(find.byType(LimpidSceneEditor), findsOneWidget);
     expect(find.text('La plage à marée basse'), findsWidgets);
+    // Le **texte** du manuscrit est rendu par l'editeur : il ne suffit
+    // pas que le CRDT le porte, l'auteur doit le voir.
+    expect(
+      find.byWidgetPredicate((Widget widget) {
+        if (widget is! RichText) return false;
+        return widget.text.toPlainText().contains('Bonjour le monde');
+      }),
+      findsWidgets,
+    );
   });
 
   testWidgets('the word counter follows the real content', (tester) async {

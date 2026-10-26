@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_providers.dart';
 import 'package:limpid_app/src/features/projects/formatters.dart';
+import 'package:limpid_app/src/features/projects/projects_providers.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 
 /// The activity of the writing of the author, over the last twelve weeks.
 ///
 /// The grid shows the weeks in their columns and the days in their rows: the
-/// figures come from the scenes of the library.
+/// figures come from the **sessions** of the writing — the days on which
+/// the author wrote, and the words they wrote that day.
 class DashboardActivity extends ConsumerWidget {
   /// Creates the card.
   const DashboardActivity({super.key});
@@ -18,7 +20,11 @@ class DashboardActivity extends ConsumerWidget {
     final AppLocalizations strings = AppLocalizations.of(context);
     final LimpidThemeScope scope = context.limpid;
     final MaterialLocalizations dates = MaterialLocalizations.of(context);
-    final WritingActivity activity = ref.watch(writingActivityProvider);
+    // The sessions are read from the device: the grid shows an empty period
+    // while they are read, never a figure it invented.
+    final WritingActivity activity =
+        ref.watch(writingActivityProvider).value ??
+        WritingActivity.empty(firstActivityDay(ref.watch(todayProvider)));
 
     return LimpidCard(
       title: strings.dashboardActivityTitle,

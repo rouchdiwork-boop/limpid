@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:limpid_app/src/domain/providers.dart';
+import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_app/src/features/projects/project_metrics.dart';
 import 'package:limpid_app/src/features/projects/project_summary.dart';
 import 'package:limpid_app/src/features/projects/projects_providers.dart';
@@ -103,7 +104,7 @@ void main() {
     },
   );
 
-  test('the words written today come from the scenes written today', () async {
+  test('the words written today come from the writing sessions', () async {
     final FakeManuscriptRepository manuscripts = FakeManuscriptRepository(
       projects: <Project>[
         fakeProject(
@@ -136,14 +137,50 @@ void main() {
           ),
         ],
       },
+      sessions: <WritingSession>[
+        WritingSession(day: today, words: 100, minutes: 9),
+        WritingSession(day: yesterday, words: 250, minutes: 21),
+      ],
     );
 
     final ProviderContainer container = buildContainer(
       manuscripts: manuscripts,
     );
-    await container.read(libraryProvider.future);
 
-    expect(container.read(wordsWrittenTodayProvider), 100);
+    expect(await container.read(wordsWrittenTodayProvider.future), 100);
+  });
+
+  test('a book that was re-read today was not written today', () async {
+    final FakeManuscriptRepository manuscripts = FakeManuscriptRepository(
+      projects: <Project>[
+        fakeProject(
+          id: 'heures',
+          title: 'Les Heures de Cendre',
+          chapterIds: <String>['c1'],
+        ),
+      ],
+      chapters: <String, List<Chapter>>{
+        'heures': <Chapter>[
+          fakeChapter(id: 'c1', sceneIds: <String>['s1']),
+        ],
+      },
+      scenes: <String, List<Scene>>{
+        'c1': <Scene>[
+          fakeScene(
+            id: 's1',
+            chapterId: 'c1',
+            wordCount: 100,
+            updatedAt: today,
+          ),
+        ],
+      },
+    );
+
+    final ProviderContainer container = buildContainer(
+      manuscripts: manuscripts,
+    );
+
+    expect(await container.read(wordsWrittenTodayProvider.future), 0);
   });
 
   test('the current project is the one that is being written', () async {

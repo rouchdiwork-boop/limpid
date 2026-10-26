@@ -85,9 +85,9 @@ void main() {
         database: database,
         now: () => DateTime(2026, 10, 25, 10),
       );
-      await _writeScene(database, 'scene-1', DateTime(2026, 10, 25, 9));
-      await _writeScene(database, 'scene-2', DateTime(2026, 10, 24, 9));
-      await _writeScene(database, 'scene-3', DateTime(2026, 10, 23, 9));
+      await _writeSession(database, DateTime(2026, 10, 25));
+      await _writeSession(database, DateTime(2026, 10, 24));
+      await _writeSession(database, DateTime(2026, 10, 23));
 
       expect(await repository.writingStreak(), 3);
     });
@@ -97,9 +97,9 @@ void main() {
         database: database,
         now: () => DateTime(2026, 10, 25, 10),
       );
-      await _writeScene(database, 'scene-1', DateTime(2026, 10, 25, 9));
-      await _writeScene(database, 'scene-2', DateTime(2026, 10, 24, 9));
-      await _writeScene(database, 'scene-3', DateTime(2026, 10, 22, 9));
+      await _writeSession(database, DateTime(2026, 10, 25));
+      await _writeSession(database, DateTime(2026, 10, 24));
+      await _writeSession(database, DateTime(2026, 10, 22));
 
       expect(await repository.writingStreak(), 2);
     });
@@ -109,17 +109,29 @@ void main() {
         database: database,
         now: () => DateTime(2026, 10, 25, 8),
       );
-      await _writeScene(database, 'scene-1', DateTime(2026, 10, 24, 22));
+      await _writeSession(database, DateTime(2026, 10, 24));
 
       expect(await repository.writingStreak(), 1);
     });
 
-    test('compte les scènes sans nombre de mots', () async {
+    test('ne compte pas un livre relu sans écriture', () async {
+      // La scène a été relue aujourd'hui : elle a été touchée, pas écrite.
+      // La série compte les jours d'écriture, pas les jours de modification.
       final LocalPreferencesRepository repository = LocalPreferencesRepository(
         database: database,
         now: () => DateTime(2026, 10, 25, 10),
       );
       await _writeScene(database, 'scene-1', DateTime(2026, 10, 25, 9));
+
+      expect(await repository.writingStreak(), 0);
+    });
+
+    test('compte le jour d’écriture même sans scène relue', () async {
+      final LocalPreferencesRepository repository = LocalPreferencesRepository(
+        database: database,
+        now: () => DateTime(2026, 10, 25, 10),
+      );
+      await _writeSession(database, DateTime(2026, 10, 25));
 
       expect(await repository.writingStreak(), 1);
     });
@@ -135,5 +147,15 @@ Future<void> _writeScene(
   await database.manuscripts.saveScene(
     sceneOf(id: sceneId, updatedAt: updatedAt),
     projectId: 'project-1',
+  );
+}
+
+/// Writes a writing session on the day of [day].
+Future<void> _writeSession(AppDatabase database, DateTime day) async {
+  await database.writingSessions.recordWriting(
+    day: day,
+    projectId: 'project-1',
+    words: 120,
+    minutes: 12,
   );
 }

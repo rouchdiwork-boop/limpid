@@ -120,6 +120,8 @@
   "dashboardResumeAction": "Reprendre",
   "dashboardSeePlan": "Voir le plan",
   "dashboardActivityTitle": "Activité d'écriture",
+  "dashboardHistoryTitle": "Historique d'écriture",
+  "dashboardHistoryEmpty": "Aucun jour d'écriture pour l'instant.",
   "dashboardGoalTitle": "Objectif du jour",
   "dashboardTodoTitle": "À faire",
   "dashboardTodoEmpty": "Rien à faire. Profitez-en pour écrire.",
@@ -323,6 +325,9 @@
   "revisionResolved": "Résolus",
   "revisionEmptyMessage": "Aucun commentaire pour l’instant.",
   "revisionMembers": "Collaborateurs",
+  "revisionComment": "Commenter",
+  "revisionCommentTitle": "Nouveau commentaire",
+  "revisionCommentHint": "Votre commentaire",
   "editorAiTitle": "Assistant",
   "editorAiPlaceholder": "Demandez, réécrivez, résumez…",
   "editorAiSend": "Envoyer",
@@ -340,6 +345,15 @@
   "exportReady": "Votre export est prêt",
   "exportFailed": "L'export a échoué",
   "exportDownload": "Télécharger",
+  "exportExpiresAt": "Le lien expire le {date}",
+  "@exportExpiresAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "exportDownloaded": "Le livre a été téléchargé.",
   "exportFormatEpub": "EPUB",
   "exportFormatPdf": "PDF",
   "exportFormatDocx": "DOCX",

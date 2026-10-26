@@ -7,6 +7,7 @@ import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_app/src/editor/editor_models.dart';
 import 'package:limpid_app/src/editor/editor_providers.dart';
 import 'package:limpid_app/src/editor/editor_statistics.dart';
+import 'package:limpid_app/src/editor/writing_clock.dart';
 import 'package:limpid_app/src/features/actions/remote_runner.dart';
 import 'package:limpid_core/limpid_core.dart';
 
@@ -22,6 +23,10 @@ class WritingController extends Notifier<WritingState> {
 
   /// The project being written.
   final String projectId;
+
+  /// The clock of the writing: it measures the time the author spends
+  /// writing.
+  WritingClock _clock = WritingClock.empty;
 
   @override
   WritingState build() {
@@ -155,6 +160,10 @@ class WritingController extends Notifier<WritingState> {
   /// The operations are applied to the local document first, so that the
   /// counters follow the text immediately, then they are written by the
   /// repository, which queues them for the server.
+  ///
+  /// The words the author **added** are recorded in the session of the day:
+  /// they are counted by difference, so a scene that is saved again without
+  /// a change does not count twice.
   Future<void> applyOperations(List<SyncOp> operations) async {
     if (operations.isEmpty) {
       return;
@@ -180,6 +189,12 @@ class WritingController extends Notifier<WritingState> {
       return;
     }
 
+    final int written = wordCountOf(next) - wordCountOf(current);
+    final ({WritingClock clock, int minutes}) counted = _clock.advance(
+      DateTime.now(),
+    );
+    _clock = counted.clock;
+
     state = state.copyWith(
       document: next,
       wordCount: wordCountOf(next),
@@ -194,6 +209,40 @@ class WritingController extends Notifier<WritingState> {
       state = state.copyWith(
         saveState: EditorSaveState.failed,
         saveError: error,
+      );
+      return;
+    }
+
+    await _recordWriting(words: written, minutes: counted.minutes);
+  }
+
+  /// Records the words the author wrote in the session of the day.
+  ///
+  /// The session is **local**: it is written on the device and never goes on
+  /// the network. The words are the ones the author added — a stroke that
+  /// deletes words never counts as writing.
+  ///
+  /// The failure of the write never breaks the interface: the manuscript is
+  /// already saved, and a session that is missing is better than a lost
+  /// text.
+  Future<void> _recordWriting({
+    required int words,
+    required int minutes,
+  }) async {
+    if (words <= 0) return;
+    final ManuscriptRepository repository = ref.read(
+      manuscriptRepositoryProvider,
+    );
+    if (repository is! WritingSessionRepository) return;
+    try {
+      await repository.recordWriting(
+        projectId: projectId,
+        words: words,
+        minutes: minutes,
+      );
+    } on Object catch (error) {
+      debugPrint(
+        'La session d\'écriture n\'a pas pu être enregistrée : $error',
       );
     }
   }

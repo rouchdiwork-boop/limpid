@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:limpid_app/src/domain/revision_repository.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_sync/limpid_sync.dart';
 
@@ -19,9 +20,13 @@ final class RevisionStore {
   ///
   /// A project that holds no discussion answers with an empty list: the
   /// caller never has to know whether the project exists.
-  Future<List<CommentThread>> listThreads(String projectId) async {
+  ///
+  /// Every discussion carries the excerpt it holds: the words the author
+  /// commented when the discussion was created.
+  Future<List<StoredThread>> listThreads(String projectId) async {
     final List<Map<String, Object?>> rows = await _select(
-      'SELECT t.id AS thread_id, t.mark_id, t.is_resolved, t.resolved_at, '
+      'SELECT t.id AS thread_id, t.mark_id, t.excerpt, t.is_resolved, '
+      't.resolved_at, '
       'c.id AS comment_id, c.author_id, c.body, '
       'c.created_at AS comment_created_at, c.edited_at AS comment_edited_at '
       'FROM comment_threads t '
@@ -30,15 +35,22 @@ final class RevisionStore {
       'ORDER BY t.created_at ASC, t.id ASC, c.created_at ASC, c.id ASC',
       <Object?>[projectId],
     );
-    return List<CommentThread>.unmodifiable(_threadsOf(rows));
+    return List<StoredThread>.unmodifiable(_threadsOf(rows));
   }
 
-  /// Writes a discussion and its messages.
+  /// Writes a discussion, its excerpt and its messages.
   ///
   /// The write is idempotent: the discussion is keyed by its identifier and
   /// its messages are keyed by theirs. The messages that left the discussion
   /// are removed, so the stored conversation is always the written one.
-  Future<void> saveThread(String projectId, CommentThread thread) async {
+  ///
+  /// The excerpt is written when the discussion is created, and kept when it
+  /// is updated: a reply does not erase the words the author commented.
+  Future<void> saveThread(
+    String projectId,
+    CommentThread thread, {
+    String excerpt = '',
+  }) async {
     final int now = DateTime.now().millisecondsSinceEpoch;
     await _database.transaction(() async {
       await _execute(
@@ -56,7 +68,7 @@ ON CONFLICT(id) DO UPDATE SET
           thread.id.value,
           projectId,
           thread.markId.value,
-          '',
+          excerpt,
           _integerOf(thread.isResolved),
           now,
           now,
@@ -129,20 +141,23 @@ ON CONFLICT(id) DO UPDATE SET
   }
 
   /// Rebuilds the discussions from the rows of the join.
-  List<CommentThread> _threadsOf(List<Map<String, Object?>> rows) {
+  List<StoredThread> _threadsOf(List<Map<String, Object?>> rows) {
     final Map<String, List<Comment>> messages = <String, List<Comment>>{};
-    final Map<String, CommentThread> threads = <String, CommentThread>{};
+    final Map<String, StoredThread> threads = <String, StoredThread>{};
 
     for (final Map<String, Object?> row in rows) {
       final String threadId = _text(row, 'thread_id');
       threads.putIfAbsent(
         threadId,
-        () => CommentThread(
-          id: CommentId(threadId),
-          markId: MarkId(_text(row, 'mark_id')),
-          comments: const <Comment>[],
-          isResolved: _boolean(row, 'is_resolved'),
-          resolvedAt: _date(row, 'resolved_at'),
+        () => StoredThread(
+          thread: CommentThread(
+            id: CommentId(threadId),
+            markId: MarkId(_text(row, 'mark_id')),
+            comments: const <Comment>[],
+            isResolved: _boolean(row, 'is_resolved'),
+            resolvedAt: _date(row, 'resolved_at'),
+          ),
+          excerpt: _text(row, 'excerpt'),
         ),
       );
       final String commentId = _text(row, 'comment_id');
@@ -163,8 +178,11 @@ ON CONFLICT(id) DO UPDATE SET
 
     return threads.values
         .map(
-          (CommentThread thread) => thread.copyWith(
-            comments: messages[thread.id.value] ?? const <Comment>[],
+          (StoredThread stored) => StoredThread(
+            thread: stored.thread.copyWith(
+              comments: messages[stored.thread.id.value] ?? const <Comment>[],
+            ),
+            excerpt: stored.excerpt,
           ),
         )
         .toList(growable: false);

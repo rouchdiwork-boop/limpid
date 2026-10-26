@@ -72,11 +72,25 @@ final streakProvider = FutureProvider<int>((ref) async {
   return preferences.writingStreak();
 });
 
-/// The number of words written today.
-final wordsWrittenTodayProvider = Provider<int>((ref) {
-  final List<Scene> scenes =
-      ref.watch(libraryProvider).value?.scenes ?? const <Scene>[];
-  return wordsWrittenOn(scenes, ref.watch(todayProvider));
+/// The number of words the author wrote today.
+///
+/// The figure comes from the **sessions** of the writing: the words the
+/// author added today, never the size of the chapters they touched. A book
+/// that is re-read today was not written today.
+final wordsWrittenTodayProvider = FutureProvider<int>((ref) async {
+  final ManuscriptRepository repository = ref.watch(
+    manuscriptRepositoryProvider,
+  );
+  if (repository is! WritingSessionRepository) return 0;
+  final DateTime today = ref.watch(todayProvider);
+  final List<WritingSession> sessions = await repository.writingSessions(
+    from: today,
+    to: today,
+  );
+  return sessions.fold<int>(
+    0,
+    (int total, WritingSession session) => total + session.words,
+  );
 });
 
 /// The chapters of a project, with the number of words they hold.

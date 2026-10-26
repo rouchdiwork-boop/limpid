@@ -26,6 +26,9 @@ final class FakeRevisionRepository implements RevisionRepository {
   /// The discussions of the project.
   final List<CommentThread> threads;
 
+  /// The excerpts the discussions carry, by their identifier.
+  final Map<String, String> excerpts = <String, String>{};
+
   /// The collaborators of the project.
   final List<ProjectMember> members;
 
@@ -36,13 +39,23 @@ final class FakeRevisionRepository implements RevisionRepository {
   final List<CommentThread> saved = <CommentThread>[];
 
   @override
-  Future<List<CommentThread>> loadThreads(String projectId) async {
-    return List<CommentThread>.unmodifiable(threads);
+  Future<List<StoredThread>> loadThreads(String projectId) async {
+    return List<StoredThread>.unmodifiable(<StoredThread>[
+      for (final CommentThread thread in threads)
+        StoredThread(thread: thread, excerpt: excerpts[thread.id.value] ?? ''),
+    ]);
   }
 
   @override
-  Future<void> saveThread(String projectId, CommentThread thread) async {
+  Future<void> saveThread(
+    String projectId,
+    CommentThread thread, {
+    String excerpt = '',
+  }) async {
     saved.add(thread);
+    if (excerpt.isNotEmpty) {
+      excerpts[thread.id.value] = excerpt;
+    }
     final int index = threads.indexWhere(
       (CommentThread current) => current.id == thread.id,
     );

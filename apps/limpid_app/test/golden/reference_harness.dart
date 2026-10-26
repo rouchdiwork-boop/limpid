@@ -8,6 +8,7 @@ import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/app/theme_controller.dart';
 import 'package:limpid_app/src/auth/supabase_auth_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
+import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_app/src/domain/revision_repository.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_providers.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_screen.dart';
@@ -228,6 +229,14 @@ projects.FakeManuscriptRepository _manuscripts() {
         ),
       ],
     },
+    sessions: <WritingSession>[
+      WritingSession(day: kReferenceToday, words: 120, minutes: 12),
+      WritingSession(
+        day: kReferenceToday.subtract(const Duration(days: 1)),
+        words: 90,
+        minutes: 9,
+      ),
+    ],
   );
 }
 

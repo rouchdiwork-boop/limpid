@@ -7,13 +7,20 @@ import 'package:limpid_core/limpid_core.dart';
 /// The author used by the fakes.
 const AuthorId kFakeAuthor = AuthorId('auteur-1');
 
+/// The failure of a writing that the test provokes.
+final class FakeWriteException implements Exception {
+  /// Creates the failure.
+  const FakeWriteException();
+}
+
 /// A manuscript repository backed by in-memory chapters, scenes and documents.
 ///
 /// The fake records the operations the editor hands over, so that a test can
 /// assert that an edition reaches the repository. It knows the hierarchy of
 /// the book — the series, the tomes, the chapters and the scenes — so that
 /// the plan of the writing screen can be driven by the test.
-final class FakeManuscriptRepository implements ManuscriptRepository {
+final class FakeManuscriptRepository
+    implements ManuscriptRepository, WritingSessionRepository {
   /// Creates the fake.
   FakeManuscriptRepository({
     this.chapters = const <Chapter>[],
@@ -23,6 +30,25 @@ final class FakeManuscriptRepository implements ManuscriptRepository {
     List<Volume> volumes = const <Volume>[],
   }) : _series = List<Series>.of(series),
        _volumes = List<Volume>.of(volumes);
+
+  /// The writing the editor recorded, in the order it was sent.
+  final List<({String projectId, int words, int minutes})> recordedWriting =
+      <({String projectId, int words, int minutes})>[];
+
+  @override
+  Future<void> recordWriting({
+    required String projectId,
+    required int words,
+    required int minutes,
+  }) async {
+    recordedWriting.add((projectId: projectId, words: words, minutes: minutes));
+  }
+
+  @override
+  Future<List<WritingSession>> writingSessions({
+    required DateTime from,
+    required DateTime to,
+  }) async => const <WritingSession>[];
 
   /// The chapters of the project, in reading order.
   final List<Chapter> chapters;
@@ -38,6 +64,12 @@ final class FakeManuscriptRepository implements ManuscriptRepository {
 
   /// The batches of operations the editor handed over to the repository.
   final List<List<SyncOp>> appliedOperations = <List<SyncOp>>[];
+
+  /// Whether the writing of the operations fails.
+  ///
+  /// The test drives the failure of the writing: the screen must tell it,
+  /// and nothing must appear.
+  bool failOnApply = false;
 
   /// Every operation the editor handed over to the repository.
   List<SyncOp> get operations => <SyncOp>[
@@ -57,6 +89,9 @@ final class FakeManuscriptRepository implements ManuscriptRepository {
 
   @override
   Future<void> applyOperations(List<SyncOp> operations) async {
+    if (failOnApply) {
+      throw const FakeWriteException();
+    }
     appliedOperations.add(List<SyncOp>.unmodifiable(operations));
   }
 

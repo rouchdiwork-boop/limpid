@@ -15,8 +15,11 @@ final Provider<RevisionRepository> revisionRepositoryProvider =
     });
 
 /// The discussions anchored on the manuscripts of a project.
+///
+/// Every discussion carries the excerpt it holds: the words the author
+/// commented.
 final revisionThreadsProvider =
-    FutureProvider.family<List<CommentThread>, String>((
+    FutureProvider.family<List<StoredThread>, String>((
       Ref ref,
       String projectId,
     ) async {
@@ -144,14 +147,59 @@ class RevisionController extends Notifier<RevisionState> {
     );
   }
 
+  /// Creates the discussion of a comment and writes it.
+  ///
+  /// The discussion is anchored on the mark [markId] — the mark that covers
+  /// the passage the author selected — and it holds the message of the
+  /// author, his account and the date of the writing. The excerpt holds the
+  /// words the author commented.
+  ///
+  /// An empty message is refused: a discussion never holds an empty message.
+  ///
+  /// Returns whether the discussion was written.
+  Future<bool> createThread({
+    required MarkId markId,
+    required String body,
+    required String excerpt,
+    required AuthorId author,
+  }) async {
+    if (!state.canAct) {
+      return false;
+    }
+    final String text = body.trim();
+    if (text.isEmpty) {
+      return false;
+    }
+    final CommentId threadId = CommentId(_ids.generate().value);
+    final CommentThread thread = CommentThread(
+      id: threadId,
+      markId: markId,
+      comments: <Comment>[
+        Comment(
+          id: CommentId(_ids.generate().value),
+          threadId: threadId,
+          author: author,
+          body: text,
+          createdAt: DateTime.now(),
+        ),
+      ],
+    );
+    return _write(thread, excerpt: _excerptOf(excerpt));
+  }
+
   /// Writes the discussion [thread] and keeps the state of the panel.
+  ///
+  /// The excerpt is written when the discussion is created: a reply or a
+  /// resolution leaves it untouched.
   ///
   /// Returns whether the discussion was written. The error is kept in the
   /// state: the panel shows it and the author may try again.
-  Future<bool> _write(CommentThread thread) async {
+  Future<bool> _write(CommentThread thread, {String excerpt = ''}) async {
     state = const RevisionState(isWriting: true);
     try {
-      await ref.read(revisionRepositoryProvider).saveThread(projectId, thread);
+      await ref
+          .read(revisionRepositoryProvider)
+          .saveThread(projectId, thread, excerpt: excerpt);
       ref.invalidate(revisionThreadsProvider(projectId));
       state = const RevisionState();
       return true;
@@ -159,6 +207,22 @@ class RevisionController extends Notifier<RevisionState> {
       state = RevisionState(error: error);
       return false;
     }
+  }
+
+  /// The excerpt of the discussion, cut to the length the server accepts.
+  ///
+  /// The cut never separates a surrogate pair: the excerpt stays a text the
+  /// server can read.
+  String _excerptOf(String excerpt) {
+    if (excerpt.length <= maxRevisionExcerptLength) {
+      return excerpt;
+    }
+    int end = maxRevisionExcerptLength;
+    final int last = excerpt.codeUnitAt(end - 1);
+    if (last >= 0xD800 && last <= 0xDBFF) {
+      end -= 1;
+    }
+    return excerpt.substring(0, end);
   }
 
   /// Forgets the error of the last action.

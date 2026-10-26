@@ -1,6 +1,42 @@
 import 'package:flutter/foundation.dart';
 import 'package:limpid_core/limpid_core.dart';
 
+/// The maximum length of the excerpt carried by a discussion.
+///
+/// The server keeps the same bound (see `maxCommentExcerptLength` of the
+/// API) : an excerpt longer than that would be refused by the API.
+const int maxRevisionExcerptLength = 1000;
+
+/// A discussion and the excerpt it carries.
+///
+/// The domain of `limpid_core` describes the discussion itself
+/// ([CommentThread]), but not the words it comments: the contract of the
+/// review carries them.
+@immutable
+class StoredThread {
+  /// Creates a stored discussion.
+  const StoredThread({required this.thread, this.excerpt = ''});
+
+  /// The discussion of the domain.
+  final CommentThread thread;
+
+  /// The words the author commented.
+  final String excerpt;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StoredThread &&
+          other.thread == thread &&
+          other.excerpt == excerpt);
+
+  @override
+  int get hashCode => Object.hash(thread, excerpt);
+
+  @override
+  String toString() => 'StoredThread(${thread.id}, ${excerpt.length} chars)';
+}
+
 /// A collaborator of a project and the role it holds inside it.
 ///
 /// The domain of `limpid_core` describes the roles ([ProjectRole]) and the
@@ -58,13 +94,21 @@ class ProjectMember {
 /// block by block, on the states of the blocks — never on two texts.
 abstract interface class RevisionRepository {
   /// The discussions of a project, oldest first.
-  Future<List<CommentThread>> loadThreads(String projectId);
+  ///
+  /// Every discussion carries the excerpt it holds: the words the author
+  /// commented when the discussion was created.
+  Future<List<StoredThread>> loadThreads(String projectId);
 
   /// Writes a discussion of a project.
   ///
-  /// Writing the same discussion twice is a no-op: the discussions are keyed
-  /// by their identifier.
-  Future<void> saveThread(String projectId, CommentThread thread);
+  /// The excerpt holds the words the author commented. Writing the same
+  /// discussion twice is a no-op: the discussions are keyed by their
+  /// identifier.
+  Future<void> saveThread(
+    String projectId,
+    CommentThread thread, {
+    String excerpt = '',
+  });
 
   /// The collaborators of a project, with the role they hold.
   Future<List<ProjectMember>> loadMembers(String projectId);
@@ -94,15 +138,15 @@ abstract interface class RevisionRepository {
 final class InMemoryRevisionRepository implements RevisionRepository {
   /// Creates the repository.
   InMemoryRevisionRepository({
-    Map<String, List<CommentThread>> threads =
-        const <String, List<CommentThread>>{},
+    Map<String, List<StoredThread>> threads =
+        const <String, List<StoredThread>>{},
     Map<String, List<ProjectMember>> members =
         const <String, List<ProjectMember>>{},
     Map<String, CrdtDocument> documents = const <String, CrdtDocument>{},
-  }) : _threads = <String, List<CommentThread>>{
-         for (final MapEntry<String, List<CommentThread>> entry
+  }) : _threads = <String, List<StoredThread>>{
+         for (final MapEntry<String, List<StoredThread>> entry
              in threads.entries)
-           entry.key: List<CommentThread>.of(entry.value),
+           entry.key: List<StoredThread>.of(entry.value),
        },
        _members = <String, List<ProjectMember>>{
          for (final MapEntry<String, List<ProjectMember>> entry
@@ -111,31 +155,38 @@ final class InMemoryRevisionRepository implements RevisionRepository {
        },
        _documents = Map<String, CrdtDocument>.of(documents);
 
-  final Map<String, List<CommentThread>> _threads;
+  final Map<String, List<StoredThread>> _threads;
   final Map<String, List<ProjectMember>> _members;
   final Map<String, CrdtDocument> _documents;
 
   @override
-  Future<List<CommentThread>> loadThreads(String projectId) async {
-    return List<CommentThread>.unmodifiable(
-      _threads[projectId] ?? const <CommentThread>[],
+  Future<List<StoredThread>> loadThreads(String projectId) async {
+    return List<StoredThread>.unmodifiable(
+      _threads[projectId] ?? const <StoredThread>[],
     );
   }
 
   @override
-  Future<void> saveThread(String projectId, CommentThread thread) async {
-    final List<CommentThread> threads = _threads.putIfAbsent(
+  Future<void> saveThread(
+    String projectId,
+    CommentThread thread, {
+    String excerpt = '',
+  }) async {
+    final List<StoredThread> threads = _threads.putIfAbsent(
       projectId,
-      () => <CommentThread>[],
+      () => <StoredThread>[],
     );
     final int index = threads.indexWhere(
-      (CommentThread current) => current.id == thread.id,
+      (StoredThread current) => current.thread.id == thread.id,
     );
     if (index < 0) {
-      threads.add(thread);
+      threads.add(StoredThread(thread: thread, excerpt: excerpt));
       return;
     }
-    threads[index] = thread;
+    threads[index] = StoredThread(
+      thread: thread,
+      excerpt: excerpt.isEmpty ? threads[index].excerpt : excerpt,
+    );
   }
 
   @override

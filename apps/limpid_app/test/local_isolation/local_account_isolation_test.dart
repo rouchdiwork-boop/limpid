@@ -125,6 +125,13 @@ void main() {
         await device.manuscripts.createProject(title: 'Les Heures de Cendre');
         await device.manuscripts.saveChapter(chapterOf());
         await device.manuscripts.saveScene(sceneOf());
+        await device.database.writingSessions.recordWriting(
+          day: DateTime.now(),
+          projectId: 'project-1',
+          words: 120,
+          minutes: 12,
+          accountId: SignedInAccount.firstAccount,
+        );
 
         expect(await device.preferences.writingStreak(), 1);
 
@@ -144,6 +151,13 @@ void main() {
         ),
       ]);
       await device.preferences.setDailyGoal(2500);
+      await device.database.writingSessions.recordWriting(
+        day: DateTime.now(),
+        projectId: 'project-1',
+        words: 120,
+        minutes: 12,
+        accountId: SignedInAccount.firstAccount,
+      );
 
       device.account.accountId = SignedInAccount.secondAccount;
       await device.preferences.setDailyGoal(900);
@@ -154,6 +168,7 @@ void main() {
       expect(await device.manuscripts.listProjects(), isEmpty);
       expect(await device.pendingOperations(), isEmpty);
       expect(await device.preferences.dailyGoal(), 1500);
+      expect(await device.preferences.writingStreak(), 0);
 
       device.account.accountId = SignedInAccount.secondAccount;
       expect(await device.preferences.dailyGoal(), 1500);

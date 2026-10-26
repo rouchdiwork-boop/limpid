@@ -5,7 +5,8 @@ import 'package:limpid_sync/limpid_sync.dart';
 ///
 /// The list follows `app_schema.dart`: the projects, the chapters, the
 /// scenes, the index of the synchronised documents, the cursors of the
-/// synchronisation, the preferences and the discussions of the review.
+/// synchronisation, the preferences, the discussions of the review and the
+/// writing sessions — the days on which the author wrote.
 const List<String> localAuthorTables = <String>[
   'comments',
   'comment_threads',
@@ -16,6 +17,7 @@ const List<String> localAuthorTables = <String>[
   'sync_cursors',
   'preferences',
   'project_members',
+  'writing_sessions',
 ];
 
 /// The tables of `limpid_sync` that hold the data of the author: the queue

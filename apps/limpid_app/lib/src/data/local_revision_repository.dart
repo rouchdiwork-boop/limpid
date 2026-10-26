@@ -31,12 +31,15 @@ final class LocalRevisionRepository implements RevisionRepository {
   final AccountSnapshotStore _snapshots;
 
   @override
-  Future<List<CommentThread>> loadThreads(String projectId) =>
+  Future<List<StoredThread>> loadThreads(String projectId) =>
       _store.listThreads(projectId);
 
   @override
-  Future<void> saveThread(String projectId, CommentThread thread) =>
-      _store.saveThread(projectId, thread);
+  Future<void> saveThread(
+    String projectId,
+    CommentThread thread, {
+    String excerpt = '',
+  }) => _store.saveThread(projectId, thread, excerpt: excerpt);
 
   @override
   Future<List<ProjectMember>> loadMembers(String projectId) async {

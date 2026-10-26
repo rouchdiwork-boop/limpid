@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/realtime.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
@@ -10,7 +11,9 @@ import 'package:limpid_app/src/editor/editor_controller.dart';
 import 'package:limpid_app/src/editor/editor_models.dart';
 import 'package:limpid_app/src/editor/editor_providers.dart';
 import 'package:limpid_app/src/editor/editor_statistics.dart';
+import 'package:limpid_app/src/editor/selection_ranges.dart';
 import 'package:limpid_app/src/features/actions/remote_runner.dart';
+import 'package:limpid_app/src/features/revision/comment_anchor.dart';
 import 'package:limpid_app/src/features/revision/presence_models.dart';
 import 'package:limpid_app/src/features/revision/presence_providers.dart';
 import 'package:limpid_app/src/features/revision/revision_anchors.dart';
@@ -24,6 +27,7 @@ import 'package:limpid_app/src/features/writing/widgets/writing_outline_panel.da
 import 'package:limpid_app/src/features/writing/widgets/writing_status_bar.dart';
 import 'package:limpid_app/src/features/writing/widgets/writing_toolbar.dart';
 import 'package:limpid_core/limpid_core.dart';
+import 'package:limpid_design_system/limpid_design_system.dart';
 import 'package:limpid_quill/limpid_quill.dart'
     show LimpidCommentAnchor, SceneBlock;
 
@@ -83,7 +87,7 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
     );
     final AsyncValue<SyncStatus> sync = ref.watch(syncStatusProvider);
     final AuthorId authorId = ref.watch(authorIdProvider);
-    final AsyncValue<List<CommentThread>> threads = ref.watch(
+    final AsyncValue<List<StoredThread>> threads = ref.watch(
       revisionThreadsProvider(widget.projectId),
     );
     final AsyncValue<List<ProjectMember>> members = ref.watch(
@@ -113,7 +117,7 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
 
     final List<RevisionThread> revisionThreads = _revisionThreadsOf(
       state: state,
-      threads: threads.value ?? const <CommentThread>[],
+      threads: threads.value ?? const <StoredThread>[],
       members: collaborators,
     );
     final List<LimpidCommentAnchor> anchors = editorAnchorsOf(revisionThreads);
@@ -224,6 +228,8 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
       onClearSelection: _clearSelection,
       onChanged: (List<SyncOp> operations) =>
           unawaited(controller.applyOperations(operations)),
+      onComment: (SelectedPassage passage, String body) =>
+          unawaited(_comment(passage, body)),
       remoteOperations: remoteOperations,
       onCursorMoved: _publishCursor,
     );
@@ -307,7 +313,7 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
   /// The discussions anchored on the manuscript being read.
   List<RevisionThread> _revisionThreadsOf({
     required WritingState state,
-    required List<CommentThread> threads,
+    required List<StoredThread> threads,
     required List<ProjectMember> members,
   }) {
     final CrdtDocument? document = state.document;
@@ -315,8 +321,91 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
       return const <RevisionThread>[];
     }
     return revisionThreadsOf(
-      anchors: revisionAnchorsOf(document: document, threads: threads),
+      anchors: revisionAnchorsOf(
+        document: document,
+        threads: <CommentThread>[
+          for (final StoredThread stored in threads) stored.thread,
+        ],
+      ),
       members: members,
+    );
+  }
+
+  /// Commente le passage que l'auteur a sélectionné.
+  ///
+  /// La marque part comme une écriture ordinaire : c'est une opération du
+  /// CRDT, et elle passe par le chemin de toute écriture. Le fil part
+  /// ensuite comme fil de discussion. Un échec est dit, et aucun fil
+  /// n'apparaît : une marque sans fil ne montre rien.
+  Future<void> _comment(SelectedPassage passage, String body) async {
+    final WritingState writing = ref.read(
+      writingControllerProvider(widget.projectId),
+    );
+    final OutlineScene? scene = writing.activeScene;
+    final CrdtDocument? document = writing.document;
+    if (scene == null || document == null) {
+      return;
+    }
+    final AuthorId author = ref.read(authorIdProvider);
+    final CommentAnchor anchor = CommentAnchor.of(
+      document: document,
+      documentId: scene.documentId,
+      author: author,
+      lamport: writing.lamport,
+      blockId: passage.blockId,
+      range: passage.range,
+      body: body,
+    );
+    if (!await _poseTheMark(anchor)) {
+      _showFailure();
+      return;
+    }
+    final bool written = await ref
+        .read(revisionControllerProvider(widget.projectId).notifier)
+        .createThread(
+          markId: anchor.markId,
+          body: body,
+          excerpt: passage.text,
+          author: author,
+        );
+    if (written) {
+      return;
+    }
+    if (_isRevisionVisible) {
+      // Le panneau de la relecture montre l'échec : il garde l'erreur
+      // jusqu'à ce qu'un lecteur la lise.
+      return;
+    }
+    _showFailure();
+    ref
+        .read(revisionControllerProvider(widget.projectId).notifier)
+        .clearError();
+  }
+
+  /// Pose la marque du commentaire et écrit l'opération.
+  ///
+  /// L'écriture passe par le chemin de toute écriture : l'opération part
+  /// du contrôleur de l'écriture, qui l'écrit dans le dépôt du manuscrit.
+  Future<bool> _poseTheMark(CommentAnchor anchor) async {
+    await ref
+        .read(writingControllerProvider(widget.projectId).notifier)
+        .applyOperations(<SyncOp>[anchor.operation]);
+    final WritingState writing = ref.read(
+      writingControllerProvider(widget.projectId),
+    );
+    return writing.saveError == null;
+  }
+
+  /// Dit à l'auteur que l'action a échoué.
+  void _showFailure() {
+    if (!mounted) {
+      return;
+    }
+    final AppLocalizations strings = AppLocalizations.of(context);
+    LimpidSnackbar.show(
+      context,
+      message: strings.revisionActionFailed,
+      variant: LimpidStatusVariant.danger,
     );
   }
 

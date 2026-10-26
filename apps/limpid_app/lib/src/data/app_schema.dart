@@ -57,6 +57,17 @@
 /// `search_index_state` records what the index already holds for each
 /// document, so that a search never reads a document that did not move.
 ///
+/// ## Where the writing sessions live
+///
+/// The table `writing_sessions` records what the author **wrote**, day by
+/// day: the words added and the minutes of writing. It is **local**: the
+/// sessions belong to the device and never reach the server — the criterion
+/// asks for statistics that work offline.
+///
+/// The series of the writing days and the history of the writing are read
+/// from this table, never from the date the scenes were modified: a book
+/// that is re-read today was not written today.
+///
 /// ## The account of the rows
 ///
 /// The local database is unique per device and outlives the session: two
@@ -233,6 +244,27 @@ CREATE TABLE IF NOT EXISTS search_index_state (
   snapshot_lamport INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (account_id, document_id)
 )''',
+  // Les seances d'ecriture : ce que l'auteur a ecrit, jour par jour.
+  //
+  // La table est **locale** : elle appartient a l'appareil et ne part
+  // jamais sur le reseau. La serie de jours et l'historique d'ecriture se
+  // comptent sur elle, jamais sur la date de modification des scenes :
+  // relire un livre n'est pas ecrire, et le compteur de mots d'un chapitre
+  // ecrit il y a trois semaines n'appartient pas a aujourd'hui.
+  //
+  // La colonne `project_id` vaut '' pour le total de l'auteur : une ligne
+  // par livre, et une ligne qui porte le total du jour.
+  '''
+CREATE TABLE IF NOT EXISTS writing_sessions (
+  account_id TEXT NOT NULL,
+  day TEXT NOT NULL,
+  project_id TEXT NOT NULL DEFAULT '',
+  words INTEGER NOT NULL DEFAULT 0,
+  minutes INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (account_id, day, project_id)
+)''',
+  'CREATE INDEX IF NOT EXISTS writing_sessions_day '
+      'ON writing_sessions (account_id, day)',
 ];
 
 /// The move of a database created before the account scope.

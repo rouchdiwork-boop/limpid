@@ -6,6 +6,13 @@ import 'package:limpid_app/src/domain/repositories.dart';
 /// A preference must never break the interface: every read falls back on a
 /// safe value and every write is best effort.
 ///
+/// ## The series of the writing days
+///
+/// The series of the writing days is read from the **sessions** of the
+/// writing — the table that records what the author wrote, day by day.
+/// It is never read from the date the scenes were modified: a book that is
+/// re-read today was not written today.
+///
 /// ## The account of the preferences
 ///
 /// The local database is shared by every account of the device: the
@@ -69,9 +76,8 @@ final class LocalPreferencesRepository implements PreferencesRepository {
   @override
   Future<int> writingStreak() async {
     try {
-      final List<DateTime> days = await database.manuscripts.listWritingDays(
-        accountId: _accountId(),
-      );
+      final List<DateTime> days = await database.writingSessions
+          .listWritingDays(accountId: _accountId());
       return _streak(days, _now());
     } on Object {
       return 0;
@@ -79,6 +85,11 @@ final class LocalPreferencesRepository implements PreferencesRepository {
   }
 
   /// Counts the consecutive days on which the author wrote.
+  ///
+  /// The days come from the **sessions** of the writing: a day counts when
+  /// the author wrote on it, never when they touched a book. Re-reading a
+  /// chapter written three weeks ago does not break the series, and does
+  /// not start one either.
   ///
   /// The series survives a day that is not over yet: when nothing was
   /// written today, the series of yesterday still counts. A whole day

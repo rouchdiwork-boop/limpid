@@ -9,12 +9,13 @@ import '../../support/hierarchy_stub.dart';
 /// it: the figures of the interface are computed from them, exactly as they
 /// are computed from the local database.
 final class FakeManuscriptRepository extends StubHierarchyRepository
-    implements ManuscriptRepository {
+    implements ManuscriptRepository, WritingSessionRepository {
   /// Creates the repository with the manuscripts the author already owns.
   FakeManuscriptRepository({
     List<Project> projects = const <Project>[],
     Map<String, List<Chapter>> chapters = const <String, List<Chapter>>{},
     Map<String, List<Scene>> scenes = const <String, List<Scene>>{},
+    List<WritingSession> sessions = const <WritingSession>[],
   }) : _projects = List<Project>.of(projects),
        _chapters = <String, List<Chapter>>{
          for (final MapEntry<String, List<Chapter>> entry in chapters.entries)
@@ -23,11 +24,50 @@ final class FakeManuscriptRepository extends StubHierarchyRepository
        _scenes = <String, List<Scene>>{
          for (final MapEntry<String, List<Scene>> entry in scenes.entries)
            entry.key: List<Scene>.of(entry.value),
-       };
+       },
+       _sessions = List<WritingSession>.of(sessions);
 
   final List<Project> _projects;
   final Map<String, List<Chapter>> _chapters;
   final Map<String, List<Scene>> _scenes;
+  final List<WritingSession> _sessions;
+
+  /// The writing the author recorded, in the order the editor sent it.
+  final List<({String projectId, int words, int minutes})> recordedWriting =
+      <({String projectId, int words, int minutes})>[];
+
+  @override
+  Future<void> recordWriting({
+    required String projectId,
+    required int words,
+    required int minutes,
+  }) async {
+    recordedWriting.add((projectId: projectId, words: words, minutes: minutes));
+  }
+
+  @override
+  Future<List<WritingSession>> writingSessions({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final DateTime first = DateTime(from.year, from.month, from.day);
+    final DateTime last = DateTime(to.year, to.month, to.day);
+    final List<WritingSession> found = _sessions.where((
+      WritingSession session,
+    ) {
+      final DateTime day = DateTime(
+        session.day.year,
+        session.day.month,
+        session.day.day,
+      );
+      return !day.isBefore(first) && !day.isAfter(last);
+    }).toList();
+    found.sort(
+      (WritingSession left, WritingSession right) =>
+          right.day.compareTo(left.day),
+    );
+    return List<WritingSession>.unmodifiable(found);
+  }
 
   /// The error the repository throws when the library is read.
   Object? error;

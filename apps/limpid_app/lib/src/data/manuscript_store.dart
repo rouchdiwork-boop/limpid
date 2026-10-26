@@ -631,33 +631,6 @@ ON CONFLICT(account_id, key) DO UPDATE SET value = excluded.value''',
     );
   }
 
-  /// The moments on which the author wrote something.
-  ///
-  /// A scene counts when it holds words. When the word count was never
-  /// computed, a scene that carries a title or a synopsis counts instead,
-  /// so the series stays meaningful on a manuscript whose statistics were
-  /// not filled in yet.
-  ///
-  /// The series belongs to the account of [accountId]: the days of writing
-  /// of an author never reach the dashboard of another. The scenes are
-  /// counted through the index of the documents, which is the table that
-  /// names the account a document belongs to.
-  Future<List<DateTime>> listWritingDays({String? accountId}) async {
-    final List<Map<String, Object?>> rows = await _select(
-      'SELECT s.updated_at FROM scenes s '
-      'JOIN document_index d ON d.document_id = s.document_id '
-      'WHERE d.account_id = ? AND s.updated_at IS NOT NULL AND '
-      "(s.word_count > 0 OR (s.word_count = 0 AND (s.title <> '' "
-      "OR s.synopsis <> '')))",
-      <Object?>[accountId ?? _account.accountId],
-    );
-    return List<DateTime>.unmodifiable(
-      rows
-          .map((Map<String, Object?> row) => _date(row, 'updated_at'))
-          .whereType<DateTime>(),
-    );
-  }
-
   /// Removes a project, its series, its volumes, its chapters, its scenes
   /// and its documents.
   ///

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/domain/providers.dart';
+import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_screen.dart';
 import 'package:limpid_app/src/features/projects/projects_providers.dart';
 import 'package:limpid_core/limpid_core.dart';
@@ -64,6 +65,14 @@ void main() {
           fakeScene(id: 's3', chapterId: 'c1', wordCount: 0),
         ],
       },
+      sessions: <WritingSession>[
+        WritingSession(day: today, words: 100, minutes: 9),
+        WritingSession(
+          day: today.subtract(const Duration(days: 1)),
+          words: 250,
+          minutes: 21,
+        ),
+      ],
     );
   }
 
@@ -137,6 +146,24 @@ void main() {
 
     expect(find.text(strings.dashboardStreak), findsOneWidget);
     expect(find.text('12'), findsOneWidget);
+  });
+
+  testWidgets('the dashboard shows the history of the writing', (tester) async {
+    useSurface(tester, const Size(1440, 1100));
+    await tester.pumpWidget(
+      harness(child: const DashboardScreen(), manuscripts: library()),
+    );
+    await tester.pumpAndSettle();
+
+    final AppLocalizations strings = AppLocalizations.of(
+      tester.element(find.byType(DashboardScreen)),
+    );
+
+    // L'historique montre les mots de chaque jour : le jour de l'auteur et
+    // celui de la veille.
+    expect(find.text(strings.historyTitle), findsOneWidget);
+    expect(find.text(strings.libraryWords('100')), findsOneWidget);
+    expect(find.text(strings.libraryWords('250')), findsOneWidget);
   });
 
   testWidgets('the dashboard shows the failure state when the library fails', (

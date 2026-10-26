@@ -120,6 +120,8 @@
   "dashboardResumeAction": "Resume",
   "dashboardSeePlan": "See the outline",
   "dashboardActivityTitle": "Writing activity",
+  "dashboardHistoryTitle": "Writing history",
+  "dashboardHistoryEmpty": "No writing day yet.",
   "dashboardGoalTitle": "Today's goal",
   "dashboardTodoTitle": "To do",
   "dashboardTodoEmpty": "Nothing to do. Good time to write.",
@@ -323,6 +325,9 @@
   "revisionResolved": "Resolved",
   "revisionEmptyMessage": "No comment yet.",
   "revisionMembers": "Collaborators",
+  "revisionComment": "Comment",
+  "revisionCommentTitle": "New comment",
+  "revisionCommentHint": "Your comment",
   "editorAiTitle": "Assistant",
   "editorAiPlaceholder": "Ask, rewrite, summarise…",
   "editorAiSend": "Send",
@@ -340,6 +345,15 @@
   "exportReady": "Your export is ready",
   "exportFailed": "The export failed",
   "exportDownload": "Download",
+  "exportExpiresAt": "The link expires on {date}",
+  "@exportExpiresAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "exportDownloaded": "The book has been downloaded.",
   "exportFormatEpub": "EPUB",
   "exportFormatPdf": "PDF",
   "exportFormatDocx": "DOCX",

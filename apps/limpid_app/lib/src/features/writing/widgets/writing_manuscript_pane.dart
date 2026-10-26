@@ -1,25 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/editor/editor_models.dart';
+import 'package:limpid_app/src/editor/selection_ranges.dart';
+import 'package:limpid_app/src/features/writing/widgets/writing_comment_dialog.dart';
 import 'package:limpid_app/src/features/writing/widgets/writing_selected_passage.dart';
+import 'package:limpid_app/src/features/writing/widgets/writing_selection_bar.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 import 'package:limpid_quill/limpid_quill.dart';
 
-/// The letter spacing of the scene label, in logical pixels.
+/// L'espacement des lettres de l'étiquette de la scène, en pixels logiques.
 const double _letterSpacing = 0.8;
 
-/// The action of the pane when there is nothing to close.
+/// L'action de la bande quand il n'y a rien à fermer.
 void _closeNothing() {}
 
-/// The manuscript of a project: the scene being written.
+/// Le manuscrit d'un projet : la scène en cours d'écriture.
 ///
-/// The pane hosts the editor of `limpid_quill`: the text lives in the editor,
-/// the operations it produces are handed over to the controller, which writes
-/// them through the repository. The comments anchored on the manuscript are
-/// handed over as well: the editor marks the passages they cover, and the
-/// selected one is shown in relief above the text.
-class WritingManuscriptPane extends StatelessWidget {
-  /// Creates the manuscript pane.
+/// La bande héberge l'éditeur de `limpid_quill` : le texte vit dans l'éditeur,
+/// les opérations qu'il produit sont remises au contrôleur, qui les écrit
+/// par le dépôt. Les commentaires ancrés sur le manuscrit lui sont remis
+/// aussi : l'éditeur marque les passages qu'ils couvrent, et celui qui est
+/// sélectionné est montré en relief au-dessus du texte.
+///
+/// Le bande tient aussi le **contrôleur de l'éditeur** : c'est lui qui sait
+/// quel passage l'auteur a sélectionné, et c'est par lui que la sélection
+/// est ramenée au bloc qu'elle appartient.
+class WritingManuscriptPane extends StatefulWidget {
+  /// Crée la bande du manuscrit.
   const WritingManuscriptPane({
     required this.scene,
     required this.authorId,
@@ -28,6 +35,7 @@ class WritingManuscriptPane extends StatelessWidget {
     required this.lamport,
     required this.isReadMode,
     required this.onChanged,
+    required this.onComment,
     this.commentAnchors = const <LimpidCommentAnchor>[],
     this.selectedAnchor,
     this.onSelectAnchor,
@@ -37,61 +45,164 @@ class WritingManuscriptPane extends StatelessWidget {
     super.key,
   });
 
-  /// The scene being written, `null` when no scene is opened.
+  /// La scène en cours d'écriture, `null` quand aucune scène n'est ouverte.
   final OutlineScene? scene;
 
-  /// The author stamping the operations.
+  /// L'auteur qui estampille les opérations.
   final AuthorId authorId;
 
-  /// The CRDT blocks backing the lines of the scene.
+  /// Les blocs CRDT qui portent les lignes de la scène.
   final List<SceneBlock> blocks;
 
-  /// Whether the document of the scene is still being read.
+  /// Le document de la scène est-il encore en lecture ?
   ///
-  /// The editor takes the state of the document **once**, when it is built.
-  /// Building it before the document arrives would show an empty manuscript
-  /// that never fills up: the pane waits instead.
+  /// L'éditeur prend l'état du document **une fois**, quand il est
+  /// construit. Le construire avant l'arrivée du document montrerait un
+  /// manuscrit vide qui ne se remplirait jamais : la bande attend donc.
   final bool isDocumentLoading;
 
-  /// The Lamport timestamp of the last operation applied locally.
+  /// Le timestamp Lamport de la dernière opération appliquée localement.
   final int lamport;
 
-  /// Whether the manuscript is displayed instead of being edited.
+  /// Le manuscrit est-il affiché au lieu d'être édité ?
   final bool isReadMode;
 
-  /// Called with the operations every change produced.
+  /// Appelé avec les opérations que chaque changement a produites.
   final ValueChanged<List<SyncOp>> onChanged;
 
-  /// The comments anchored on the manuscript.
+  /// Appelé quand l'auteur commente le passage qu'il a sélectionné.
+  ///
+  /// Le rappel reçoit le passage — le bloc, sa plage et les mots commentés —
+  /// et le message de l'auteur.
+  final void Function(SelectedPassage passage, String body) onComment;
+
+  /// Les commentaires ancrés sur le manuscrit.
   final List<LimpidCommentAnchor> commentAnchors;
 
-  /// The anchor the author selected, `null` when nothing is selected.
+  /// L'ancre sélectionnée, `null` quand rien n'est sélectionné.
   final LimpidCommentAnchor? selectedAnchor;
 
-  /// Called when the author selects the range of a comment.
+  /// Appelé quand l'auteur sélectionne la plage d'un commentaire.
   final ValueChanged<LimpidCommentAnchor>? onSelectAnchor;
 
-  /// Called when the author closes the selected passage.
+  /// Appelé quand l'auteur ferme le passage sélectionné.
   final VoidCallback? onClearSelection;
 
-  /// Called when the caret of the author moved.
+  /// Appelé quand le curseur de l'auteur a bougé.
   ///
-  /// The callback receives the block the caret stands in and the offset of
-  /// the caret inside that block: the presence of the relay announces it to
-  /// the other authors.
+  /// Le rappel reçoit le bloc où se trouve le curseur et le décalage du
+  /// curseur dans ce bloc : la présence du relais l'annonce aux autres
+  /// auteurs.
   final void Function(String blockId, int offset)? onCursorMoved;
 
-  /// The operations another author produced.
+  /// Les opérations qu'un autre auteur a produites.
   ///
-  /// The editor applies them to the manuscript it shows: the text of the
-  /// other author appears without the author losing the caret.
+  /// L'éditeur les applique au manuscrit qu'il montre : le texte de l'autre
+  /// auteur apparaît sans que l'auteur perde son curseur.
   final List<SyncOp> remoteOperations;
+
+  @override
+  State<WritingManuscriptPane> createState() => _WritingManuscriptPaneState();
+}
+
+/// L'état de la bande du manuscrit.
+class _WritingManuscriptPaneState extends State<WritingManuscriptPane> {
+  /// Le contrôleur de l'éditeur : il porte le texte de la scène et la
+  /// sélection de l'auteur.
+  late final LimpidManuscriptController _manuscript;
+
+  /// La clé du texte que le contrôleur porte : elle change quand le
+  /// manuscrit est (re)chargé.
+  late String _loadedKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _manuscript = LimpidManuscriptController.ofBlocks(
+      widget.blocks,
+      onChange: _onSelectionChanged,
+    );
+    _loadedKey = _editorKey();
+  }
+
+  @override
+  void didUpdateWidget(WritingManuscriptPane oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadTheText();
+  }
+
+  @override
+  void dispose() {
+    _manuscript.dispose();
+    super.dispose();
+  }
+
+  /// Charge le texte de la scène quand l'éditeur va être construit.
+  ///
+  /// L'éditeur prend l'état du document **une fois**, quand il est
+  /// construit : le contrôleur doit donc porter exactement le même texte.
+  void _loadTheText() {
+    final String key = _editorKey();
+    if (key == _loadedKey) {
+      return;
+    }
+    _loadedKey = key;
+    _manuscript.load(widget.blocks);
+  }
+
+  /// La clé de l'éditeur de la scène.
+  ///
+  /// Elle change quand le texte de la scène arrive : l'éditeur est alors
+  /// construit, et il prend le texte que le contrôleur porte.
+  String _editorKey() {
+    final OutlineScene? scene = widget.scene;
+    if (scene == null) {
+      return 'scene-';
+    }
+    final String state = widget.isDocumentLoading ? 'loading' : 'ready';
+    return 'scene-${scene.id.value}-$state';
+  }
+
+  /// Annonce la sélection de l'auteur : la bande propose de commenter le
+  /// passage qu'il a choisi.
+  void _onSelectionChanged(LimpidEditorSelection selection) {
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
+  }
+
+  /// Le passage que l'auteur a sélectionné, `null` quand il n'a rien
+  /// sélectionné ou quand sa sélection traverse deux blocs.
+  SelectedPassage? _selectedPassage() {
+    final LimpidEditorSelection selection = _manuscript.selection;
+    if (selection.isEmpty) {
+      return null;
+    }
+    return selectedPassageOf(
+      blocks: widget.blocks,
+      start: selection.start,
+      end: selection.end,
+    );
+  }
+
+  /// Demande le message du commentaire et le remet à l'écran.
+  Future<void> _comment(SelectedPassage passage) async {
+    final String? body = await showCommentComposer(
+      context,
+      excerpt: passage.text,
+    );
+    if (body == null || body.trim().isEmpty || !mounted) {
+      return;
+    }
+    widget.onComment(passage, body.trim());
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations strings = AppLocalizations.of(context);
     final LimpidThemeScope scope = context.limpid;
-    final OutlineScene? current = scene;
+    final OutlineScene? current = widget.scene;
 
     if (current == null) {
       return ColoredBox(
@@ -104,6 +215,7 @@ class WritingManuscriptPane extends StatelessWidget {
     }
 
     final String? excerpt = _excerptOfSelectedAnchor();
+    final SelectedPassage? passage = _selectedPassage();
 
     return ColoredBox(
       color: scope.colors.bgCanvas,
@@ -142,32 +254,38 @@ class WritingManuscriptPane extends StatelessWidget {
               ],
             ),
           ),
-          if (selectedAnchor != null && excerpt != null)
+          if (widget.selectedAnchor != null && excerpt != null)
             WritingSelectedPassage(
-              anchor: selectedAnchor!,
+              anchor: widget.selectedAnchor!,
               excerpt: excerpt,
-              onClose: onClearSelection ?? _closeNothing,
+              onClose: widget.onClearSelection ?? _closeNothing,
+            ),
+          if (passage != null)
+            WritingSelectionBar(
+              excerpt: passage.text,
+              onComment: () => _comment(passage),
             ),
           Expanded(
-            child: isDocumentLoading
+            child: widget.isDocumentLoading
                 ? const Center(child: LimpidSpinner())
                 : LimpidSceneEditor(
-                    key: ValueKey<String>('scene-${current.id.value}'),
+                    key: ValueKey<String>(_editorKey()),
                     sceneId: current.id,
-                    authorId: authorId,
+                    authorId: widget.authorId,
                     documentId: current.documentId,
-                    initialBlocks: blocks,
-                    readOnly: isReadMode,
-                    mode: isReadMode
+                    controller: _manuscript.quill,
+                    initialBlocks: widget.blocks,
+                    readOnly: widget.isReadMode,
+                    mode: widget.isReadMode
                         ? LimpidSceneEditorMode.readOnly
                         : LimpidSceneEditorMode.writing,
-                    lamport: lamport,
-                    commentAnchors: commentAnchors,
-                    onSelectCommentRange: onSelectAnchor,
+                    lamport: widget.lamport,
+                    commentAnchors: widget.commentAnchors,
+                    onSelectCommentRange: widget.onSelectAnchor,
                     onCursorMoved: _announceCursor,
-                    remoteOperations: remoteOperations,
+                    remoteOperations: widget.remoteOperations,
                     dragHandleLabel: strings.hierarchyMoveBlock,
-                    onChanged: onChanged,
+                    onChanged: widget.onChanged,
                   ),
           ),
         ],
@@ -175,25 +293,29 @@ class WritingManuscriptPane extends StatelessWidget {
     );
   }
 
-  /// Announces the position of the caret of the author.
+  /// Annonce la position du curseur de l'auteur.
   ///
-  /// The offset the editor gives is the position in the document of the
-  /// editor; the blocks of the scene know where each paragraph stands.
+  /// Le décalage que l'éditeur donne est la position dans le document de
+  /// l'éditeur ; les blocs de la scène savent où se trouve chaque
+  /// paragraphe.
   void _announceCursor(int offset) {
-    final void Function(String blockId, int offset)? callback = onCursorMoved;
+    final void Function(String blockId, int offset)? callback =
+        widget.onCursorMoved;
     if (callback == null) return;
     final (int index, int inside)? position = _positionOf(offset);
     if (position == null) return;
     final (int blockIndex, int blockOffset) = position;
+    final List<SceneBlock> blocks = widget.blocks;
     if (blockIndex < 0 || blockIndex >= blocks.length) return;
     callback(blocks[blockIndex].id.value, blockOffset);
   }
 
-  /// The block holding the caret at [offset], and the offset inside it.
+  /// Le bloc qui porte le curseur à [offset], et le décalage dans ce bloc.
   ///
-  /// The editor lays the blocks out one after the other, each of them
-  /// followed by its newline.
+  /// L'éditeur pose les blocs les uns après les autres, chacun suivi de sa
+  /// nouvelle ligne.
   (int, int)? _positionOf(int offset) {
+    final List<SceneBlock> blocks = widget.blocks;
     if (blocks.isEmpty) return null;
     int start = 0;
     for (int index = 0; index < blocks.length; index++) {
@@ -205,9 +327,9 @@ class WritingManuscriptPane extends StatelessWidget {
     return (last, blocks[last].plainText.length);
   }
 
-  /// The text covered by the selected anchor, in the text of the scene.
+  /// Le texte couvert par l'ancre sélectionnée, dans le texte de la scène.
   String? _excerptOfSelectedAnchor() {
-    final LimpidCommentAnchor? anchor = selectedAnchor;
+    final LimpidCommentAnchor? anchor = widget.selectedAnchor;
     if (anchor == null) {
       return null;
     }
@@ -220,10 +342,10 @@ class WritingManuscriptPane extends StatelessWidget {
     return text.substring(range.start, end);
   }
 
-  /// The text of the scene, laid out as the editor lays it out.
+  /// Le texte de la scène, posé comme l'éditeur le pose.
   String _sceneTextOf() {
     final StringBuffer buffer = StringBuffer();
-    for (final SceneBlock block in blocks) {
+    for (final SceneBlock block in widget.blocks) {
       buffer.write(block.plainText);
       buffer.write('\n');
     }

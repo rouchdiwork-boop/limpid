@@ -37,20 +37,59 @@ void main() {
       );
 
       await repository.saveThread('project-1', thread);
-      final List<CommentThread> threads = await repository.loadThreads(
+      final List<StoredThread> threads = await repository.loadThreads(
         'project-1',
       );
 
       expect(threads, hasLength(1));
-      expect(threads.single.id, const CommentId('thread-1'));
-      expect(threads.single.markId, const MarkId('mark-1'));
-      expect(threads.single.isResolved, isFalse);
-      expect(threads.single.comments, hasLength(1));
+      expect(threads.single.thread.id, const CommentId('thread-1'));
+      expect(threads.single.thread.markId, const MarkId('mark-1'));
+      expect(threads.single.thread.isResolved, isFalse);
+      expect(threads.single.thread.comments, hasLength(1));
       expect(
-        threads.single.comments.single.body,
+        threads.single.thread.comments.single.body,
         'La falaise rend bien la scène.',
       );
-      expect(threads.single.comments.single.author, const AuthorId('user-1'));
+      expect(
+        threads.single.thread.comments.single.author,
+        const AuthorId('user-1'),
+      );
+    });
+
+    test('écrit les mots commentés et les relit', () async {
+      await repository.saveThread(
+        'project-1',
+        threadOf(id: 'thread-1'),
+        excerpt: 'Le sel qui vient des murs',
+      );
+
+      final List<StoredThread> threads = await repository.loadThreads(
+        'project-1',
+      );
+
+      expect(threads.single.excerpt, 'Le sel qui vient des murs');
+    });
+
+    test('garde les mots commentés quand le fil reçoit une réponse', () async {
+      await repository.saveThread(
+        'project-1',
+        threadOf(id: 'thread-1'),
+        excerpt: 'Le sel qui vient des murs',
+      );
+      await repository.saveThread(
+        'project-1',
+        threadOf(
+          id: 'thread-1',
+          comments: <Comment>[commentOf(id: 'comment-1')],
+        ),
+      );
+
+      final List<StoredThread> threads = await repository.loadThreads(
+        'project-1',
+      );
+
+      expect(threads.single.excerpt, 'Le sel qui vient des murs');
+      expect(threads.single.thread.comments, hasLength(1));
     });
 
     test('met à jour un fil déjà écrit', () async {
@@ -69,19 +108,19 @@ void main() {
         ),
       );
 
-      final List<CommentThread> threads = await repository.loadThreads(
+      final List<StoredThread> threads = await repository.loadThreads(
         'project-1',
       );
 
       expect(threads, hasLength(1));
-      expect(threads.single.isResolved, isTrue);
+      expect(threads.single.thread.isResolved, isTrue);
       expect(
-        threads.single.resolvedAt?.isAtSameMomentAs(
+        threads.single.thread.resolvedAt?.isAtSameMomentAs(
           DateTime.utc(2026, 10, 25, 9, 12),
         ),
         isTrue,
       );
-      expect(threads.single.comments, hasLength(2));
+      expect(threads.single.thread.comments, hasLength(2));
     });
 
     test('retire les messages qui ont quitté le fil', () async {
@@ -104,18 +143,21 @@ void main() {
         ),
       );
 
-      final List<CommentThread> threads = await repository.loadThreads(
+      final List<StoredThread> threads = await repository.loadThreads(
         'project-1',
       );
 
-      expect(threads.single.comments, hasLength(1));
-      expect(threads.single.comments.single.id, const CommentId('comment-1'));
+      expect(threads.single.thread.comments, hasLength(1));
+      expect(
+        threads.single.thread.comments.single.id,
+        const CommentId('comment-1'),
+      );
     });
 
     test('ne rend aucun fil pour un projet inconnu', () async {
       await repository.saveThread('project-1', threadOf(id: 'thread-1'));
 
-      final List<CommentThread> threads = await repository.loadThreads(
+      final List<StoredThread> threads = await repository.loadThreads(
         'project-inconnu',
       );
 
@@ -146,20 +188,23 @@ void main() {
         ),
       );
 
-      final List<CommentThread> threads = await repository.loadThreads(
+      final List<StoredThread> threads = await repository.loadThreads(
         'project-1',
       );
 
-      expect(threads.single.comments, hasLength(2));
+      expect(threads.single.thread.comments, hasLength(2));
       expect(
-        threads.single.comments.first.body,
+        threads.single.thread.comments.first.body,
         'La falaise rend bien la scène.',
       );
       expect(
-        threads.single.comments.last.body,
+        threads.single.thread.comments.last.body,
         'Oui, le sel vient de la falaise.',
       );
-      expect(threads.single.comments.last.author, const AuthorId('user-1'));
+      expect(
+        threads.single.thread.comments.last.author,
+        const AuthorId('user-1'),
+      );
     });
 
     test('relit la réouverture d’un fil après rechargement', () async {
@@ -177,12 +222,12 @@ void main() {
         threadOf(id: 'thread-1', isResolved: false),
       );
 
-      final List<CommentThread> threads = await repository.loadThreads(
+      final List<StoredThread> threads = await repository.loadThreads(
         'project-1',
       );
 
-      expect(threads.single.isResolved, isFalse);
-      expect(threads.single.resolvedAt, isNull);
+      expect(threads.single.thread.isResolved, isFalse);
+      expect(threads.single.thread.resolvedAt, isNull);
     });
 
     test('relit la résolution d’un fil après rechargement', () async {
@@ -195,13 +240,13 @@ void main() {
         ),
       );
 
-      final List<CommentThread> threads = await repository.loadThreads(
+      final List<StoredThread> threads = await repository.loadThreads(
         'project-1',
       );
 
-      expect(threads.single.isResolved, isTrue);
+      expect(threads.single.thread.isResolved, isTrue);
       expect(
-        threads.single.resolvedAt?.isAtSameMomentAs(
+        threads.single.thread.resolvedAt?.isAtSameMomentAs(
           DateTime.utc(2026, 10, 25, 9, 12),
         ),
         isTrue,
@@ -215,7 +260,7 @@ void main() {
       expect(await repository.loadThreads('project-1'), hasLength(1));
       expect(await repository.loadThreads('project-2'), hasLength(1));
       expect(
-        (await repository.loadThreads('project-1')).single.id,
+        (await repository.loadThreads('project-1')).single.thread.id,
         const CommentId('thread-1'),
       );
     });
@@ -249,13 +294,13 @@ void main() {
 
       opened = await openFileDatabase(file);
       stored = LocalRevisionRepository(database: opened);
-      final List<CommentThread> threads = await stored.loadThreads('project-1');
+      final List<StoredThread> threads = await stored.loadThreads('project-1');
 
       expect(threads, hasLength(1));
-      expect(threads.single.id, const CommentId('thread-1'));
-      expect(threads.single.comments, hasLength(1));
+      expect(threads.single.thread.id, const CommentId('thread-1'));
+      expect(threads.single.thread.comments, hasLength(1));
       expect(
-        threads.single.comments.single.body,
+        threads.single.thread.comments.single.body,
         'La falaise rend bien la scène.',
       );
       await opened.close();

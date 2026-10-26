@@ -8,6 +8,7 @@ import 'package:limpid_app/src/data/local_account_scope.dart';
 import 'package:limpid_app/src/data/local_data_wiper.dart';
 import 'package:limpid_app/src/data/manuscript_store.dart';
 import 'package:limpid_app/src/data/project_membership_store.dart';
+import 'package:limpid_app/src/data/writing_session_store.dart';
 import 'package:limpid_app/src/domain/errors.dart';
 import 'package:limpid_sync/limpid_sync.dart';
 
@@ -75,6 +76,15 @@ final class AppDatabase {
 
   /// The state the interface displays.
   late final ManuscriptStore manuscripts = ManuscriptStore(sync, account);
+
+  /// The writing sessions of the author: the days on which they wrote.
+  ///
+  /// The store is **local**: the sessions belong to the device and never
+  /// reach the server.
+  late final WritingSessionStore writingSessions = WritingSessionStore(
+    sync,
+    account,
+  );
 
   /// The durable queue of the operations waiting to be sent.
   ///

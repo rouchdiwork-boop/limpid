@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/app/router.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_activity.dart';
+import 'package:limpid_app/src/features/dashboard/dashboard_history.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_manuscript.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_panels.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_providers.dart';
@@ -153,10 +154,11 @@ class _DashboardContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final LimpidThemeScope scope = context.limpid;
     final ProjectSummary? current = ref.watch(currentProjectProvider);
-    final int written = ref.watch(wordsWrittenTodayProvider);
+    final int written = ref.watch(wordsWrittenTodayProvider).value ?? 0;
     final int goal = ref.watch(dailyGoalProvider).value ?? regularDailyWordGoal;
     final int streak = ref.watch(streakProvider).value ?? 0;
-    final int weeklyWords = ref.watch(writingActivityProvider).weeklyWords;
+    final int weeklyWords =
+        ref.watch(writingActivityProvider).value?.weeklyWords ?? 0;
     final String authorName = ref.watch(authorNameProvider);
 
     return Column(
@@ -180,6 +182,8 @@ class _DashboardContent extends ConsumerWidget {
                   DashboardManuscript(project: current, authorName: authorName),
                 SizedBox(height: scope.spacing.space20),
                 const DashboardActivity(),
+                SizedBox(height: scope.spacing.space20),
+                const DashboardHistory(),
               ],
             );
             final Widget side = Column(

@@ -1,6 +1,6 @@
-import 'dart:typed_data';
-
 import 'package:limpid_core/limpid_core.dart';
+
+export 'export_repository.dart';
 
 /// The state of the synchronisation, as the interface shows it.
 ///
@@ -274,43 +274,6 @@ abstract interface class SyncRepository {
   Future<void> synchronize();
 }
 
-/// The file produced by an export.
-final class ExportArtefact {
-  /// Creates an artefact.
-  const ExportArtefact({
-    required this.fileName,
-    required this.mimeType,
-    required this.bytes,
-  });
-
-  /// The recommended name of the file, extension included.
-  final String fileName;
-
-  /// The media type of the file.
-  final String mimeType;
-
-  /// The content of the file.
-  final Uint8List bytes;
-}
-
-/// The exports of a manuscript.
-///
-/// The generation happens on the server: `POST /v1/export/<format>` builds the
-/// book, writes the artefact in the object storage and **returns the file
-/// itself**. There is no job to follow — the export of a manuscript is fast
-/// enough to be synchronous, and a job would only add a round trip and a
-/// state to lose.
-abstract interface class ExportRepository {
-  /// Exports the manuscript and returns the produced file.
-  ///
-  /// Throws a typed error when the server refuses the export — a manuscript
-  /// with no content yet, an unknown format, a missing right.
-  Future<ExportArtefact> export({
-    required String projectId,
-    required ExportFormat format,
-  });
-}
-
 /// The preferences of the author that do not belong to a manuscript.
 ///
 /// The daily goal is the only one for now: the number of words the author
@@ -332,6 +295,85 @@ abstract interface class PreferencesRepository {
   /// A day counts when at least one word was written; a day without writing
   /// breaks the series.
   Future<int> writingStreak();
+}
+
+/// A day of writing, as the statistics of the author read it.
+///
+/// A session carries what the author **wrote** that day — never the size
+/// of the chapters they touched. The words are counted by difference: a
+/// scene that is saved again without a change does not count twice.
+///
+/// The session is a **local** fact: it belongs to the device and never
+/// leaves it.
+final class WritingSession {
+  /// Creates a session.
+  const WritingSession({
+    required this.day,
+    required this.words,
+    this.minutes = 0,
+    this.projectId = '',
+  });
+
+  /// The day of the session, at the local midnight.
+  ///
+  /// The day is **local**: the author writes on their own days, not on the
+  /// days of the universal time zone.
+  final DateTime day;
+
+  /// The number of words the author wrote that day.
+  final int words;
+
+  /// The number of minutes the author wrote that day.
+  final int minutes;
+
+  /// The book the session belongs to.
+  ///
+  /// The identifier is empty for the **total** of the author: the total is
+  /// the sum of the books, and it is the row the series of the writing days
+  /// counts.
+  final String projectId;
+}
+
+/// The writing sessions of the author.
+///
+/// The contract is **local**: the sessions are written on the device and are
+/// never synchronized — the criterion asks for statistics that work
+/// offline.
+///
+/// The days of writing come from the sessions, never from the date the
+/// scenes were modified: re-reading a book is not writing, and the counter
+/// of words of a chapter written three weeks ago does not belong to today.
+///
+/// A repository that does not know the sessions — the demonstration mode,
+/// for instance — simply does not implement this contract: the screens then
+/// show no history rather than an invented one.
+///
+/// The contract **extends** [ManuscriptRepository]: the sessions belong to
+/// the manuscripts of the author, and a repository that knows the sessions
+/// knows the manuscripts too.
+abstract interface class WritingSessionRepository
+    implements ManuscriptRepository {
+  /// Records the words the author wrote in [projectId].
+  ///
+  /// The words are the ones the author **added**: the session of the day
+  /// grows by that amount, and never by the size of the chapter.
+  ///
+  /// The minutes are the time the author spent writing; they are the time
+  /// between two strokes, and never the time the application stayed open.
+  Future<void> recordWriting({
+    required String projectId,
+    required int words,
+    required int minutes,
+  });
+
+  /// The sessions written between [from] and [to], both included.
+  ///
+  /// The sessions are the ones of the author of the session: they are
+  /// ordered from the most recent day to the oldest one.
+  Future<List<WritingSession>> writingSessions({
+    required DateTime from,
+    required DateTime to,
+  });
 }
 
 /// The assistant.

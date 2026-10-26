@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/app/router.dart';
 import 'package:limpid_app/src/domain/providers.dart';
+import 'package:limpid_app/src/features/export/export_dialog.dart';
 import 'package:limpid_app/src/features/project/publication_action.dart';
 import 'package:limpid_app/src/features/project/share_section.dart';
 import 'package:limpid_app/src/features/projects/project_cover.dart';
@@ -169,6 +170,10 @@ class _ProjectHeader extends StatelessWidget {
               label: strings.projectExport,
               variant: LimpidButtonVariant.secondary,
               icon: LimpidIcons.export,
+              onPressed: () => showExportDialog(
+                context,
+                projectId: project.project.id.value,
+              ),
             ),
             LimpidButton(
               label: strings.projectPublicPage,

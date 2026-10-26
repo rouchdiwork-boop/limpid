@@ -1,7 +1,5 @@
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
-
-import 'export_file_saver_io.dart'
-    if (dart.library.js_interop) 'export_file_saver_web.dart';
+import 'package:limpid_app/src/features/export/export_file_saver.dart';
 
 /// Saves the export of the personal data outside of the application.
 ///
@@ -11,5 +9,10 @@ import 'export_file_saver_io.dart'
 ///
 /// The file is an **archive**, not a text: it can never go through the
 /// clipboard, which would corrupt it.
-Future<void> savePersonalDataExport(PersonalDataExport export) =>
-    saveExportFile(export);
+Future<void> savePersonalDataExport(PersonalDataExport export) {
+  return saveExportFile(
+    fileName: export.fileName,
+    mimeType: export.mimeType,
+    bytes: export.bytes,
+  );
+}

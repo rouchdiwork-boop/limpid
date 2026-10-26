@@ -29,7 +29,7 @@ import 'package:limpid_sync/limpid_sync.dart';
 /// live session — the author of the constructor is the scope when the
 /// resolver is not given.
 final class LocalManuscriptRepository
-    implements ManuscriptRepository, PublishedBookReader {
+    implements PublishedBookReader, WritingSessionRepository {
   /// Creates a repository on top of [database].
   LocalManuscriptRepository({
     required this.database,
@@ -358,6 +358,42 @@ final class LocalManuscriptRepository
         OrderKey(operation.value),
       );
     }
+  }
+
+  /// Records the words the author wrote in the session of the day.
+  ///
+  /// The session is **local**: it is written in the database of the device
+  /// and never queued for the server. The words are the ones the author
+  /// added — the editor measures them by difference.
+  @override
+  Future<void> recordWriting({
+    required String projectId,
+    required int words,
+    required int minutes,
+  }) async {
+    await database.writingSessions.recordWriting(
+      day: _now(),
+      projectId: projectId,
+      words: words,
+      minutes: minutes,
+      accountId: database.account.accountId,
+    );
+  }
+
+  /// The sessions written between [from] and [to], both included.
+  ///
+  /// The sessions belong to the account of the session: the days of writing
+  /// of an author never reach the dashboard of another.
+  @override
+  Future<List<WritingSession>> writingSessions({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    return database.writingSessions.listWritingSessions(
+      from: from,
+      to: to,
+      accountId: database.account.accountId,
+    );
   }
 
   /// Applies the operations to the local document and writes the journal.
