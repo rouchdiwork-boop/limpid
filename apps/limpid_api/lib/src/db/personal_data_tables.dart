@@ -31,6 +31,11 @@ final class PersonalDataTables {
       ownerColumns: <String>['user_id'],
     ),
     ErasedTable(
+      name: 'exports',
+      holds: "les travaux d'export de l'auteur",
+      ownerColumns: <String>['user_id'],
+    ),
+    ErasedTable(
       name: 'account_plans',
       holds: 'la formule du compte et sa période',
       ownerColumns: <String>['user_id'],

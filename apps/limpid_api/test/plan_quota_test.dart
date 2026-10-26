@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:limpid_api/src/auth/auth_middleware.dart';
 import 'package:limpid_api/src/config/app_config.dart';
 import 'package:limpid_api/src/db/audit_entry.dart';
+import 'package:limpid_api/src/db/in_memory_export_job_store.dart';
 import 'package:limpid_api/src/db/in_memory_quota_database.dart';
 import 'package:limpid_api/src/db/quota_database.dart';
 import 'package:limpid_api/src/db/sql_quota_database.dart';
@@ -14,8 +15,10 @@ import 'package:limpid_api/src/logging/logger.dart';
 import 'package:limpid_api/src/middleware/error_handler.dart';
 import 'package:limpid_api/src/routes/export_routes.dart';
 import 'package:limpid_api/src/routes/quota_routes.dart';
+import 'package:limpid_api/src/services/export_service.dart';
 import 'package:limpid_api/src/services/plan_catalog.dart';
 import 'package:limpid_api/src/services/quota_service.dart';
+import 'package:limpid_api/src/worker/export_worker.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -181,8 +184,9 @@ void main() {
     test('refuse l\'export quand le quota est atteint', () async {
       final String projectId = await _seedProject(server);
       await _consumeExports(quota, 50);
+      final InMemoryExportJobStore jobs = InMemoryExportJobStore();
 
-      final Response response = await _exportHandler(server, quota)(
+      final Response response = await _exportHandler(server, quota, jobs)(
         _post('/v1/export/epub', <String, Object?>{'project_id': projectId}),
       );
 
@@ -201,12 +205,27 @@ void main() {
       () async {
         final String projectId = await _seedProject(server);
         await _consumeExports(quota, 49);
+        final InMemoryExportJobStore jobs = InMemoryExportJobStore();
 
-        final Response response = await _exportHandler(server, quota)(
+        final Response response = await _exportHandler(server, quota, jobs)(
           _post('/v1/export/epub', <String, Object?>{'project_id': projectId}),
         );
 
-        expect(response.statusCode, 200);
+        // La route cree le travail et repond aussitot : l'export n'est
+        // pas fait dans la requete.
+        expect(response.statusCode, 202);
+        expect(
+          await database.usageOf(
+            userId: 'user-1',
+            feature: QuotaFeature.exports,
+            periodKey: '2026-10',
+          ),
+          49,
+        );
+
+        // Le worker produit le travail : le compteur n'est incremente
+        // qu'une fois, et seulement au succes.
+        await _worker(server, quota, jobs).drain();
         final int used = await database.usageOf(
           userId: 'user-1',
           feature: QuotaFeature.exports,
@@ -485,10 +504,37 @@ Handler _handler(Router router) {
 }
 
 /// Le gestionnaire de la route d'export, câblé sur le garde-fou.
-Handler _exportHandler(TestServer server, QuotaService quota) {
+Handler _exportHandler(
+  TestServer server,
+  QuotaService quota,
+  InMemoryExportJobStore jobs,
+) {
   final Router router = Router();
-  registerExportRoutes(router, server.dependencies, testConfig(), quota: quota);
+  registerExportRoutes(
+    router,
+    server.dependencies,
+    testConfig(),
+    quota: quota,
+    jobs: jobs,
+  );
   return _handler(router);
+}
+
+/// Le worker qui produit les travaux de la file.
+ExportWorker _worker(
+  TestServer server,
+  QuotaService quota,
+  InMemoryExportJobStore jobs,
+) {
+  return ExportWorker(
+    service: ExportService(
+      jobs: jobs,
+      projects: server.dependencies.projects,
+      sync: server.dependencies.sync,
+      storage: server.dependencies.storage,
+      quota: quota,
+    ),
+  );
 }
 
 /// Crée un projet rempli et renvoie son identifiant.

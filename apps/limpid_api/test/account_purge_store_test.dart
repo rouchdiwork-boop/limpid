@@ -376,6 +376,15 @@ Future<void> _seedAuthor(SqliteDatabase database, String userId) async {
     'schema_version': 1,
     'created_at': _stamp,
   });
+  await _insert(database, 'exports', <String, Object?>{
+    'id': 'export-$userId',
+    'user_id': userId,
+    'project_id': book,
+    'format': 'epub3',
+    'cover': 'front',
+    'status': 'succeeded',
+    'created_at': _stamp,
+  });
   await _insert(database, 'comment_threads', <String, Object?>{
     'id': 'thread-$userId',
     'project_id': book,
@@ -618,6 +627,11 @@ void _seedInMemory(InMemoryAccountPurgeStore store, String userId) {
     authorId: userId,
   );
   store.addMember(projectId: book, userId: userId);
+  store.addRow(
+    table: 'exports',
+    rowId: 'export-$userId',
+    owners: <String>{userId},
+  );
   store.addRow(
     table: 'comment_threads',
     rowId: 'thread-$userId',

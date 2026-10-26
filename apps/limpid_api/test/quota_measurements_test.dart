@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:limpid_api/src/auth/auth_middleware.dart';
 import 'package:limpid_api/src/config/app_config.dart';
+import 'package:limpid_api/src/db/export_job_record.dart';
 import 'package:limpid_api/src/db/in_memory_quota_database.dart';
 import 'package:limpid_api/src/logging/logger.dart';
 import 'package:limpid_api/src/middleware/error_handler.dart';
@@ -14,11 +15,12 @@ import 'package:limpid_api/src/services/storage_usage.dart';
 import 'package:limpid_api/src/storage/artifact_keys.dart';
 import 'package:limpid_api/src/storage/object_storage.dart';
 import 'package:limpid_api/src/storage/stored_object.dart';
-import 'package:limpid_core/limpid_core.dart';
+import 'package:limpid_core/limpid_core.dart' hide ExportJobStatus;
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:test/test.dart';
 
+import 'helpers/export_test_server.dart';
 import 'helpers/test_server.dart';
 
 void main() {
@@ -29,8 +31,8 @@ void main() {
     setUp(() async {
       server = await startTestServer();
       await server.givePlan('user-1', SubscriptionPlan.writer);
-      projectId = await _createProject(server);
-      await _writeChapter(server, projectId);
+      projectId = await _createProject(server.post, server.tokenFor('user-1'));
+      await _writeChapter(server.post, server.tokenFor('user-1'), projectId);
     });
 
     tearDown(() async {
@@ -79,19 +81,19 @@ void main() {
   });
 
   group('garde-fou du stockage', () {
-    late TestServer server;
+    late ExportTestServer server;
     late _AnnouncedStorage storage;
     late Map<String, String> auth;
     late String projectId;
 
     setUp(() async {
       storage = _AnnouncedStorage();
-      server = await startTestServer(storage: storage);
+      server = await ExportTestServer.start(storage: storage);
       auth = <String, String>{
         'authorization': 'Bearer ${server.tokenFor('user-1')}',
       };
-      projectId = await _createProject(server);
-      await _writeChapter(server, projectId);
+      projectId = await _createProject(server.post, server.tokenFor('user-1'));
+      await _writeChapter(server.post, server.tokenFor('user-1'), projectId);
     });
 
     tearDown(() async {
@@ -114,18 +116,22 @@ void main() {
         body: <String, Object?>{'project_id': projectId},
       );
 
-      expect(response.statusCode, 402);
-      final Map<String, dynamic> body =
-          jsonDecode(response.body) as Map<String, dynamic>;
-      final Map<String, dynamic> error = body['error'] as Map<String, dynamic>;
-      expect(error['code'], 'plan_limit_reached');
-      final Map<String, dynamic> details =
-          error['details'] as Map<String, dynamic>;
-      expect(details['feature'], 'storage_bytes');
-      expect(details['limit'], 100 * 1024 * 1024);
-      expect(details['used'], greaterThan(100 * 1024 * 1024));
+      // La route cree le travail : la taille de l'artefact n'est connue
+      // qu'apres la fabrication, le garde-fou du stockage passe donc dans
+      // le worker.
+      expect(response.statusCode, 202);
+      final String jobId =
+          ((jsonDecode(response.body) as Map<String, dynamic>)['data']
+                  as Map<String, dynamic>)['id']!
+              as String;
+      await server.runWorker();
 
-      // L'artefact refusé n'est pas écrit.
+      final ExportJobRecord? job = await server.job(jobId);
+      expect(job!.status, ExportJobStatus.failed);
+      expect(job.errorCode, 'plan_limit_reached');
+      expect(job.error, contains('Stockage'));
+
+      // L'artefact refuse n'est pas ecrit.
       expect(storage.keys, hasLength(1));
     });
 
@@ -142,9 +148,10 @@ void main() {
         body: <String, Object?>{'project_id': projectId},
       );
 
-      expect(response.statusCode, 200);
+      expect(response.statusCode, 202);
+      await server.runWorker();
       final int after = await usage.bytesOf('user-1');
-      expect(after - before, response.bodyBytes.length);
+      expect(after - before, greaterThan(0));
       expect(storage.keys, hasLength(1));
     });
   });
@@ -294,13 +301,22 @@ Map<String, dynamic> _quotaOf(List<dynamic> quotas, String feature) {
   );
 }
 
+/// L'appel HTTP du serveur de test.
+///
+/// Les deux serveurs du dépôt — le serveur complet et celui de l'export —
+/// répondent de la meme facon : l'appel HTTP est ce dont l'aide a besoin.
+typedef _Post =
+    Future<http.Response> Function(
+      String path, {
+      Object? body,
+      Map<String, String> headers,
+    });
+
 /// Crée un livre et renvoie son identifiant.
-Future<String> _createProject(TestServer server) async {
-  final http.Response response = await server.post(
+Future<String> _createProject(_Post post, String token) async {
+  final http.Response response = await post(
     '/v1/projects',
-    headers: <String, String>{
-      'authorization': 'Bearer ${server.tokenFor('user-1')}',
-    },
+    headers: <String, String>{'authorization': 'Bearer $token'},
     body: <String, Object?>{'title': 'Manuscrit'},
   );
   final Map<String, dynamic> body =
@@ -309,12 +325,10 @@ Future<String> _createProject(TestServer server) async {
 }
 
 /// Écrit un chapitre de cinq mots dans le livre [projectId].
-Future<void> _writeChapter(TestServer server, String projectId) async {
-  await server.post(
+Future<void> _writeChapter(_Post post, String token, String projectId) async {
+  await post(
     '/v1/projects/$projectId/ops',
-    headers: <String, String>{
-      'authorization': 'Bearer ${server.tokenFor('user-1')}',
-    },
+    headers: <String, String>{'authorization': 'Bearer $token'},
     body: <String, Object?>{
       'operations': <dynamic>[
         <String, Object?>{

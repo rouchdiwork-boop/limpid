@@ -70,7 +70,13 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
   registerProjectRoutes(router, dependencies, config, quota: quota);
   registerSyncRoutes(router, dependencies, config, quota: quota);
   registerAiRoutes(router, dependencies, config, quota: quota);
-  registerExportRoutes(router, dependencies, config, quota: quota);
+  registerExportRoutes(
+    router,
+    dependencies,
+    config,
+    quota: quota,
+    jobs: dependencies.exportJobs,
+  );
   registerCheckoutRoutes(
     router,
     dependencies,

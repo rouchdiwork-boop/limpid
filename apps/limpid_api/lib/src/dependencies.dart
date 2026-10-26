@@ -8,6 +8,7 @@ import 'db/audit_log.dart';
 import 'db/book_sale_store.dart';
 import 'db/comment_store.dart';
 import 'db/entitlement_store.dart';
+import 'db/export_job_store.dart';
 import 'db/kdp_database.dart';
 import 'db/kdp_deposit_store.dart';
 import 'db/project_store.dart';
@@ -83,6 +84,7 @@ final class AppDependencies {
     this.bookSales,
     this.entitlements,
     this.promoCodes,
+    this.exportJobs,
   });
 
   /// The projects of the callers.
@@ -162,6 +164,12 @@ final class AppDependencies {
 
   /// The discount codes, when the feature is configured.
   final PromoCodeStore? promoCodes;
+
+  /// The export jobs, when the feature is configured.
+  ///
+  /// The port is optional : a server qui n'exporte pas de livre ne sert
+  /// pas les routes d'export, plutot que de les servir en erreur.
+  final ExportJobStore? exportJobs;
 
   /// The Amazon KDP publications, when the feature is configured.
   final KdpDatabase? kdp;

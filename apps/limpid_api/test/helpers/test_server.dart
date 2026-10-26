@@ -346,11 +346,42 @@ Future<TestServer> startTestServer({
   final List<String> logLines = <String>[];
   final Logger logger = Logger(level: LogLevel.warning, sink: logLines.add);
 
+  final AppDependencies dependencies = buildTestDependencies(
+    jwks: jwks,
+    logger: logger,
+    storage: storage,
+  );
+
+  final AppConfig config = testConfig(overrides: configOverrides);
+  final HttpServer server = await createServer(
+    config,
+    dependencies: dependencies,
+  );
+
+  return TestServer._(
+    server: server,
+    dependencies: dependencies,
+    issuer: issuer,
+    keyPair: keyPair,
+    logLines: logLines,
+  );
+}
+
+/// Les dépendances en mémoire du serveur de test.
+///
+/// La construction est séparée du démarrage : un test qui monte son propre
+/// routeur — la file d'export, par exemple — a besoin des mêmes
+/// dépendances sans le serveur standard.
+AppDependencies buildTestDependencies({
+  required JwksProvider jwks,
+  required Logger logger,
+  ObjectStorage? storage,
+}) {
   final InMemoryAuditLog audit = InMemoryAuditLog();
   final InMemoryQuotaDatabase quotas = InMemoryQuotaDatabase();
   final InMemoryProjectStore projects = InMemoryProjectStore();
   final InMemorySyncStore sync = InMemorySyncStore();
-  final AppDependencies dependencies = AppDependencies(
+  return AppDependencies(
     projects: projects,
     sync: sync,
     audit: audit,
@@ -392,19 +423,5 @@ Future<TestServer> startTestServer({
     databaseProbe: const AlwaysHealthyProbe(),
     syncHub: SyncHub(),
     shutdown: () async {},
-  );
-
-  final AppConfig config = testConfig(overrides: configOverrides);
-  final HttpServer server = await createServer(
-    config,
-    dependencies: dependencies,
-  );
-
-  return TestServer._(
-    server: server,
-    dependencies: dependencies,
-    issuer: issuer,
-    keyPair: keyPair,
-    logLines: logLines,
   );
 }

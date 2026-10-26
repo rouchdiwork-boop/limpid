@@ -75,7 +75,8 @@ void main() {
           <String, Object?>{'project_id': projectId},
           userId: 'user-1',
         );
-        expect(response.statusCode, 200);
+        expect(response.statusCode, 202);
+        await harness.runWorker();
 
         final _Sent sent = await harness.awaitDelivery('export.completed');
         expect(sent.payload['type'], 'export.completed');
@@ -222,9 +223,9 @@ void main() {
           userId: 'user-1',
         );
 
-        // L'export a réussi : le rappel est mort, le livre est là.
-        expect(response.statusCode, 200);
-        expect(response.bodyBytes, isNotEmpty);
+        // L'export a reussi : le rappel est mort, le livre est la.
+        expect(response.statusCode, 202);
+        await harness.runWorker();
 
         await harness.awaitDelivery('export.completed');
         final WebhookPage<WebhookDeliveryRecord> deliveries = await harness
@@ -249,6 +250,7 @@ void main() {
       await harness.post('/v1/export/md', <String, Object?>{
         'project_id': projectId,
       }, userId: 'user-1');
+      await harness.runWorker();
       final _Sent sent = await harness.awaitDelivery('export.completed');
 
       expect(sent.body, isNot(contains(endpoint.secret)));
@@ -458,6 +460,9 @@ final class _Harness {
     required this.teams,
     required this.audit,
     required this.callback,
+    required this.jobs,
+    required this.dependencies,
+    required this.quota,
   });
 
   /// Le serveur qui répond.
@@ -489,6 +494,15 @@ final class _Harness {
 
   /// Le point de rappel simulé.
   final _Callback callback;
+
+  /// La file des travaux d'export.
+  final InMemoryExportJobStore jobs;
+
+  /// Les dépendances du serveur.
+  final AppDependencies dependencies;
+
+  /// Le garde-fou des quotas du serveur.
+  final QuotaService quota;
 
   /// L'adresse du serveur.
   String get baseUrl => 'http://127.0.0.1:${server.port}';
@@ -558,9 +572,16 @@ final class _Harness {
     );
 
     final AppConfig config = testConfig();
+    final InMemoryExportJobStore jobs = InMemoryExportJobStore();
     final Router router = Router();
     registerProjectRoutes(router, dependencies, config, quota: quota);
-    registerExportRoutes(router, dependencies, config, quota: quota);
+    registerExportRoutes(
+      router,
+      dependencies,
+      config,
+      quota: quota,
+      jobs: jobs,
+    );
     registerAiRoutes(router, dependencies, config, quota: quota);
     registerTeamRoutes(
       router,
@@ -614,7 +635,25 @@ final class _Harness {
       teams: teams,
       audit: audit,
       callback: callback,
+      jobs: jobs,
+      dependencies: dependencies,
+      quota: quota,
     );
+  }
+
+  /// Fait tourner le worker : la file des exports est videe.
+  Future<int> runWorker() {
+    return ExportWorker(
+      service: ExportService(
+        jobs: jobs,
+        projects: projects,
+        sync: sync,
+        storage: dependencies.storage,
+        quota: quota,
+        audit: audit,
+        dispatcher: dispatcher,
+      ),
+    ).drain();
   }
 
   /// Donne la formule [plan] au compte [userId].

@@ -1,27 +1,19 @@
+import 'dart:io';
+
 import 'package:limpid_export/limpid_export.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import '../auth/auth_middleware.dart';
 import '../config/app_config.dart';
-import '../db/audit_entry.dart';
-import '../db/kdp_database.dart';
-import '../db/kdp_record.dart';
-import '../db/project_record.dart';
-import '../db/sync_op_record.dart';
+import '../db/export_job_record.dart';
+import '../db/export_job_store.dart';
 import '../dependencies.dart';
 import '../errors/app_exception.dart';
+import '../http/api_response.dart';
 import '../http/json_body.dart';
-import '../middleware/rate_limiter.dart';
-import '../services/access_control.dart';
-import '../services/book_builder.dart';
-import '../services/plan_catalog.dart';
+import '../services/export_service.dart';
 import '../services/quota_service.dart';
-import '../services/storage_usage.dart';
-import '../services/webhook_dispatcher.dart';
-import '../services/webhook_service.dart';
-import '../storage/artifact_keys.dart';
-import '../sync/tree_builder.dart';
 
 /// The formats accepted by the export route.
 const Map<String, ExportFormat> exportFormats = <String, ExportFormat>{
@@ -45,27 +37,57 @@ const Map<String, CoverVariant> exportCoverVariants = <String, CoverVariant>{
 
 /// Registers the routes of the export.
 ///
-/// [quota] porte le garde-fou des quotas : le quota d'exports est vérifié
-/// avant la génération du fichier, le quota de stockage est vérifié avant
-/// l'écriture de l'artefact, et le compteur n'est incrémenté qu'une fois,
-/// après le succès de l'export. Le point de composition câble le service ;
-/// sans lui, la route n'applique aucun plafond.
+/// L'export est un **travail** : la route ne fabrique pas le livre, elle
+/// crée le travail et répond aussitot (`202` et l'identifiant du travail).
+/// Un livre de 80 000 mots tiendrait la requête HTTP ouverte pendant des
+/// dizaines de secondes : le proxy la coupe, et l'export serait perdu
+/// après avoir facturé.
 ///
-/// Le dispatcher est pris dans les dépendances : c'est lui qui porte la
-/// livraison de la fin de l'export. La livraison part en arrière-plan, et
-/// un rappel mort ne transforme jamais un export réussi en erreur.
+/// Quatre routes suivent la demande :
 ///
-/// Le corps de la requete choisit la couverture : `front` (le defaut) ou
-/// `full`, la maquette complete. Le choix ne vaut que pour les PDF : les
-/// autres formats portent toujours la couverture de face.
+/// - `GET /v1/exports` liste les travaux du compte ;
+/// - `GET /v1/exports/<jobId>` dit où en est le travail ;
+/// - `GET /v1/exports/<jobId>/download` donne l'adresse signée de
+///   l'artefact, jusqu'à son expiration ;
+/// - `POST /v1/exports/<jobId>/retry` relance un travail **échoué** en
+///   créant un travail **neuf** : un travail est un événement, il n'est
+///   jamais rejoué.
+///
+/// [quota] porte le garde-fou des quotas : il est vérifié avant la
+/// création du travail, et la consommation n'est comptée qu'au succès.
+///
+/// [jobs] est la file des travaux. Un serveur qui ne la câble pas ne sert
+/// pas l'export : la route le dit clairement plutôt que de promettre un
+/// fichier qu'elle ne produira pas.
+///
+/// [clock] rend l'heure injectable : les tests font passer le temps sans
+/// attendre, et l'expiration de l'artefact se mesure ainsi.
 void registerExportRoutes(
   Router router,
   AppDependencies dependencies,
   AppConfig config, {
   QuotaService? quota,
+  ExportJobStore? jobs,
+  DateTime Function()? clock,
 }) {
-  final WebhookDispatcher? dispatcher = dependencies.webhookDispatcher;
+  final ExportService? service = jobs == null
+      ? null
+      : ExportService(
+          jobs: jobs,
+          projects: dependencies.projects,
+          sync: dependencies.sync,
+          storage: dependencies.storage,
+          kdp: dependencies.kdp,
+          quota: quota,
+          audit: dependencies.audit,
+          dispatcher: dependencies.webhookDispatcher,
+          logger: dependencies.logger,
+          clock: clock,
+        );
+
+  // La demande : le travail est créé, le livre n'est pas fabriqué ici.
   router.post('/v1/export/<format>', (Request request, String format) async {
+    final ExportService export = _requireService(service);
     final AuthContext auth = requireAuthContext(request);
     final ExportFormat exportFormat = _parseFormat(format);
     final JsonBody body = await JsonBody.fromRequest(
@@ -73,116 +95,157 @@ void registerExportRoutes(
       maxBytes: config.maxBodyBytes,
     );
     final String projectId = body.requireString('project_id');
-    final CoverVariant coverVariant = _coverVariant(body);
+    final CoverVariant cover = _coverVariant(body);
 
-    final ProjectAccess access = await AccessControl.requireProject(
-      dependencies.projects,
-      projectId,
-      auth,
-    );
-
-    // Le garde-fou passe avant la génération : un compte qui a épuisé son
-    // quota d'exports ne déclenche jamais la fabrication du livre.
-    if (quota != null) {
-      await quota.ensureCounter(
-        userId: auth.userId,
-        feature: QuotaFeature.exports,
-      );
-      if (exportFormat == ExportFormat.pdfPrintReady) {
-        await quota.ensureCapability(
-          userId: auth.userId,
-          capability: PlanCapability.printReadyExports,
-        );
-      }
-    }
-
-    final List<SyncOpRecord> operations = await dependencies.sync.all(
-      projectId: projectId,
-    );
-    final List<DocumentTree> trees = TreeBuilder.build(operations);
-
-    final ExportBook book = await _buildBook(
-      access.project,
-      trees,
-      dependencies.kdp,
-    );
-    final ExportResult result = await _export(
-      exportFormat,
-      book,
-      _variantOf(exportFormat, coverVariant),
-    );
-
-    // Le garde-fou du stockage passe avant l'écriture : un compte dont le
-    // stockage est plein refuse l'export, et l'artefact n'est jamais
-    // écrit. Le livre est fabriqué en mémoire, il ne coûte donc rien au
-    // compte — ni au fournisseur.
-    if (quota != null) {
-      final AccountStorageUsage storage = AccountStorageUsage(
-        projects: dependencies.projects,
-        storage: dependencies.storage,
-      );
-      await quota.ensureGaugeFits(
-        userId: auth.userId,
-        feature: QuotaFeature.storageBytes,
-        current: await storage.bytesOf(auth.userId),
-        charge: result.bytes.length,
-      );
-    }
-
-    final String key =
-        '${ArtifactKeys.prefixOfProject(projectId)}${result.fileName}';
-    await dependencies.storage.put(
-      key: key,
-      bytes: result.bytes,
-      contentType: result.mimeType,
-    );
-
-    // L'export a réussi : le compteur est incrémenté une fois, et une
-    // seule.
-    if (quota != null) {
-      await quota.recordConsumption(
-        userId: auth.userId,
-        feature: QuotaFeature.exports,
-      );
-    }
-
-    await dependencies.audit.record(
-      AuditEntry(
-        userId: auth.userId,
-        action: 'export.requested',
-        targetType: 'project',
-        targetId: projectId,
-        metadata: <String, Object?>{
-          'format': exportFormat.name,
-          'bytes': result.bytes.length,
-        },
-        ip: clientIpOf(request),
-      ),
-    );
-
-    // L'export a réussi : l'intégration de l'auteur est prévenue. La
-    // charge porte le projet, le format et la taille : ni le texte du
-    // livre, ni le secret du point de rappel.
-    dispatcher?.emit(
+    final ExportJobRecord job = await export.request(
       userId: auth.userId,
-      event: WebhookEvent.exportCompleted,
-      data: <String, Object?>{
-        'project_id': projectId,
-        'format': exportFormat.name,
-        'bytes': result.bytes.length,
-      },
+      projectId: projectId,
+      format: exportFormat,
+      cover: cover,
     );
 
-    return Response.ok(
-      result.bytes,
-      headers: <String, String>{
-        'content-type': result.mimeType,
-        'content-length': '${result.bytes.length}',
-        'content-disposition': 'attachment; filename="${result.fileName}"',
-        'x-limpid-export-key': key,
-      },
+    return ApiResponse.ok(
+      await _payloadOf(export, job),
+      status: HttpStatus.accepted,
     );
   });
+
+  // La liste des travaux du compte : l'interface la relit après une
+  // reconnexion, quand la notification a été perdue.
+  router.get('/v1/exports', (Request request) async {
+    final ExportService export = _requireService(service);
+    final AuthContext auth = requireAuthContext(request);
+    final List<ExportJobRecord> jobs = await export.jobs.listByUser(
+      userId: auth.userId,
+    );
+    return ApiResponse.ok(<Map<String, Object?>>[
+      for (final ExportJobRecord job in jobs) await _payloadOf(export, job),
+    ]);
+  });
+
+  // La consultation : où en est le travail.
+  router.get('/v1/exports/<jobId>', (Request request, String jobId) async {
+    final ExportService export = _requireService(service);
+    final AuthContext auth = requireAuthContext(request);
+    final ExportJobRecord job = await _requireJob(export, auth, jobId);
+    return ApiResponse.ok(await _payloadOf(export, job));
+  });
+
+  // La relance : un travail échoué devient un travail **neuf**.
+  router.post('/v1/exports/<jobId>/retry', (
+    Request request,
+    String jobId,
+  ) async {
+    final ExportService export = _requireService(service);
+    final AuthContext auth = requireAuthContext(request);
+    final ExportJobRecord failed = await _requireJob(export, auth, jobId);
+    if (failed.status != ExportJobStatus.failed) {
+      throw const ConflictException(
+        message: 'Seul un travail en échec peut être relancé.',
+      );
+    }
+    final ExportJobRecord job = await export.retry(failed);
+    return ApiResponse.ok(
+      await _payloadOf(export, job),
+      status: HttpStatus.accepted,
+    );
+  });
+
+  // Le téléchargement : l'adresse signée de l'artefact, jusqu'à son
+  // expiration.
+  router.get('/v1/exports/<jobId>/download', (
+    Request request,
+    String jobId,
+  ) async {
+    final ExportService export = _requireService(service);
+    final AuthContext auth = requireAuthContext(request);
+    final ExportJobRecord job = await _requireJob(export, auth, jobId);
+    final String? key = job.artifactKey;
+    if (job.status != ExportJobStatus.succeeded || key == null) {
+      throw const NotFoundException(
+        message: "Ce fichier n'est pas disponible.",
+      );
+    }
+    final DateTime now = export.now;
+    if (job.isExpiredAt(now)) {
+      throw const NotFoundException(
+        message: "Ce fichier a expiré : il n'est plus téléchargeable.",
+      );
+    }
+    final String url = await dependencies.storage.presignedUrl(
+      key: key,
+      expires: job.expiresAt!.difference(now),
+    );
+    return ApiResponse.ok(<String, Object?>{
+      'download_url': url,
+      'file_name': _fileNameOf(key),
+      'expires_at': job.expiresAt!.toUtc().toIso8601String(),
+    });
+  });
+}
+
+/// Le service d'export, ou l'erreur qui dit que la file n'est pas câblée.
+ExportService _requireService(ExportService? service) {
+  if (service == null) {
+    throw const ServiceUnavailableException(
+      message:
+          "La file d'export n'est pas configurée sur ce poste : l'export "
+          'est indisponible.',
+    );
+  }
+  return service;
+}
+
+/// Le travail [jobId], quand il appartient à l'appelant.
+///
+/// Un travail d'un autre compte est rapporté comme absent : son existence
+/// n'est pas divulguée.
+Future<ExportJobRecord> _requireJob(
+  ExportService export,
+  AuthContext auth,
+  String jobId,
+) async {
+  final ExportJobRecord? job = await export.read(jobId);
+  if (job == null || job.userId != auth.userId) {
+    throw const NotFoundException();
+  }
+  return job;
+}
+
+/// La charge du travail.
+///
+/// La charge porte l'adresse de téléchargement quand l'artefact est prêt
+/// et vivant : l'adresse est signée, et elle porte sa propre expiration.
+/// Un travail terminé dont l'artefact a expiré ne porte plus d'adresse : il
+/// est prêt, mais il n'est plus téléchargeable.
+Future<Map<String, Object?>> _payloadOf(
+  ExportService export,
+  ExportJobRecord job,
+) async {
+  String? downloadUrl;
+  String? fileName;
+  final String? key = job.artifactKey;
+  if (job.status == ExportJobStatus.succeeded &&
+      key != null &&
+      !job.isExpiredAt(export.now)) {
+    downloadUrl = await export.storage.presignedUrl(
+      key: key,
+      expires: job.expiresAt!.difference(export.now),
+    );
+    fileName = _fileNameOf(key);
+  }
+  return <String, Object?>{
+    ...job.toJson(),
+    'download_url': downloadUrl,
+    'file_name': fileName,
+  };
+}
+
+/// Le nom du fichier produit, tel qu'il est rangé dans le stockage.
+String _fileNameOf(String key) {
+  final int slash = key.lastIndexOf('/');
+  if (slash < 0 || slash == key.length - 1) return key;
+  return key.substring(slash + 1);
 }
 
 ExportFormat _parseFormat(String format) {
@@ -218,69 +281,6 @@ CoverVariant _coverVariant(JsonBody body) {
     );
   }
   return variant;
-}
-
-/// La variante de couverture d'un format.
-///
-/// La maquette complete ne vaut que pour le PDF : les autres formats
-/// portent la couverture de face, une couverture etroite et le dos
-/// n'y ont pas leur place.
-CoverVariant _variantOf(ExportFormat format, CoverVariant variant) {
-  final bool isPdf =
-      format == ExportFormat.pdfReflowable ||
-      format == ExportFormat.pdfPrintReady;
-  return isPdf ? variant : CoverVariant.front;
-}
-
-/// Construit le livre exporte.
-///
-/// L'ISBN et l'auteur viennent de la fiche Amazon KDP du projet quand elle
-/// existe : l'edition imprimee porte alors son code-barres. Un livre sans
-/// fiche n'en porte pas : l'export n'invente jamais un ISBN.
-Future<ExportBook> _buildBook(
-  ProjectRecord project,
-  List<DocumentTree> trees,
-  KdpDatabase? kdp,
-) async {
-  final bool hasContent = trees.any(
-    (DocumentTree tree) => tree.blocks.isNotEmpty,
-  );
-  if (!hasContent) {
-    throw const ConflictException(
-      message: "Ce projet n'a encore aucun contenu à exporter.",
-    );
-  }
-  final KdpPublication? publication = await kdp?.findPublicationByProject(
-    projectId: project.id,
-  );
-  return BookBuilder.build(
-    project: project,
-    trees: trees,
-    isbn: publication?.isbn,
-    author: publication?.author,
-  );
-}
-
-Future<ExportResult> _export(
-  ExportFormat format,
-  ExportBook book,
-  CoverVariant variant,
-) async {
-  try {
-    // La couverture générée est attachée au livre avant l'export : les
-    // formats qui l'embarquent (EPUB, ODT) la portent, ceux qui la nomment
-    // (HTML, Markdown) la référencent.
-    return await CoveredExporter(
-      export: LimpidExporter().export,
-      variant: variant,
-    ).call(format, book, const ExportOptions());
-  } on ExportException catch (error) {
-    throw ExportFailedException(
-      message: "L'export n'a pas pu être généré. Réessayez dans un instant.",
-      details: <String, Object?>{'format': format.name},
-      cause: error,
-    );
-  }
 }
 
 /// The JSON headers of a regular API response.

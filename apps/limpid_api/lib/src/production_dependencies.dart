@@ -13,6 +13,7 @@ import 'db/book_sale_store.dart';
 import 'db/comment_store.dart';
 import 'db/database.dart';
 import 'db/entitlement_store.dart';
+import 'db/export_job_store.dart';
 import 'db/kdp_database.dart';
 import 'db/kdp_deposit_store.dart';
 import 'db/migration_runner.dart';
@@ -20,6 +21,7 @@ import 'db/postgres_admin_database.dart';
 import 'db/postgres_audit_log.dart';
 import 'db/postgres_book_sale_store.dart';
 import 'db/postgres_entitlement_store.dart';
+import 'db/postgres_export_job_store.dart';
 import 'db/postgres_kdp_database.dart';
 import 'db/postgres_kdp_deposit_store.dart';
 import 'db/postgres_project_store.dart';
@@ -42,6 +44,7 @@ import 'db/sqlite_audit_log.dart';
 import 'db/sqlite_book_sale_store.dart';
 import 'db/sqlite_database.dart';
 import 'db/sqlite_entitlement_store.dart';
+import 'db/sqlite_export_job_store.dart';
 import 'db/sqlite_kdp_database.dart';
 import 'db/sqlite_kdp_deposit_store.dart';
 import 'db/sqlite_migration_runner.dart';
@@ -74,6 +77,7 @@ import 'services/payment_gateway.dart';
 import 'services/sync_hub.dart';
 import 'services/webhook_dispatcher.dart';
 import 'storage/object_storage.dart';
+import 'worker/export_worker_loop.dart';
 
 /// The directory holding the SQL migrations of Postgres.
 const String defaultMigrationsDirectory = 'db/migrations';
@@ -153,7 +157,12 @@ Future<AppDependencies> buildProductionDependencies(
   );
   purgeScheduler.start();
 
-  return AppDependencies(
+  // Le worker d'export demarre avec le serveur et s'arrete avec lui : un
+  // travail demande reste en attente dans la base, et le premier tour de
+  // la boucle le trouve apres un redemarrage.
+  late final ExportWorkerLoop exportWorker;
+
+  final AppDependencies dependencies = AppDependencies(
     projects: stores.projects,
     sync: stores.sync,
     audit: stores.audit,
@@ -199,11 +208,17 @@ Future<AppDependencies> buildProductionDependencies(
     databaseProbe: stores.probe,
     syncHub: SyncHub(),
     shutdown: () async {
+      await exportWorker.stop();
       await purgeScheduler.stop();
       await stores.close();
       await resolvedRedis?.close();
     },
   );
+
+  exportWorker = buildExportWorkerLoop(dependencies, jobs: stores.exportJobs);
+  await exportWorker.start();
+
+  return dependencies;
 }
 
 /// The persistence ports of the API, whatever the engine behind them.
@@ -224,6 +239,7 @@ final class _Stores {
     required this.bookSales,
     required this.entitlements,
     required this.promoCodes,
+    required this.exportJobs,
     required this.kdp,
     required this.kdpDeposits,
     required this.stripeEvents,
@@ -248,6 +264,7 @@ final class _Stores {
   final BookSaleStore bookSales;
   final EntitlementStore entitlements;
   final PromoCodeStore promoCodes;
+  final ExportJobStore exportJobs;
   final KdpDatabase kdp;
   final KdpDepositStore kdpDeposits;
   final StripeEventDatabase stripeEvents;
@@ -315,6 +332,7 @@ Future<_Stores> _postgresStores(
     bookSales: PostgresBookSaleStore(resolvedPool),
     entitlements: PostgresEntitlementStore(resolvedPool),
     promoCodes: PostgresPromoCodeStore(resolvedPool),
+    exportJobs: PostgresExportJobStore(resolvedPool),
     kdp: PostgresKdpDatabase(
       resolvedPool,
       planLookup: _planLookupOf(quotas),
@@ -367,6 +385,7 @@ Future<_Stores> _sqliteStores(
     bookSales: SqliteBookSaleStore(resolved),
     entitlements: SqliteEntitlementStore(resolved),
     promoCodes: SqlitePromoCodeStore(resolved),
+    exportJobs: SqliteExportJobStore(resolved),
     kdp: SqliteKdpDatabase(
       resolved,
       planLookup: _planLookupOf(quotas),
