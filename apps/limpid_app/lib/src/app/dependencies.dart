@@ -8,6 +8,7 @@ import 'package:limpid_app/src/auth/two_factor_proof_holder.dart';
 import 'package:limpid_app/src/bootstrap/app_bootstrap.dart';
 import 'package:limpid_app/src/data/api_admin_repository.dart';
 import 'package:limpid_app/src/data/api_ai_repository.dart';
+import 'package:limpid_app/src/data/api_book_sale_repository.dart';
 import 'package:limpid_app/src/data/api_client.dart';
 import 'package:limpid_app/src/data/api_export_repository.dart';
 import 'package:limpid_app/src/data/api_gdpr_repository.dart';
@@ -29,6 +30,7 @@ import 'package:limpid_app/src/data/project_identity_store.dart';
 import 'package:limpid_app/src/data/project_ops_transport.dart';
 import 'package:limpid_app/src/data/real_time_transport.dart';
 import 'package:limpid_app/src/domain/admin_repository.dart';
+import 'package:limpid_app/src/domain/book_sale_repository.dart';
 import 'package:limpid_app/src/domain/fallbacks.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
 import 'package:limpid_app/src/domain/kdp_repository.dart';
@@ -81,6 +83,7 @@ final class AppDependencies {
     required this.shares,
     required this.webhooks,
     required this.kdp,
+    required this.sales,
     required this.localDataEraser,
     required this.author,
     required this.navigatorKey,
@@ -140,6 +143,9 @@ final class AppDependencies {
 
   /// The Amazon KDP submissions of the account.
   final KdpRepository kdp;
+
+  /// The sale of the books and the purchases of the account.
+  final BookSaleRepository sales;
 
   /// The erasure of the local data of the author (D-19).
   final LocalDataEraser localDataEraser;
@@ -238,6 +244,16 @@ Future<AppDependencies> buildAppDependencies() async {
       ? ApiAdminRepository(client: apiClient)
       : const UnavailableAdminRepository();
 
+  // La vente d'un livre vit sur le serveur : le prix, la commande et les
+  // achats y sont. Sans serveur, la page de vente dit que le livre n'est
+  // pas en vente, et les achats refusent.
+  final BookSaleRepository sales = AppBootstrap.isSupabaseConfigured
+      ? ApiBookSaleRepository(
+          client: apiClient,
+          checkoutOrigin: _publicOrigin(),
+        )
+      : const UnavailableBookSaleRepository();
+
   AppDatabase? database;
   try {
     database = await AppDatabase.open();
@@ -272,6 +288,7 @@ Future<AppDependencies> buildAppDependencies() async {
       shares: shares,
       webhooks: webhooks,
       kdp: kdp,
+      sales: sales,
       // Aucune base locale : rien à effacer, l'interface le dit.
       localDataEraser: _refuseTheErasure,
       author: author,
@@ -347,6 +364,7 @@ Future<AppDependencies> buildAppDependencies() async {
     shares: shares,
     webhooks: webhooks,
     kdp: kdp,
+    sales: sales,
     localDataEraser: opened.wiper.wipe,
     author: author,
     navigatorKey: navigatorKey,

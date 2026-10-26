@@ -169,6 +169,18 @@ class _RevisionPanelState extends ConsumerState<RevisionPanel> {
             .read(revisionControllerProvider(widget.projectId).notifier)
             .resolve(thread.thread),
       ),
+      onReopen: () => unawaited(
+        ref
+            .read(revisionControllerProvider(widget.projectId).notifier)
+            .reopen(thread.thread),
+      ),
+      onReply: (String body) => ref
+          .read(revisionControllerProvider(widget.projectId).notifier)
+          .reply(
+            thread: thread.thread,
+            body: body,
+            author: widget.currentAuthorId,
+          ),
     );
   }
 
@@ -214,7 +226,7 @@ class _RevisionPanelState extends ConsumerState<RevisionPanel> {
     final AppLocalizations strings = AppLocalizations.of(context);
     final String message = error is ApiException
         ? error.message
-        : strings.revisionResolveFailed;
+        : strings.revisionActionFailed;
     LimpidSnackbar.show(
       context,
       message: message,

@@ -12,6 +12,7 @@ import 'package:limpid_app/src/features/publication/publication_chapters.dart';
 import 'package:limpid_app/src/features/publication/publication_providers.dart';
 import 'package:limpid_app/src/features/publication/publication_routes.dart';
 import 'package:limpid_app/src/features/publication/publication_states.dart';
+import 'package:limpid_app/src/features/publication/sale/sale_providers.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 
@@ -36,17 +37,24 @@ const Key publicationTitleKey = Key('publication-title');
 /// The key of the summary of the public page.
 const Key publicationSummaryKey = Key('publication-summary');
 
+/// The key of the button that offers to buy the book.
+const Key publicationBuyKey = Key('publication-buy');
+
 /// The public page of a book.
 ///
 /// The page shows the cover, the title, the synopsis, the author and the
 /// chapters of the book with the excerpt of every scene. It reads the local
 /// repository: a published book of the author is displayed with its real
 /// data, and a book that is not published has no page at all.
+///
+/// When the book is **for sale**, the page offers to buy it: the button
+/// leads to the sale page, where the price is read from the server.
 class PublicationScreen extends ConsumerWidget {
   /// Creates the public page of a book.
   const PublicationScreen({
     required this.projectId,
     this.onOpenReader,
+    this.onOpenSale,
     super.key,
   });
 
@@ -58,6 +66,12 @@ class PublicationScreen extends ConsumerWidget {
   /// When it is null, the screen navigates to the reading route of the
   /// application.
   final ValueChanged<String>? onOpenReader;
+
+  /// Called when the reader asks to buy the book.
+  ///
+  /// When it is null, the screen navigates to the sale route of the
+  /// application.
+  final ValueChanged<String>? onOpenSale;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -82,6 +96,7 @@ class PublicationScreen extends ConsumerWidget {
                 chapters: chapters,
                 authorName: ref.watch(authorNameProvider),
                 onOpenReader: onOpenReader,
+                onOpenSale: onOpenSale,
               ),
             UnpublishedBook(:final Project project) => PublicationUnavailable(
               project: project,
@@ -95,22 +110,29 @@ class PublicationScreen extends ConsumerWidget {
 }
 
 /// The layout of the public page of a published book.
-class _PublishedView extends StatelessWidget {
+class _PublishedView extends ConsumerWidget {
   const _PublishedView({
     required this.project,
     required this.chapters,
     required this.authorName,
     this.onOpenReader,
+    this.onOpenSale,
   });
 
   final Project project;
   final List<PublicationChapter> chapters;
   final String authorName;
   final ValueChanged<String>? onOpenReader;
+  final ValueChanged<String>? onOpenSale;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final LimpidThemeScope scope = context.limpid;
+    // La page propose l'achat quand le livre est en vente : seul le
+    // serveur sait le dire, et une page qui l'inventerait proposerait
+    // d'acheter un livre qui n'existe pas.
+    final bool isForSale =
+        ref.watch(bookSaleProvider(project.id.value)).value != null;
 
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -123,6 +145,8 @@ class _PublishedView extends StatelessWidget {
           authorName: authorName,
           width: isWide ? publicationCoverWidth : publicationNarrowCoverWidth,
           onOpenReader: onOpenReader,
+          isForSale: isForSale,
+          onOpenSale: onOpenSale,
         );
         final Widget summary = _PublicationSummary(
           key: publicationSummaryKey,
@@ -182,7 +206,9 @@ class _PublicationCoverPane extends StatelessWidget {
     required this.chapters,
     required this.authorName,
     required this.width,
+    required this.isForSale,
     this.onOpenReader,
+    this.onOpenSale,
     super.key,
   });
 
@@ -190,7 +216,9 @@ class _PublicationCoverPane extends StatelessWidget {
   final List<PublicationChapter> chapters;
   final String authorName;
   final double width;
+  final bool isForSale;
   final ValueChanged<String>? onOpenReader;
+  final ValueChanged<String>? onOpenSale;
 
   @override
   Widget build(BuildContext context) {
@@ -241,6 +269,18 @@ class _PublicationCoverPane extends StatelessWidget {
           expand: true,
           onPressed: () => _openReader(context),
         ),
+        if (isForSale) ...<Widget>[
+          SizedBox(height: scope.spacing.space8),
+          LimpidButton(
+            key: publicationBuyKey,
+            label: strings.saleBuy,
+            icon: LimpidIcons.money,
+            variant: LimpidButtonVariant.secondary,
+            size: LimpidButtonSize.large,
+            expand: true,
+            onPressed: () => _openSale(context),
+          ),
+        ],
       ],
     );
   }
@@ -253,6 +293,19 @@ class _PublicationCoverPane extends StatelessWidget {
       return;
     }
     context.go(PublicationRoutes.reader(project.id.value));
+  }
+
+  /// Opens the sale page of the book.
+  ///
+  /// The page de vente lit le **prix** du livre : la vitrine ne l'invente
+  /// pas, elle mene a la page qui sait le lire.
+  void _openSale(BuildContext context) {
+    final ValueChanged<String>? callback = onOpenSale;
+    if (callback != null) {
+      callback(project.id.value);
+      return;
+    }
+    context.go(PublicationRoutes.sale(project.id.value));
   }
 }
 

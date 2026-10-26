@@ -179,4 +179,24 @@ void main() {
     // The tile shows the word count and the completion on the same line.
     expect(find.textContaining(strings.libraryWords('120')), findsOneWidget);
   });
+
+  testWidgets('the library shows the entry to the purchased books', (
+    tester,
+  ) async {
+    useSurface(tester, const Size(1440, 1100));
+    await tester.pumpWidget(
+      harness(child: const LibraryScreen(), manuscripts: library()),
+    );
+    await tester.pumpAndSettle();
+
+    final AppLocalizations strings = AppLocalizations.of(
+      tester.element(find.byType(LibraryScreen)),
+    );
+
+    expect(find.text(strings.purchasesTitle), findsOneWidget);
+    expect(
+      find.text(strings.librarySectionPurchases.toUpperCase()),
+      findsOneWidget,
+    );
+  });
 }

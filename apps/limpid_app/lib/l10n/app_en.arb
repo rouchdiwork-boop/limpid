@@ -202,6 +202,48 @@
       }
     }
   },
+  "saleBuy": "Buy",
+  "salePageTitle": "Sale page",
+  "saleNotForSale": "This book is not for sale",
+  "saleNotForSaleMessage": "This book has no price for now. Come back later.",
+  "saleSignInRequired": "Sign in to buy this book",
+  "saleSignInRequiredMessage": "The price and the purchase are reserved for signed-in accounts.",
+  "saleSignInAction": "Sign in",
+  "salePaymentUnavailable": "Payment is not possible on this platform",
+  "saleOrderFailed": "The order did not go through",
+  "saleFreeGranted": "This book is free: it is in your purchases.",
+  "salePriceFree": "Free",
+  "purchasesTitle": "My purchased books",
+  "purchasesSubtitle": "The books you bought, and their file.",
+  "purchasesEmpty": "You have not bought any book",
+  "purchasesEmptyMessage": "The books you buy appear here, with their file.",
+  "purchasesDownloaded": "The book has been downloaded.",
+  "purchasesDownloadFailed": "The download failed",
+  "purchasesBoughtOn": "Bought on {date}",
+  "@purchasesBoughtOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "purchasesLinkExpires": "The link expires on {date}",
+  "@purchasesLinkExpires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "purchasesLinkExpired": "The link has expired: ask for a new one.",
+  "purchasesRenewLink": "Ask for a new link",
+  "paymentReturnSuccess": "The payment went through",
+  "paymentReturnSuccessMessage": "The book is in your purchases.",
+  "paymentReturnFailure": "The payment did not go through",
+  "paymentReturnFailureMessage": "The book does not appear in your purchases.",
+  "paymentReturnSeePurchases": "See my purchases",
+  "paymentReturnBackToBook": "Back to the book’s page",
+  "librarySectionPurchases": "My purchases",
   "@projectChapterCount": {
     "placeholders": {
       "count": {
@@ -274,6 +316,10 @@
   "revisionRoleBetaReader": "Beta reader",
   "revisionRoleReader": "Reader",
   "revisionResolve": "Resolve the thread",
+  "revisionReply": "Reply",
+  "revisionReplyHint": "Your reply",
+  "revisionReopen": "Reopen the thread",
+  "revisionActionFailed": "The action could not be completed.",
   "revisionResolved": "Resolved",
   "revisionEmptyMessage": "No comment yet.",
   "revisionMembers": "Collaborators",
@@ -398,7 +444,6 @@
     }
   },
   "syncStatusConflict": "Conflict resolved",
-  "revisionResolveFailed": "The thread could not be resolved.",
   "commonWords": "words",
   "commonMinutes": "min",
   "settingsExportManuscriptsSubtitle": "Your manuscripts, in the format you choose.",

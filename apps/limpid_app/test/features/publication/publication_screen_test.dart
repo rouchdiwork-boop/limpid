@@ -7,6 +7,7 @@ import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/data/api_client.dart';
 import 'package:limpid_app/src/data/api_publication_repository.dart';
 import 'package:limpid_app/src/data/local_publication_repository.dart';
+import 'package:limpid_app/src/domain/book_sale_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/publication_repository.dart';
 import 'package:limpid_app/src/features/projects/project_cover.dart';
@@ -16,6 +17,7 @@ import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 
 import 'fakes.dart';
+import 'sale/fakes.dart';
 
 /// The synopsis of the published book of the tests.
 const String bookSynopsis =
@@ -92,6 +94,7 @@ void main() {
     required Widget child,
     FakePublicationRepository? manuscripts,
     PublicationRepository? publications,
+    BookSaleRepository? sales,
   }) {
     return ProviderScope(
       overrides: [
@@ -100,6 +103,9 @@ void main() {
         ),
         if (publications != null)
           publicationRepositoryProvider.overrideWithValue(publications),
+        bookSaleRepositoryProvider.overrideWithValue(
+          sales ?? FakeBookSaleRepository(),
+        ),
       ],
       child: MaterialApp(
         theme: LimpidTheme.of(LimpidThemeVariant.paper),
@@ -146,6 +152,46 @@ void main() {
       expect(find.text(strings.publicationContents), findsOneWidget);
       expect(find.text('Le sel'), findsOneWidget);
       expect(find.text('La cloche sonne encore.'), findsOneWidget);
+    });
+
+    testWidgets('offers to buy the book when it is for sale', (tester) async {
+      useSurface(tester, const Size(1440, 1100));
+      final List<String> opened = <String>[];
+
+      await tester.pumpWidget(
+        harness(
+          child: PublicationScreen(projectId: 'heures', onOpenSale: opened.add),
+          manuscripts: publishedBook(),
+          sales: FakeBookSaleRepository(sale: fakeBookSale()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final AppLocalizations strings = stringsOf(tester);
+      expect(find.byKey(publicationBuyKey), findsOneWidget);
+      expect(find.text(strings.saleBuy), findsOneWidget);
+
+      await tester.tap(find.byKey(publicationBuyKey));
+      await tester.pumpAndSettle();
+
+      expect(opened, <String>['heures']);
+    });
+
+    testWidgets('does not offer to buy a book that is not for sale', (
+      tester,
+    ) async {
+      useSurface(tester, const Size(1440, 1100));
+
+      await tester.pumpWidget(
+        harness(
+          child: const PublicationScreen(projectId: 'heures'),
+          manuscripts: publishedBook(),
+          sales: FakeBookSaleRepository(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(publicationBuyKey), findsNothing);
     });
 
     testWidgets('shows the excerpt of a scene and never its whole text', (

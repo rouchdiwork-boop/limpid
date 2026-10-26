@@ -122,6 +122,92 @@ void main() {
       expect(threads, isEmpty);
     });
 
+    test('relit la réponse d’un fil après rechargement', () async {
+      await repository.saveThread(
+        'project-1',
+        threadOf(
+          id: 'thread-1',
+          comments: <Comment>[commentOf(id: 'comment-1', threadId: 'thread-1')],
+        ),
+      );
+
+      await repository.saveThread(
+        'project-1',
+        threadOf(
+          id: 'thread-1',
+          comments: <Comment>[
+            commentOf(id: 'comment-1', threadId: 'thread-1'),
+            commentOf(
+              id: 'comment-2',
+              threadId: 'thread-1',
+              body: 'Oui, le sel vient de la falaise.',
+            ),
+          ],
+        ),
+      );
+
+      final List<CommentThread> threads = await repository.loadThreads(
+        'project-1',
+      );
+
+      expect(threads.single.comments, hasLength(2));
+      expect(
+        threads.single.comments.first.body,
+        'La falaise rend bien la scène.',
+      );
+      expect(
+        threads.single.comments.last.body,
+        'Oui, le sel vient de la falaise.',
+      );
+      expect(threads.single.comments.last.author, const AuthorId('user-1'));
+    });
+
+    test('relit la réouverture d’un fil après rechargement', () async {
+      await repository.saveThread(
+        'project-1',
+        threadOf(
+          id: 'thread-1',
+          isResolved: true,
+          resolvedAt: DateTime.utc(2026, 10, 25, 9, 12),
+        ),
+      );
+
+      await repository.saveThread(
+        'project-1',
+        threadOf(id: 'thread-1', isResolved: false),
+      );
+
+      final List<CommentThread> threads = await repository.loadThreads(
+        'project-1',
+      );
+
+      expect(threads.single.isResolved, isFalse);
+      expect(threads.single.resolvedAt, isNull);
+    });
+
+    test('relit la résolution d’un fil après rechargement', () async {
+      await repository.saveThread(
+        'project-1',
+        threadOf(
+          id: 'thread-1',
+          isResolved: true,
+          resolvedAt: DateTime.utc(2026, 10, 25, 9, 12),
+        ),
+      );
+
+      final List<CommentThread> threads = await repository.loadThreads(
+        'project-1',
+      );
+
+      expect(threads.single.isResolved, isTrue);
+      expect(
+        threads.single.resolvedAt?.isAtSameMomentAs(
+          DateTime.utc(2026, 10, 25, 9, 12),
+        ),
+        isTrue,
+      );
+    });
+
     test('sépare les discussions de deux projets', () async {
       await repository.saveThread('project-1', threadOf(id: 'thread-1'));
       await repository.saveThread('project-2', threadOf(id: 'thread-2'));

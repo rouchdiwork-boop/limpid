@@ -20,6 +20,10 @@ import 'package:limpid_app/src/features/publication/publication_author_screen.da
 import 'package:limpid_app/src/features/publication/publication_reader.dart';
 import 'package:limpid_app/src/features/publication/publication_routes.dart';
 import 'package:limpid_app/src/features/publication/publication_screen.dart';
+import 'package:limpid_app/src/features/publication/purchases/purchases_routes.dart';
+import 'package:limpid_app/src/features/publication/purchases/purchases_screen.dart';
+import 'package:limpid_app/src/features/publication/sale/book_sale_screen.dart';
+import 'package:limpid_app/src/features/publication/sale/payment_return_screen.dart';
 import 'package:limpid_app/src/features/revision/history/history_routes.dart';
 import 'package:limpid_app/src/features/revision/history/history_screen.dart';
 import 'package:limpid_app/src/features/search/search_screen.dart';
@@ -49,7 +53,9 @@ bool _isPublicLocation(String location) {
   if (_publicRoutes.contains(location)) return true;
   return location.startsWith(PublicationRoutes.showcasePrefix) ||
       location.startsWith(PublicationRoutes.readerPrefix) ||
-      location.startsWith(PublicationRoutes.authorPrefix);
+      location.startsWith(PublicationRoutes.authorPrefix) ||
+      location.startsWith(PublicationRoutes.salePrefix) ||
+      location.startsWith(PublicationRoutes.paymentReturnPrefix);
 }
 
 /// The routes of the signed-in part of the application.
@@ -189,6 +195,20 @@ GoRouter appRouter(Ref ref) {
           authorId: state.pathParameters['authorId'] ?? '',
         ),
       ),
+      // La page de vente et le retour du paiement sont publics comme la
+      // vitrine : un lecteur ouvre la page d'un livre, il ne se connecte
+      // pas pour la voir.
+      GoRoute(
+        path: PublicationRoutes.salePattern,
+        builder: (context, state) =>
+            BookSaleScreen(projectId: state.pathParameters['projectId'] ?? ''),
+      ),
+      GoRoute(
+        path: PublicationRoutes.paymentReturnPattern,
+        builder: (context, state) => PaymentReturnScreen(
+          projectId: state.pathParameters['projectId'] ?? '',
+        ),
+      ),
       // L'historique des versions porte sur un document : il a son propre
       // chemin, comme les pages publiques d'un livre.
       GoRoute(
@@ -214,6 +234,13 @@ GoRouter appRouter(Ref ref) {
                 path: AppRoutes.library,
                 builder: (context, state) => const LibraryScreen(),
                 routes: <RouteBase>[
+                  // Les livres achetés sont une page du compte : elle
+                  // accompagne la bibliotheque, d'ou l'auteur y trouve
+                  // deja ses livres.
+                  GoRoute(
+                    path: PurchasesRoutes.segment,
+                    builder: (context, state) => const PurchasesScreen(),
+                  ),
                   // Les depots chez Amazon sont une page de l'auteur :
                   // ils vivent dans la branche de la bibliotheque, comme
                   // le reste de ce qui porte sur ses livres.

@@ -42,29 +42,29 @@ final revisionMembersProvider =
 @immutable
 class RevisionState {
   /// Creates a state.
-  const RevisionState({this.isResolving = false, this.error});
+  const RevisionState({this.isWriting = false, this.error});
 
-  /// Whether a discussion is being closed.
-  final bool isResolving;
+  /// Whether a discussion is being written.
+  final bool isWriting;
 
   /// The error raised by the last action, `null` when it succeeded.
   final Object? error;
 
   /// Whether the panel may act.
-  bool get canAct => !isResolving;
+  bool get canAct => !isWriting;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RevisionState &&
-          other.isResolving == isResolving &&
+          other.isWriting == isWriting &&
           other.error == error);
 
   @override
-  int get hashCode => Object.hash(isResolving, error);
+  int get hashCode => Object.hash(isWriting, error);
 
   @override
-  String toString() => 'RevisionState(isResolving: $isResolving)';
+  String toString() => 'RevisionState(isWriting: $isWriting)';
 }
 
 /// The actions of the review panel of a project.
@@ -75,14 +75,18 @@ final revisionControllerProvider =
 
 /// The controller of the review panel of a project.
 ///
-/// It closes the discussions and writes them: the state of a closed
-/// discussion survives the panel, and the manuscript keeps its anchor.
+/// It answers the discussions, closes them and opens them again, then writes
+/// them: the state of a discussion survives the panel, and the manuscript
+/// keeps its anchor.
 class RevisionController extends Notifier<RevisionState> {
   /// Creates the controller of a project.
   RevisionController(this.projectId);
 
   /// The project being reviewed.
   final String projectId;
+
+  /// The generator of the identifiers of the replies.
+  final UlidGenerator _ids = UlidGenerator();
 
   @override
   RevisionState build() => const RevisionState();
@@ -95,19 +99,65 @@ class RevisionController extends Notifier<RevisionState> {
     if (!state.canAct) {
       return;
     }
-    state = const RevisionState(isResolving: true);
+    await _write(thread.resolve(DateTime.now()));
+  }
+
+  /// Opens the discussion again and writes it.
+  ///
+  /// The reopened discussion keeps no date of resolution.
+  Future<void> reopen(CommentThread thread) async {
+    if (!state.canAct) {
+      return;
+    }
+    await _write(thread.reopen());
+  }
+
+  /// Adds a reply to the discussion and writes it.
+  ///
+  /// An empty reply is refused: a discussion never holds an empty message.
+  /// The reply carries the account of [author] and the date of the writing.
+  /// The reply is added at the end of the discussion: the messages stay
+  /// ordered from the oldest to the newest.
+  ///
+  /// Returns whether the reply was written.
+  Future<bool> reply({
+    required CommentThread thread,
+    required String body,
+    required AuthorId author,
+  }) async {
+    if (!state.canAct) {
+      return false;
+    }
+    final String text = body.trim();
+    if (text.isEmpty) {
+      return false;
+    }
+    final Comment answer = Comment(
+      id: CommentId(_ids.generate().value),
+      threadId: thread.id,
+      author: author,
+      body: text,
+      createdAt: DateTime.now(),
+    );
+    return _write(
+      thread.copyWith(comments: <Comment>[...thread.comments, answer]),
+    );
+  }
+
+  /// Writes the discussion [thread] and keeps the state of the panel.
+  ///
+  /// Returns whether the discussion was written. The error is kept in the
+  /// state: the panel shows it and the author may try again.
+  Future<bool> _write(CommentThread thread) async {
+    state = const RevisionState(isWriting: true);
     try {
-      final CommentThread resolved = thread.copyWith(
-        isResolved: true,
-        resolvedAt: DateTime.now(),
-      );
-      await ref
-          .read(revisionRepositoryProvider)
-          .saveThread(projectId, resolved);
+      await ref.read(revisionRepositoryProvider).saveThread(projectId, thread);
       ref.invalidate(revisionThreadsProvider(projectId));
       state = const RevisionState();
+      return true;
     } on Exception catch (error) {
       state = RevisionState(error: error);
+      return false;
     }
   }
 
@@ -119,7 +169,7 @@ class RevisionController extends Notifier<RevisionState> {
     if (state.error == null) {
       return;
     }
-    state = RevisionState(isResolving: state.isResolving);
+    state = RevisionState(isWriting: state.isWriting);
   }
 }
 

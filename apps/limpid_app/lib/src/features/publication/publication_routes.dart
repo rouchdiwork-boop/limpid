@@ -23,6 +23,21 @@ abstract final class PublicationRoutes {
   /// connaître son paramètre.
   static const String authorPrefix = '/auteur/';
 
+  /// Le préfixe de la page de vente d'un livre.
+  ///
+  /// La page de vente est **publique** comme la vitrine : un lecteur la
+  /// regarde sans compte, et se connecte pour acheter. Le préfixe et le
+  /// motif sont bâtis depuis la même constante, comme les autres pages
+  /// publiques.
+  static const String salePrefix = '/vente/';
+
+  /// Le préfixe de l'écran de retour du paiement d'un livre.
+  ///
+  /// L'écran de retour est **public** : c'est le prestataire de paiement qui
+  /// y renvoie l'acheteur, et l'acheteur peut ne pas être connecté quand il
+  /// arrive.
+  static const String paymentReturnPrefix = '/retour-paiement/';
+
   /// The pattern of the public page of a book.
   static const String showcasePattern = '$showcasePrefix:projectId';
 
@@ -32,6 +47,12 @@ abstract final class PublicationRoutes {
   /// Le motif de la page publique d'un auteur.
   static const String authorPattern = '$authorPrefix:authorId';
 
+  /// Le motif de la page de vente d'un livre.
+  static const String salePattern = '$salePrefix:projectId';
+
+  /// Le motif de l'écran de retour du paiement d'un livre.
+  static const String paymentReturnPattern = '$paymentReturnPrefix:projectId';
+
   /// The public page of the given book.
   static String showcase(String projectId) => '$showcasePrefix$projectId';
 
@@ -40,4 +61,11 @@ abstract final class PublicationRoutes {
 
   /// La page publique de l'auteur donné.
   static String author(String authorId) => '$authorPrefix$authorId';
+
+  /// La page de vente du livre donné.
+  static String sale(String projectId) => '$salePrefix$projectId';
+
+  /// L'écran de retour du paiement du livre donné.
+  static String paymentReturn(String projectId) =>
+      '$paymentReturnPrefix$projectId';
 }

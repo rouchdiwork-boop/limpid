@@ -202,6 +202,48 @@
       }
     }
   },
+  "saleBuy": "Acheter",
+  "salePageTitle": "Page de vente",
+  "saleNotForSale": "Ce livre n’est pas en vente",
+  "saleNotForSaleMessage": "Ce livre n’a pas de prix pour le moment. Revenez plus tard.",
+  "saleSignInRequired": "Connectez-vous pour acheter ce livre",
+  "saleSignInRequiredMessage": "Le prix et l’achat sont réservés aux comptes connectés.",
+  "saleSignInAction": "Se connecter",
+  "salePaymentUnavailable": "Le paiement n’est pas possible sur cette plateforme",
+  "saleOrderFailed": "La commande n’a pas abouti",
+  "saleFreeGranted": "Ce livre est gratuit : il est dans vos achats.",
+  "salePriceFree": "Gratuit",
+  "purchasesTitle": "Mes livres achetés",
+  "purchasesSubtitle": "Les livres que vous avez achetés, et leur fichier.",
+  "purchasesEmpty": "Vous n’avez acheté aucun livre",
+  "purchasesEmptyMessage": "Les livres achetés apparaissent ici, avec leur fichier.",
+  "purchasesDownloaded": "Le livre a été téléchargé.",
+  "purchasesDownloadFailed": "Le téléchargement a échoué",
+  "purchasesBoughtOn": "Acheté le {date}",
+  "@purchasesBoughtOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "purchasesLinkExpires": "Le lien expire le {date}",
+  "@purchasesLinkExpires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "purchasesLinkExpired": "Le lien a expiré : demandez-en un nouveau.",
+  "purchasesRenewLink": "Demander un nouveau lien",
+  "paymentReturnSuccess": "Le paiement est passé",
+  "paymentReturnSuccessMessage": "Le livre est dans vos achats.",
+  "paymentReturnFailure": "Le paiement n’a pas abouti",
+  "paymentReturnFailureMessage": "Le livre n’apparaît pas dans vos achats.",
+  "paymentReturnSeePurchases": "Voir mes achats",
+  "paymentReturnBackToBook": "Revenir à la page du livre",
+  "librarySectionPurchases": "Mes achats",
   "@projectChapterCount": {
     "placeholders": {
       "count": {
@@ -274,6 +316,10 @@
   "revisionRoleBetaReader": "Bêta-lecteur",
   "revisionRoleReader": "Lecteur",
   "revisionResolve": "Résoudre le fil",
+  "revisionReply": "Répondre",
+  "revisionReplyHint": "Votre réponse",
+  "revisionReopen": "Rouvrir le fil",
+  "revisionActionFailed": "L’action n’a pas pu être effectuée.",
   "revisionResolved": "Résolus",
   "revisionEmptyMessage": "Aucun commentaire pour l’instant.",
   "revisionMembers": "Collaborateurs",
@@ -398,7 +444,6 @@
     }
   },
   "syncStatusConflict": "Conflit résolu",
-  "revisionResolveFailed": "Le fil n’a pas pu être résolu.",
   "commonWords": "mots",
   "commonMinutes": "min",
   "settingsExportManuscriptsSubtitle": "Vos manuscrits, au format que vous choisissez.",

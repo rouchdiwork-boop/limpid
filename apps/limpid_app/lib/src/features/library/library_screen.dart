@@ -9,6 +9,7 @@ import 'package:limpid_app/src/features/library/library_tile.dart';
 import 'package:limpid_app/src/features/projects/project_metrics.dart';
 import 'package:limpid_app/src/features/projects/project_summary.dart';
 import 'package:limpid_app/src/features/projects/projects_providers.dart';
+import 'package:limpid_app/src/features/publication/purchases/purchases_routes.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 
@@ -46,7 +47,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           SizedBox(height: scope.spacing.space20),
           _FilterBar(filter: _filter, onChanged: _selectFilter),
           SizedBox(height: scope.spacing.space20),
-          _buildCollaboration(context, strings),
+          _buildPages(context, strings),
           SizedBox(height: scope.spacing.space20),
           library.when(
             loading: () => const LibraryLoading(),
@@ -71,8 +72,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   /// The pages qui accompagnent les livres de l'auteur.
   ///
   /// La diffusion chez Amazon et les equipes vivent dans la bibliotheque :
-  /// elles portent sur les livres, comme le reste de la page.
-  Widget _buildCollaboration(BuildContext context, AppLocalizations strings) {
+  /// elles portent sur les livres, comme le reste de la page. Les livres
+  /// **achetes** y sont aussi : le compte achete des livres, il ne se
+  /// contente pas d'en ecrire.
+  Widget _buildPages(BuildContext context, AppLocalizations strings) {
     final LimpidThemeScope scope = context.limpid;
 
     return Column(
@@ -94,6 +97,18 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           subtitle: strings.teamsSubtitle,
           leading: const Icon(LimpidIcons.users),
           onTap: () => context.go(AppRoutes.teams),
+        ),
+        SizedBox(height: scope.spacing.space20),
+        Text(
+          LimpidTextTransform.label(strings.librarySectionPurchases),
+          style: LimpidTypography.labelStyle(color: scope.colors.fgSubtle),
+        ),
+        SizedBox(height: scope.spacing.space8),
+        LimpidListTile(
+          title: strings.purchasesTitle,
+          subtitle: strings.purchasesSubtitle,
+          leading: const Icon(LimpidIcons.library),
+          onTap: () => context.go(PurchasesRoutes.purchases),
         ),
       ],
     );

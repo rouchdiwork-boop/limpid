@@ -40,6 +40,7 @@ Widget harness({
       theme: LimpidTheme.of(LimpidThemeVariant.paper),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('fr'),
       home: Scaffold(
         body: RevisionPanel(
           projectId: kRevisionProjectId,
@@ -247,5 +248,276 @@ void main() {
       find.widgetWithText(LimpidButton, strings.revisionResolve),
     );
     expect(button.onPressed, isNull);
+  });
+
+  group('the thread answers', () {
+    /// The thread of the panel, with one message.
+    CommentThread threadOfThePanel() => fakeThread(
+      id: 'fil-1',
+      markId: 'marque-1',
+      comments: <Comment>[
+        fakeComment(
+          id: 'message-1',
+          threadId: 'fil-1',
+          authorId: 'auteur-2',
+          body: 'Le sel vient des murs',
+        ),
+      ],
+    );
+
+    /// The repository of the panel, with its owner.
+    FakeRevisionRepository repositoryOfThePanel(CommentThread thread) {
+      return FakeRevisionRepository(
+        threads: <CommentThread>[thread],
+        members: <ProjectMember>[
+          fakeMember(
+            id: 'auteur-1',
+            displayName: 'Ines Barreau',
+            role: ProjectRole.owner,
+          ),
+        ],
+      );
+    }
+
+    testWidgets('the reply is written at the end of the thread', (
+      tester,
+    ) async {
+      useSurface(tester, const Size(1440, 1100));
+      final CommentThread thread = threadOfThePanel();
+      final FakeRevisionRepository repository = repositoryOfThePanel(thread);
+
+      await tester.pumpWidget(
+        harness(
+          threads: <RevisionThread>[fakeRevisionThread(thread: thread)],
+          members: repository.members,
+          repository: repository,
+        ),
+      );
+      await settle(tester);
+
+      await tester.enterText(
+        find.byType(TextField),
+        'Oui, le sel vient de la falaise',
+      );
+      await settle(tester);
+      await tester.tap(find.widgetWithText(LimpidButton, 'Répondre'));
+      await settle(tester);
+
+      expect(repository.saved, hasLength(1));
+      final CommentThread saved = repository.saved.single;
+      expect(saved.comments, hasLength(2));
+      expect(saved.comments.first.body, 'Le sel vient des murs');
+      expect(saved.comments.last.body, 'Oui, le sel vient de la falaise');
+    });
+
+    testWidgets('the reply carries the connected account and the date', (
+      tester,
+    ) async {
+      useSurface(tester, const Size(1440, 1100));
+      final CommentThread thread = threadOfThePanel();
+      final FakeRevisionRepository repository = repositoryOfThePanel(thread);
+
+      await tester.pumpWidget(
+        harness(
+          threads: <RevisionThread>[fakeRevisionThread(thread: thread)],
+          members: repository.members,
+          repository: repository,
+        ),
+      );
+      await settle(tester);
+
+      final DateTime before = DateTime.now();
+      await tester.enterText(find.byType(TextField), 'D’accord');
+      await settle(tester);
+      await tester.tap(find.widgetWithText(LimpidButton, 'Répondre'));
+      await settle(tester);
+
+      final Comment reply = repository.saved.single.comments.last;
+      expect(reply.author, kRevisionAuthor);
+      expect(reply.threadId, thread.id);
+      expect(reply.createdAt.isBefore(before), isFalse);
+    });
+
+    testWidgets('an empty reply is refused', (tester) async {
+      useSurface(tester, const Size(1440, 1100));
+      final CommentThread thread = threadOfThePanel();
+      final FakeRevisionRepository repository = repositoryOfThePanel(thread);
+
+      await tester.pumpWidget(
+        harness(
+          threads: <RevisionThread>[fakeRevisionThread(thread: thread)],
+          members: repository.members,
+          repository: repository,
+        ),
+      );
+      await settle(tester);
+
+      final LimpidButton button = tester.widget<LimpidButton>(
+        find.widgetWithText(LimpidButton, 'Répondre'),
+      );
+      expect(button.onPressed, isNull);
+
+      await tester.enterText(find.byType(TextField), '   ');
+      await settle(tester);
+
+      final LimpidButton stillEmpty = tester.widget<LimpidButton>(
+        find.widgetWithText(LimpidButton, 'Répondre'),
+      );
+      expect(stillEmpty.onPressed, isNull);
+      expect(repository.saved, isEmpty);
+    });
+
+    test('the controller refuses an empty reply', () async {
+      final CommentThread thread = fakeThread(
+        id: 'fil-1',
+        markId: 'marque-1',
+        comments: <Comment>[
+          fakeComment(
+            id: 'message-1',
+            threadId: 'fil-1',
+            authorId: 'auteur-2',
+            body: 'Le sel vient des murs',
+          ),
+        ],
+      );
+      final FakeRevisionRepository repository = FakeRevisionRepository(
+        threads: <CommentThread>[thread],
+      );
+      final ProviderContainer container = ProviderContainer(
+        overrides: [revisionRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final RevisionController controller = container.read(
+        revisionControllerProvider(kRevisionProjectId).notifier,
+      );
+      final bool written = await controller.reply(
+        thread: thread,
+        body: '   ',
+        author: kRevisionAuthor,
+      );
+
+      expect(written, isFalse);
+      expect(repository.saved, isEmpty);
+    });
+  });
+
+  group('the thread is resolved and opened again', () {
+    /// The thread of the panel, resolved.
+    CommentThread resolvedThread() => fakeThread(
+      id: 'fil-1',
+      markId: 'marque-1',
+      comments: <Comment>[
+        fakeComment(
+          id: 'message-1',
+          threadId: 'fil-1',
+          authorId: 'auteur-2',
+          body: 'Le sel vient des murs',
+        ),
+      ],
+      isResolved: true,
+    );
+
+    /// The repository of the panel, with its owner.
+    FakeRevisionRepository repositoryOfThePanel(CommentThread thread) {
+      return FakeRevisionRepository(
+        threads: <CommentThread>[thread],
+        members: <ProjectMember>[
+          fakeMember(
+            id: 'auteur-1',
+            displayName: 'Ines Barreau',
+            role: ProjectRole.owner,
+          ),
+        ],
+      );
+    }
+
+    testWidgets('the resolved thread stays visible', (tester) async {
+      useSurface(tester, const Size(1440, 1100));
+      final CommentThread thread = resolvedThread();
+      final FakeRevisionRepository repository = repositoryOfThePanel(thread);
+
+      await tester.pumpWidget(
+        harness(
+          threads: <RevisionThread>[fakeRevisionThread(thread: thread)],
+          members: repository.members,
+          repository: repository,
+        ),
+      );
+      await settle(tester);
+
+      final AppLocalizations strings = stringsOf(tester);
+      await tester.tap(
+        find.widgetWithText(LimpidChip, strings.revisionResolved),
+      );
+      await settle(tester);
+
+      expect(find.text('Le sel vient des murs'), findsOneWidget);
+    });
+
+    testWidgets('the resolved thread is opened again', (tester) async {
+      useSurface(tester, const Size(1440, 1100));
+      final CommentThread thread = resolvedThread();
+      final FakeRevisionRepository repository = repositoryOfThePanel(thread);
+
+      await tester.pumpWidget(
+        harness(
+          threads: <RevisionThread>[fakeRevisionThread(thread: thread)],
+          members: repository.members,
+          repository: repository,
+        ),
+      );
+      await settle(tester);
+
+      final AppLocalizations strings = stringsOf(tester);
+      await tester.tap(
+        find.widgetWithText(LimpidChip, strings.revisionResolved),
+      );
+      await settle(tester);
+      await tester.tap(find.widgetWithText(LimpidButton, 'Rouvrir le fil'));
+      await settle(tester);
+
+      expect(repository.saved, hasLength(1));
+      expect(repository.saved.single.isResolved, isFalse);
+      expect(repository.saved.single.resolvedAt, isNull);
+    });
+
+    testWidgets('the resolution carries its date', (tester) async {
+      useSurface(tester, const Size(1440, 1100));
+      final CommentThread thread = fakeThread(
+        id: 'fil-1',
+        markId: 'marque-1',
+        comments: <Comment>[
+          fakeComment(
+            id: 'message-1',
+            threadId: 'fil-1',
+            authorId: 'auteur-2',
+            body: 'Le sel vient des murs',
+          ),
+        ],
+      );
+      final FakeRevisionRepository repository = repositoryOfThePanel(thread);
+
+      await tester.pumpWidget(
+        harness(
+          threads: <RevisionThread>[fakeRevisionThread(thread: thread)],
+          members: repository.members,
+          repository: repository,
+        ),
+      );
+      await settle(tester);
+
+      final AppLocalizations strings = stringsOf(tester);
+      final DateTime before = DateTime.now();
+      await tester.tap(
+        find.widgetWithText(LimpidButton, strings.revisionResolve),
+      );
+      await settle(tester);
+
+      expect(repository.saved, hasLength(1));
+      expect(repository.saved.single.isResolved, isTrue);
+      expect(repository.saved.single.resolvedAt, isNotNull);
+      expect(repository.saved.single.resolvedAt!.isBefore(before), isFalse);
+    });
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/features/revision/revision_models.dart';
@@ -6,9 +8,9 @@ import 'package:limpid_design_system/limpid_design_system.dart';
 
 /// The card of a discussion of the manuscript.
 ///
-/// The card shows the first message of the discussion, its replies and the
-/// action that closes it. Clicking it selects the anchor of the discussion:
-/// the manuscript puts the passage in relief.
+/// The card shows the first message of the discussion, its replies, the
+/// field that answers it and the action that closes it. Clicking it selects
+/// the anchor of the discussion: the manuscript puts the passage in relief.
 class RevisionThreadCard extends StatefulWidget {
   /// Creates the card of a discussion.
   const RevisionThreadCard({
@@ -17,6 +19,8 @@ class RevisionThreadCard extends StatefulWidget {
     required this.canResolve,
     required this.onSelect,
     required this.onResolve,
+    required this.onReopen,
+    required this.onReply,
     super.key,
   });
 
@@ -35,6 +39,15 @@ class RevisionThreadCard extends StatefulWidget {
   /// Called when the discussion is closed.
   final VoidCallback onResolve;
 
+  /// Called when the discussion is opened again.
+  final VoidCallback onReopen;
+
+  /// Called when a reply is written.
+  ///
+  /// The callback answers whether the reply was saved: the field keeps the
+  /// text of a reply that could not be written.
+  final Future<bool> Function(String body) onReply;
+
   @override
   State<RevisionThreadCard> createState() => _RevisionThreadCardState();
 }
@@ -43,6 +56,7 @@ class _RevisionThreadCardState extends State<RevisionThreadCard> {
   late final FocusNode _focusNode = FocusNode(
     debugLabel: 'revision-thread-card',
   );
+  final TextEditingController _reply = TextEditingController();
   bool _isFocused = false;
 
   @override
@@ -55,6 +69,7 @@ class _RevisionThreadCardState extends State<RevisionThreadCard> {
   void dispose() {
     _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();
+    _reply.dispose();
     super.dispose();
   }
 
@@ -62,6 +77,21 @@ class _RevisionThreadCardState extends State<RevisionThreadCard> {
     if (mounted) {
       setState(() => _isFocused = _focusNode.hasFocus);
     }
+  }
+
+  /// Sends the reply written in the field.
+  ///
+  /// An empty reply is refused: the discussion never holds an empty message.
+  Future<void> _sendReply() async {
+    final String body = _reply.text.trim();
+    if (body.isEmpty) {
+      return;
+    }
+    final bool written = await widget.onReply(body);
+    if (!written || !mounted) {
+      return;
+    }
+    _reply.clear();
   }
 
   @override
@@ -113,6 +143,13 @@ class _RevisionThreadCardState extends State<RevisionThreadCard> {
                 for (final RevisionComment reply in replies)
                   _ReplyRow(comment: reply),
                 if (!isResolved) ...<Widget>[
+                  SizedBox(height: tokens.spacing.space8),
+                  _ReplyField(
+                    controller: _reply,
+                    label: strings.revisionReply,
+                    hint: strings.revisionReplyHint,
+                    onSend: _sendReply,
+                  ),
                   SizedBox(height: tokens.spacing.space4),
                   LimpidButton(
                     label: strings.revisionResolve,
@@ -121,12 +158,76 @@ class _RevisionThreadCardState extends State<RevisionThreadCard> {
                     size: LimpidButtonSize.small,
                     onPressed: widget.canResolve ? widget.onResolve : null,
                   ),
+                ] else ...<Widget>[
+                  SizedBox(height: tokens.spacing.space4),
+                  LimpidButton(
+                    label: strings.revisionReopen,
+                    icon: LimpidIcons.undo,
+                    variant: LimpidButtonVariant.ghost,
+                    size: LimpidButtonSize.small,
+                    onPressed: widget.canResolve ? widget.onReopen : null,
+                  ),
                 ],
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The field that writes a reply, and the button that sends it.
+///
+/// The button stays disabled while the field is empty: an empty reply is
+/// never written.
+class _ReplyField extends StatelessWidget {
+  const _ReplyField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.onSend,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final Future<void> Function() onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    final LimpidThemeScope tokens = context.limpid;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: <Widget>[
+        Expanded(
+          child: LimpidTextField(
+            controller: controller,
+            hint: hint,
+            minLines: 1,
+            maxLines: 3,
+            textInputAction: TextInputAction.send,
+            onSubmitted: (String _) => unawaited(onSend()),
+          ),
+        ),
+        SizedBox(width: tokens.spacing.space8),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder:
+              (BuildContext context, TextEditingValue value, Widget? child) {
+                return LimpidButton(
+                  label: label,
+                  icon: LimpidIcons.arrowRight,
+                  variant: LimpidButtonVariant.secondary,
+                  size: LimpidButtonSize.small,
+                  onPressed: value.text.trim().isEmpty
+                      ? null
+                      : () => unawaited(onSend()),
+                );
+              },
+        ),
+      ],
     );
   }
 }
