@@ -132,6 +132,46 @@ void main() {
           expect(response.statusCode, 404);
         },
       );
+
+      test('le prix se lit sans compte', () async {
+        await harness.publish(projectId, priceInCents: 1200);
+
+        final http.Response response = await harness.get(
+          '/v1/public/books/$projectId/sale',
+        );
+
+        expect(response.statusCode, 200);
+        final Map<String, dynamic> data = harness.dataOf(response);
+        expect(data['price_cents'], 1200);
+        expect(data['currency'], 'eur');
+        expect(data['status'], 'published');
+        // La part de l'auteur et le proprietaire restent sur le serveur :
+        // un lecteur n'a pas a les connaitre.
+        expect(data.containsKey('author_share'), isFalse);
+        expect(data.containsKey('owner_id'), isFalse);
+      });
+
+      test('un livre en preparation n\'a pas de prix public', () async {
+        await harness.publish(
+          projectId,
+          priceInCents: 1200,
+          status: BookSaleStatus.draft,
+        );
+
+        final http.Response response = await harness.get(
+          '/v1/public/books/$projectId/sale',
+        );
+
+        expect(response.statusCode, 404);
+      });
+
+      test('un livre inconnu n\'a pas de prix public', () async {
+        final http.Response response = await harness.get(
+          '/v1/public/books/projet-inconnu/sale',
+        );
+
+        expect(response.statusCode, 404);
+      });
     });
 
     group('commande', () {

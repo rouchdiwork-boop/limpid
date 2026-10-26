@@ -22,6 +22,12 @@ import '../services/revenue_share_service.dart';
 /// L'action journalée quand un auteur met son livre en vente.
 const String bookSalePublishedAction = 'book.sale_published';
 
+/// Le nombre de prix publics qu'une adresse IP peut demander d'un coup.
+const int publicBookSaleRateLimitCapacity = 60;
+
+/// Le nombre de prix publics qu'une adresse IP regagne par seconde.
+const double publicBookSaleRateLimitRefillPerSecond = 2;
+
 /// L'action journalée quand l'administration crée un code promo.
 const String promoCodeCreatedAction = 'book.promo_code_created';
 
@@ -123,6 +129,46 @@ void registerBookSaleRoutes(
       throw const NotFoundException(message: "Ce livre n'est pas en vente.");
     }
     return ApiResponse.ok(sale.toJson());
+  });
+
+  // Le prix est public : la page de vente se regarde sans compte, et le
+  // lecteur n'en fait un que pour acheter. La route répond sous le
+  // préfixe public de la vitrine — elle est donc exemptée du jeton — et
+  // elle est limitée comme elle, puisque c'est la seule qu'un inconnu
+  // peut appeler en boucle.
+  final TokenBucketRateLimiter publicPriceLimiter = TokenBucketRateLimiter(
+    capacity: publicBookSaleRateLimitCapacity,
+    refillPerSecond: publicBookSaleRateLimitRefillPerSecond,
+  );
+
+  router.get('/v1/public/books/<projectId>/sale', (
+    Request request,
+    String projectId,
+  ) {
+    return rateLimitMiddleware(
+      limiter: publicPriceLimiter,
+      scope: 'public_book_sale',
+      applies: (Request request) => true,
+    )((Request request) async {
+      final BookSaleRecord? sale = await service.saleOf(projectId);
+      if (sale == null || !sale.isPublished) {
+        // Un livre inconnu, un livre qui n'est pas en vente et un livre en
+        // préparation répondent la même chose : le visiteur ne doit pas
+        // apprendre qu'un livre existe.
+        throw const NotFoundException(message: "Ce livre n'est pas en vente.");
+      }
+      // La réponse ne porte que ce qu'un lecteur a le droit de voir : le
+      // prix, le titre et la devise. La part de l'auteur et l'identité du
+      // propriétaire restent sur le serveur.
+      return ApiResponse.ok(<String, Object?>{
+        'project_id': sale.projectId,
+        'title': sale.title,
+        'price_cents': sale.priceInCents,
+        'currency': sale.currency,
+        'status': sale.status.key,
+        'is_free': sale.isFree,
+      });
+    })(request);
   });
 
   // -------------------------------------------------------------------
