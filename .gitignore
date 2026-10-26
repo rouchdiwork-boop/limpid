@@ -86,7 +86,11 @@ Desktop.ini
 .DS_Store
 .AppleDouble
 .LSOverride
-Icon?
+# Le fichier `Icon` de macOS porte un retour chariot final. Le motif doit
+# refuser les lettres : sans cela, sur un systeme de fichiers insensible a
+# la casse, il attrapait aussi le dossier `icons/` du design system, et le
+# fichier d icones n etait pas versionne.
+Icon[^a-zA-Z]
 
 # ─── Mockups ────────────────────────────────────────────────────────────────
 
