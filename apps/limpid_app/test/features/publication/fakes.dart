@@ -2,6 +2,8 @@ import 'package:limpid_app/src/domain/publication_repository.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_core/limpid_core.dart';
 
+import '../../support/hierarchy_stub.dart';
+
 /// The author stamping the operations built by the fakes.
 const AuthorId kFakeAuthor = AuthorId('fake-author');
 
@@ -36,7 +38,8 @@ final class FakePublicationPageRepository implements PublicationRepository {
 /// The fake holds the projects, the chapters, the scenes and the documents
 /// the test gives it: the public page is computed from them, exactly as it
 /// is computed from the local database.
-final class FakePublicationRepository implements ManuscriptRepository {
+final class FakePublicationRepository extends StubHierarchyRepository
+    implements ManuscriptRepository {
   /// Creates the repository with the manuscripts the author already owns.
   FakePublicationRepository({
     List<Project> projects = const <Project>[],

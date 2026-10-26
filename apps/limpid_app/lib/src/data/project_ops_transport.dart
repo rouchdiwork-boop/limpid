@@ -5,7 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:limpid_app/src/data/manuscript_store.dart';
 import 'package:limpid_app/src/data/project_identity_store.dart';
 import 'package:limpid_app/src/data/server_project_registry.dart';
+import 'package:limpid_app/src/data/server_tree.dart';
 import 'package:limpid_app/src/data/sync_api_client.dart';
+import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_core/limpid_core.dart' hide SyncTransport;
 import 'package:limpid_sync/limpid_sync.dart';
 
@@ -62,21 +64,55 @@ abstract interface class ProjectRegisteringTransport implements SyncTransport {
   Future<void> registerProject(String projectId);
 }
 
-final class ProjectOpsTransport implements ProjectRegisteringTransport {
+/// A transport that can pull the tree of a project.
+///
+/// The tree is what the client pulls when the server refuses its version of
+/// the protocol: the server rebuilds the documents of the project from its
+/// journal, and the client replaces its local state by the result.
+///
+/// The capability extends the contract of the synchronisation: an
+/// implementation that declares it knows how to ask the server for the state
+/// it holds.
+abstract interface class TreeFetchingTransport implements SyncTransport {
+  /// Pulls the tree of the documents of the project [projectId].
+  ///
+  /// The trees are the ones the server rebuilt from its journal: the server
+  /// makes the authority of the manuscript.
+  Future<List<ServerDocumentTree>> fetchTree(String projectId);
+}
+
+/// A transport that reports the operations the server refused.
+///
+/// The refusal of an operation is a fact of the synchronisation: the
+/// operation stays in the durable queue of the device, and the application
+/// is told about it. A refusal is never swallowed.
+abstract interface class RejectionReportingTransport implements SyncTransport {
+  /// The stream of the operations the server refused.
+  Stream<RejectedOperation> get refusals;
+}
+
+final class ProjectOpsTransport
+    implements
+        ProjectRegisteringTransport,
+        TreeFetchingTransport,
+        RejectionReportingTransport {
   /// Creates a transport.
   ProjectOpsTransport({
     required Uri baseUrl,
     required http.Client client,
     required this.store,
     required this.projects,
+    String Function()? accountId,
     AuthTokenProvider? tokenProvider,
+    this.twoFactorProof,
     this.requestTimeout = defaultRequestTimeout,
     this.pageSize = defaultPullLimit,
-  }) {
+  }) : accountId = accountId ?? (() => store.accountId) {
     _api = SyncApiClient(
       baseUrl: baseUrl,
       client: client,
       tokenProvider: tokenProvider,
+      twoFactorProof: twoFactorProof,
       requestTimeout: requestTimeout,
     );
     _registry = ServerProjectRegistry(api: _api, identities: projects);
@@ -92,6 +128,22 @@ final class ProjectOpsTransport implements ProjectRegisteringTransport {
   /// the device adopt the identifier the server minted.
   final ProjectIdentityStore projects;
 
+  /// The account that owns the local data of the device.
+  ///
+  /// The index of the documents and the cursor of the scan belong to it: the
+  /// transport never routes a document of another account, and never
+  /// continues the scan of another account.
+  ///
+  /// The account is resolved on every call: it follows the session.
+  final String Function() accountId;
+
+  /// Resolves the proof of the second factor sent with every request.
+  ///
+  /// The operations reach the routes of the API, which refuse them when the
+  /// proof is missing. The proof is resolved on every call: it expires, and
+  /// the author then proves the second factor again.
+  final String? Function()? twoFactorProof;
+
   /// The timeout applied to every request.
   final Duration requestTimeout;
 
@@ -102,13 +154,22 @@ final class ProjectOpsTransport implements ProjectRegisteringTransport {
 
   late final ServerProjectRegistry _registry;
 
+  final StreamController<RejectedOperation> _refusals =
+      StreamController<RejectedOperation>.broadcast();
+
+  @override
+  Stream<RejectedOperation> get refusals => _refusals.stream;
+
   @override
   Future<PushResult> push(List<SyncOp> ops) async {
     if (ops.isEmpty) return PushResult.empty;
     final Map<String, List<SyncOp>> byProject = <String, List<SyncOp>>{};
     final List<RejectedOperation> rejected = <RejectedOperation>[];
     for (final SyncOp op in ops) {
-      final String? projectId = await store.findProjectOfDocument(op.doc.value);
+      final String? projectId = await store.findProjectOfDocument(
+        op.doc.value,
+        accountId: accountId(),
+      );
       if (projectId == null) {
         rejected.add(
           RejectedOperation(
@@ -130,6 +191,7 @@ final class ProjectOpsTransport implements ProjectRegisteringTransport {
       accepted.addAll(result.accepted);
       duplicated.addAll(result.duplicated);
       rejected.addAll(result.rejected);
+      _publishRefusals(result.rejected);
       if (result.lamportAck > lamportAck) lamportAck = result.lamportAck;
     }
     return PushResult(
@@ -146,16 +208,19 @@ final class ProjectOpsTransport implements ProjectRegisteringTransport {
     required int since,
     int limit = defaultPullLimit,
   }) async {
-    final String? projectId = await store.findProjectOfDocument(docId);
+    final String? projectId = await store.findProjectOfDocument(
+      docId,
+      accountId: accountId(),
+    );
     if (projectId == null) return const <SyncOp>[];
 
-    var cursor = await store.readCursor(docId);
+    var cursor = await store.readCursor(docId, accountId: accountId());
     final List<SyncOp> delivered = <SyncOp>[];
     while (delivered.length < limit) {
       final List<SyncOp> page = await _pullPage(projectId, cursor);
       if (page.isEmpty) break;
       cursor = _maxLamport(page);
-      await store.writeCursor(docId, cursor);
+      await store.writeCursor(docId, cursor, accountId: accountId());
       for (final SyncOp op in page) {
         if (op.doc.value == docId) delivered.add(op);
       }
@@ -164,6 +229,13 @@ final class ProjectOpsTransport implements ProjectRegisteringTransport {
     return List<SyncOp>.unmodifiable(delivered);
   }
 
+  /// The real-time channel of the document [docId].
+  ///
+  /// The transport is the **REST path** of the synchronisation: it pushes
+  /// and pulls the operations. The real-time channel belongs to
+  /// `RealTimeTransport`, the collaborator that owns the WebSocket of the
+  /// relay and the reconnection — this method therefore opens nothing, and
+  /// the stream stays empty.
   @override
   Stream<TransportEvent> connect(String docId) =>
       const Stream<TransportEvent>.empty();
@@ -171,7 +243,9 @@ final class ProjectOpsTransport implements ProjectRegisteringTransport {
   @override
   Future<void> dispose() async {
     // The HTTP client belongs to the application: the transport never closes
-    // it.
+    // it. The stream of the refusals stays open too: the transport is
+    // shared by every document of the library, and the client of the
+    // synchronisation releases it at the end of every round.
   }
 
   /// Declares the project [projectId] on the server.
@@ -196,7 +270,7 @@ final class ProjectOpsTransport implements ProjectRegisteringTransport {
     final String body = jsonEncode(<String, Object?>{
       'operations': ops.map(OpCodec.encode).toList(growable: false),
     });
-    final http.Response response = await _api.send(
+    final http.Response response = await _send(
       () => _api.client.post(
         _api.uri('/v1/projects/${Uri.encodeComponent(project.id)}/ops'),
         headers: headers,
@@ -210,6 +284,54 @@ final class ProjectOpsTransport implements ProjectRegisteringTransport {
       rejected: _decodeRejected(payload['rejected']),
       lamportAck: _decodeInt(payload['lamport_ack']),
     );
+  }
+
+  /// Pulls the tree of the documents of the project [projectId].
+  ///
+  /// The tree is what the server rebuilt from its journal: the client
+  /// replaces its local state by it when the server refuses its version of
+  /// the protocol.
+  ///
+  /// The declaration comes first, as for the push: the route of the tree is
+  /// the route of the project, and the server mints the identifier of a
+  /// project it does not know yet.
+  @override
+  Future<List<ServerDocumentTree>> fetchTree(String projectId) async {
+    final RegisteredProject project = await _registry.register(projectId);
+    final Map<String, String> headers = await _api.headers();
+    final http.Response response = await _send(
+      () => _api.client.get(
+        _api.uri('/v1/projects/${Uri.encodeComponent(project.id)}/tree'),
+        headers: headers,
+      ),
+    );
+    return ServerTree.decode(_api.decodeEnvelope(response.body));
+  }
+
+  /// Sends a request and reads the refusal of the protocol version.
+  ///
+  /// The server answers `409 schema_version_unsupported` when the version of
+  /// the protocol the client speaks is too old. The refusal is not an
+  /// ordinary failure: the client has to resynchronize itself, and the
+  /// error says so — the interface never sees it.
+  Future<http.Response> _send(Future<http.Response> Function() request) async {
+    try {
+      return await _api.send(request);
+    } on SyncTransportException catch (error) {
+      if (error.code != schemaVersionUnsupportedCode) rethrow;
+      throw SchemaVersionUnsupportedException(message: error.message);
+    }
+  }
+
+  /// Publishes the operations the server refused.
+  ///
+  /// The operations stay in the durable queue of the device: they are never
+  /// dropped, and the application is told about them.
+  void _publishRefusals(List<RejectedOperation> refused) {
+    if (refused.isEmpty || _refusals.isClosed) return;
+    for (final RejectedOperation rejection in refused) {
+      _refusals.add(rejection);
+    }
   }
 
   /// Reads a page of the journal of a project.

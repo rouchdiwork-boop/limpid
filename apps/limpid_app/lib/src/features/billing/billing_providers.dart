@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:limpid_app/src/domain/plan_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/features/billing/billing_routes.dart';
+import 'package:limpid_app/src/features/security/two_factor_challenge.dart';
 import 'package:limpid_core/limpid_core.dart';
 
 /// Le cycle de facturation que l'auteur regarde.
@@ -28,17 +29,26 @@ final class BillingPeriodNotifier extends Notifier<BillingPeriod> {
 
 /// L'abonnement du compte, lu sur le serveur.
 final accountPlanProvider = FutureProvider<AccountPlan>((Ref ref) async {
-  return ref.watch(planRepositoryProvider).currentPlan();
+  return runWithTwoFactorGlobally(
+    ref,
+    action: () => ref.watch(planRepositoryProvider).currentPlan(),
+  );
 });
 
 /// Le catalogue des formules, lu sur le serveur.
 final planOffersProvider = FutureProvider<List<PlanOffer>>((Ref ref) async {
-  return ref.watch(planRepositoryProvider).offers();
+  return runWithTwoFactorGlobally(
+    ref,
+    action: () => ref.watch(planRepositoryProvider).offers(),
+  );
 });
 
 /// La consommation du cycle en cours, lue sur le serveur.
 final quotaUsageProvider = FutureProvider<List<QuotaReading>>((Ref ref) async {
-  return ref.watch(planRepositoryProvider).usage();
+  return runWithTwoFactorGlobally(
+    ref,
+    action: () => ref.watch(planRepositoryProvider).usage(),
+  );
 });
 
 /// L'état de l'ouverture d'une session de paiement.

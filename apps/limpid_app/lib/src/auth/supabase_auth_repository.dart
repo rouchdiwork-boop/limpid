@@ -4,6 +4,7 @@ import 'package:limpid_app/src/auth/auth_repository.dart';
 import 'package:limpid_app/src/auth/auth_runtime.dart';
 import 'package:limpid_app/src/auth/demo_auth_repository.dart';
 import 'package:limpid_app/src/auth/session_stream.dart';
+import 'package:limpid_app/src/auth/two_factor_proof_holder.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
@@ -76,7 +77,12 @@ final class SupabaseAuthRepository
   }
 
   @override
-  Future<void> signOut() => _client.auth.signOut();
+  Future<void> signOut() async {
+    // La preuve du second facteur appartient à la session : elle tombe avec
+    // elle, que l'écran de sécurité ait été ouvert ou non.
+    TwoFactorProofHolder.clear();
+    await _client.auth.signOut();
+  }
 
   /// Where Supabase must send the author back after clicking the magic link.
   String get _redirectUrl {

@@ -42,6 +42,12 @@ dependencies:
   # Client HTTP de l'API (projets, synchronisation, IA, exports).
   http: ^1.6.0
 
+  # Interoperabilite avec le navigateur : le web n'a pas de systeme de
+  # fichiers, et l'archive des donnees personnelles se telecharge par le
+  # navigateur. Le paquet est deja dans l'arbre (transitif) ; il devient
+  # direct parce que le code l'utilise.
+  web: ^1.1.1
+
   # Paquets internes
   limpid_core:
     path: ../../packages/limpid_core
@@ -74,3 +80,52 @@ flutter:
   generate: true
   assets:
     - assets/
+  fonts:
+    - family: Literata
+      fonts:
+        - asset: assets/fonts/Literata-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Literata-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/Literata-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Literata-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Fraunces-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/Fraunces-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Fraunces-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: Instrument Sans
+      fonts:
+        - asset: assets/fonts/InstrumentSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/InstrumentSans-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/InstrumentSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/InstrumentSans-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: IBM Plex Mono
+      fonts:
+        - asset: assets/fonts/IBMPlexMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexMono-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/IBMPlexMono-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/IBMPlexMono-BoldItalic.ttf
+          weight: 700
+          style: italic

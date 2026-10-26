@@ -153,6 +153,8 @@ class _Gauge extends StatelessWidget {
       switch (meter) {
         QuotaMeter.words => strings.billingWords,
         QuotaMeter.aiUsage => strings.billingAiRewrites,
+        QuotaMeter.aiTokens => strings.billingAiTokens,
+        QuotaMeter.aiCovers => strings.billingAiCovers,
         QuotaMeter.storage => strings.billingStorage,
       };
 

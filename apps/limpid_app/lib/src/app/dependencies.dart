@@ -1,30 +1,47 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:limpid_app/src/auth/auth_runtime.dart';
+import 'package:limpid_app/src/auth/two_factor_proof_holder.dart';
 import 'package:limpid_app/src/bootstrap/app_bootstrap.dart';
+import 'package:limpid_app/src/data/api_admin_repository.dart';
 import 'package:limpid_app/src/data/api_ai_repository.dart';
 import 'package:limpid_app/src/data/api_client.dart';
 import 'package:limpid_app/src/data/api_export_repository.dart';
 import 'package:limpid_app/src/data/api_gdpr_repository.dart';
+import 'package:limpid_app/src/data/api_kdp_repository.dart';
 import 'package:limpid_app/src/data/api_plan_repository.dart';
 import 'package:limpid_app/src/data/api_publication_repository.dart';
+import 'package:limpid_app/src/data/api_share_repository.dart';
+import 'package:limpid_app/src/data/api_team_repository.dart';
+import 'package:limpid_app/src/data/api_two_factor_repository.dart';
+import 'package:limpid_app/src/data/api_webhook_repository.dart';
 import 'package:limpid_app/src/data/app_database.dart';
 import 'package:limpid_app/src/data/local_manuscript_repository.dart';
 import 'package:limpid_app/src/data/local_preferences_repository.dart';
 import 'package:limpid_app/src/data/local_publication_repository.dart';
 import 'package:limpid_app/src/data/local_revision_repository.dart';
+import 'package:limpid_app/src/data/local_search_repository.dart';
 import 'package:limpid_app/src/data/local_sync_repository.dart';
 import 'package:limpid_app/src/data/project_identity_store.dart';
 import 'package:limpid_app/src/data/project_ops_transport.dart';
+import 'package:limpid_app/src/data/real_time_transport.dart';
+import 'package:limpid_app/src/domain/admin_repository.dart';
 import 'package:limpid_app/src/domain/fallbacks.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
+import 'package:limpid_app/src/domain/kdp_repository.dart';
 import 'package:limpid_app/src/domain/plan_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/publication_repository.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_app/src/domain/revision_repository.dart';
+import 'package:limpid_app/src/domain/search_repository.dart';
+import 'package:limpid_app/src/domain/share_repository.dart';
+import 'package:limpid_app/src/domain/team_repository.dart';
+import 'package:limpid_app/src/domain/two_factor_repository.dart';
+import 'package:limpid_app/src/domain/webhook_repository.dart';
 import 'package:limpid_app/src/features/settings/settings_providers.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
@@ -56,9 +73,17 @@ final class AppDependencies {
     required this.gdpr,
     required this.publication,
     required this.revision,
+    required this.search,
+    required this.admin,
     required this.plans,
+    required this.twoFactor,
+    required this.teams,
+    required this.shares,
+    required this.webhooks,
+    required this.kdp,
     required this.localDataEraser,
     required this.author,
+    required this.navigatorKey,
     required this.close,
   });
 
@@ -86,14 +111,48 @@ final class AppDependencies {
   /// The discussions of the projects, held by the review.
   final RevisionRepository revision;
 
+  /// The back-office of the service.
+  ///
+  /// The accounts and the feature flags are read on the server: they are
+  /// the administrator's view of the service.
+  final AdminRepository admin;
+
+  /// The search in the manuscripts of the author.
+  ///
+  /// The search is **local** : it answers from the index of the device, and
+  /// it never reaches the network.
+  final SearchRepository search;
+
   /// The subscription, the quotas and the payment of the author.
   final PlanRepository plans;
+
+  /// The second factor of the account.
+  final TwoFactorRepository twoFactor;
+
+  /// The teams of the account.
+  final TeamRepository teams;
+
+  /// The read-only shares of the account.
+  final ShareRepository shares;
+
+  /// The API keys and the webhooks of the account.
+  final WebhookRepository webhooks;
+
+  /// The Amazon KDP submissions of the account.
+  final KdpRepository kdp;
 
   /// The erasure of the local data of the author (D-19).
   final LocalDataEraser localDataEraser;
 
   /// The author stamping the local operations.
   final AuthorId author;
+
+  /// The navigation key of the application.
+  ///
+  /// The router uses it, and the remote reads use it to open the window of
+  /// the second factor : a `FutureProvider` has no `BuildContext` of its
+  /// own.
+  final GlobalKey<NavigatorState> navigatorKey;
 
   /// Releases the resources held by the dependencies.
   final Future<void> Function() close;
@@ -110,12 +169,22 @@ Future<AppDependencies> buildAppDependencies() async {
   final AuthorId author = AuthorId(
     AuthRuntimeHolder.current.session?.userId ?? kLocalAuthorId,
   );
+  // La cle de navigation est creee ici, une fois : le routeur s'en sert,
+  // et les lectures distantes s'en servent pour ouvrir la fenetre du
+  // second facteur.
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'limpid',
+  );
   final http.Client httpClient = http.Client();
   final Uri baseUrl = Uri.parse(apiBaseUrl);
   final ApiClient apiClient = ApiClient(
     baseUrl: baseUrl,
     client: httpClient,
     tokenProvider: _accessToken,
+    // La preuve du second facteur est portée par la session : elle est
+    // obtenue par l'écran, lue ici au moment de la requête. Le client
+    // attend une fonction : la preuve change au cours de la session.
+    twoFactorProof: () => TwoFactorProofHolder.currentValue,
   );
 
   // The personal data of the author lives on the server: the repository
@@ -132,6 +201,42 @@ Future<AppDependencies> buildAppDependencies() async {
   final PlanRepository plans = AppBootstrap.isSupabaseConfigured
       ? ApiPlanRepository(client: apiClient, checkoutOrigin: _publicOrigin())
       : const UnavailablePlanRepository();
+
+  // Le second facteur vit sur le serveur comme le reste : l'application
+  // ne le calcule pas, elle demande un code et porte la preuve.
+  final TwoFactorRepository twoFactor = AppBootstrap.isSupabaseConfigured
+      ? ApiTwoFactorRepository(client: apiClient)
+      : const UnavailableTwoFactorRepository();
+
+  // Les equipes vivent sur le serveur : les sieges et les roles sont
+  // compotes par le service, pas par l'appareil.
+  final TeamRepository teams = AppBootstrap.isSupabaseConfigured
+      ? ApiTeamRepository(client: apiClient)
+      : const UnavailableTeamRepository();
+
+  // Les partages en lecture vivent sur le serveur : le jeton secret
+  // n'est montre qu'une fois, et il ne quitte jamais l'appareil.
+  final ShareRepository shares = AppBootstrap.isSupabaseConfigured
+      ? ApiShareRepository(client: apiClient)
+      : const UnavailableShareRepository();
+
+  // Les cles d'API et les points de rappel vivent sur le serveur : leurs
+  // secrets ne quittent jamais le poste de l'auteur.
+  final WebhookRepository webhooks = AppBootstrap.isSupabaseConfigured
+      ? ApiWebhookRepository(client: apiClient)
+      : const UnavailableWebhookRepository();
+
+  // Les depots chez Amazon vivent sur le serveur : le dossier est prepare
+  // et depose par l'API, l'application montre la trace.
+  final KdpRepository kdp = AppBootstrap.isSupabaseConfigured
+      ? ApiKdpRepository(client: apiClient)
+      : const UnavailableKdpRepository();
+
+  // Le back-office n'existe que sur un serveur configure : le mode
+  // demonstration ne montre aucun compte.
+  final AdminRepository admin = AppBootstrap.isSupabaseConfigured
+      ? ApiAdminRepository(client: apiClient)
+      : const UnavailableAdminRepository();
 
   AppDatabase? database;
   try {
@@ -157,10 +262,20 @@ Future<AppDependencies> buildAppDependencies() async {
         fallback: LocalPublicationRepository(manuscript: manuscripts),
       ),
       revision: InMemoryRevisionRepository(),
+      // Sans base locale, il n'y a pas d'index a interroger : la
+      // recherche refuse plutot que de dire que les livres sont vides.
+      search: const UnavailableSearchRepository(),
+      admin: admin,
       plans: plans,
+      twoFactor: twoFactor,
+      teams: teams,
+      shares: shares,
+      webhooks: webhooks,
+      kdp: kdp,
       // Aucune base locale : rien à effacer, l'interface le dit.
       localDataEraser: _refuseTheErasure,
       author: author,
+      navigatorKey: navigatorKey,
       close: () async => httpClient.close(),
     );
   }
@@ -169,22 +284,43 @@ Future<AppDependencies> buildAppDependencies() async {
   final LocalManuscriptRepository manuscripts = LocalManuscriptRepository(
     database: opened,
     author: author,
+    // La lecture suit la **session vivante** : un compte qui se
+    // connecte apres le demarrage trouve ses propres manuscrits, et ne
+    // voit pas ceux du compte precedent.
+    currentAuthor: () => AuthorId(opened.account.accountId),
+  );
+
+  // Le relais temps reel : la frappe distante et la presence. Il est un
+  // **accélérateur**, jamais la source de verite : le push et le pull
+  // restent sur le transport REST.
+  final ProjectOpsTransport rest = ProjectOpsTransport(
+    baseUrl: baseUrl,
+    client: httpClient,
+    store: opened.manuscripts,
+    // Le registre des identités : le serveur en fabrique un, l'appareil
+    // l'adopte quand il diffère du sien.
+    projects: ProjectIdentityStore(opened.sync, authorId: author.value),
+    tokenProvider: _accessToken,
+    // La synchronisation atteint les routes protégées de l'API : elle
+    // porte donc la preuve du second facteur, comme le client de l'API.
+    twoFactorProof: () => TwoFactorProofHolder.currentValue,
+  );
+  final RealTimeTransport relay = RealTimeTransport(
+    baseUrl: baseUrl,
+    store: opened.manuscripts,
+    rest: rest,
+    tokenProvider: _accessToken,
+    accountId: () => opened.account.accountId,
   );
 
   return AppDependencies(
     manuscripts: manuscripts,
     sync: LocalSyncRepository(
       database: opened,
-      transport: ProjectOpsTransport(
-        baseUrl: baseUrl,
-        client: httpClient,
-        store: opened.manuscripts,
-        // Le registre des identités : le serveur en fabrique un, l'appareil
-        // l'adopte quand il diffère du sien.
-        projects: ProjectIdentityStore(opened.sync, authorId: author.value),
-        tokenProvider: _accessToken,
-      ),
+      transport: rest,
+      realTime: relay,
       author: author,
+      currentAuthor: () => AuthorId(opened.account.accountId),
     ),
     preferences: LocalPreferencesRepository(database: opened),
     exports: ApiExportRepository(client: apiClient),
@@ -198,10 +334,26 @@ Future<AppDependencies> buildAppDependencies() async {
       fallback: LocalPublicationRepository(manuscript: manuscripts),
     ),
     revision: LocalRevisionRepository(database: opened),
+    // La recherche suit la **session vivante** : elle porte les livres du
+    // compte connecte, et rien d'autre.
+    search: LocalSearchRepository(
+      database: opened,
+      currentAuthor: () => AuthorId(opened.account.accountId),
+    ),
+    admin: admin,
     plans: plans,
+    twoFactor: twoFactor,
+    teams: teams,
+    shares: shares,
+    webhooks: webhooks,
+    kdp: kdp,
     localDataEraser: opened.wiper.wipe,
     author: author,
+    navigatorKey: navigatorKey,
     close: () async {
+      // Le relais se ferme avant la base : il tient des canaux ouverts sur
+      // elle.
+      await relay.dispose();
       await opened.close();
       httpClient.close();
     },

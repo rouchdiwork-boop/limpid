@@ -1,12 +1,15 @@
 import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_core/limpid_core.dart';
 
+import '../../support/hierarchy_stub.dart';
+
 /// A [ManuscriptRepository] the test drives by hand.
 ///
 /// The fake holds the projects, the chapters and the scenes the test gives
 /// it: the figures of the interface are computed from them, exactly as they
 /// are computed from the local database.
-final class FakeManuscriptRepository implements ManuscriptRepository {
+final class FakeManuscriptRepository extends StubHierarchyRepository
+    implements ManuscriptRepository {
   /// Creates the repository with the manuscripts the author already owns.
   FakeManuscriptRepository({
     List<Project> projects = const <Project>[],
@@ -29,8 +32,32 @@ final class FakeManuscriptRepository implements ManuscriptRepository {
   /// The error the repository throws when the library is read.
   Object? error;
 
+  /// Les chapitres que l'ecran a crees, dans l'ordre.
+  ///
+  /// Le doublure note ce que l'ecran a demande : le test prouve ainsi que
+  /// le bouton « Creer » **fait** quelque chose.
+  final List<Chapter> createdChapters = <Chapter>[];
+
   /// The number of times the library was read.
   int listProjectsCalls = 0;
+
+  @override
+  Future<Chapter> createChapter({
+    required String projectId,
+    String? volumeId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final Chapter chapter = Chapter(
+      id: ChapterId('chapter-cree-${createdChapters.length + 1}'),
+      volumeId: volumeId == null ? null : VolumeId(volumeId),
+      title: title,
+      order: OrderKey('${createdChapters.length + 1}'),
+    );
+    createdChapters.add(chapter);
+    _chapters.putIfAbsent(projectId, () => <Chapter>[]).add(chapter);
+    return chapter;
+  }
 
   @override
   Future<List<Project>> listProjects() async {

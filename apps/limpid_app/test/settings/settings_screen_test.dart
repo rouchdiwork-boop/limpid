@@ -39,8 +39,11 @@ class _ThemedApp extends ConsumerWidget {
 
 void main() {
   /// Gives the test a viewport large enough for the desktop layout.
+  ///
+  /// The page is tall: every row of the settings is visible, and the tests
+  /// that tap one of them do not depend on the scroll position.
   void useSurface(WidgetTester tester) {
-    tester.view.physicalSize = const Size(1440, 1100);
+    tester.view.physicalSize = const Size(1440, 2000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
   }

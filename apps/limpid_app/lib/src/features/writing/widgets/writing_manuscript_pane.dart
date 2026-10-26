@@ -32,6 +32,8 @@ class WritingManuscriptPane extends StatelessWidget {
     this.selectedAnchor,
     this.onSelectAnchor,
     this.onClearSelection,
+    this.onCursorMoved,
+    this.remoteOperations = const <SyncOp>[],
     super.key,
   });
 
@@ -71,6 +73,19 @@ class WritingManuscriptPane extends StatelessWidget {
 
   /// Called when the author closes the selected passage.
   final VoidCallback? onClearSelection;
+
+  /// Called when the caret of the author moved.
+  ///
+  /// The callback receives the block the caret stands in and the offset of
+  /// the caret inside that block: the presence of the relay announces it to
+  /// the other authors.
+  final void Function(String blockId, int offset)? onCursorMoved;
+
+  /// The operations another author produced.
+  ///
+  /// The editor applies them to the manuscript it shows: the text of the
+  /// other author appears without the author losing the caret.
+  final List<SyncOp> remoteOperations;
 
   @override
   Widget build(BuildContext context) {
@@ -149,12 +164,45 @@ class WritingManuscriptPane extends StatelessWidget {
                     lamport: lamport,
                     commentAnchors: commentAnchors,
                     onSelectCommentRange: onSelectAnchor,
+                    onCursorMoved: _announceCursor,
+                    remoteOperations: remoteOperations,
+                    dragHandleLabel: strings.hierarchyMoveBlock,
                     onChanged: onChanged,
                   ),
           ),
         ],
       ),
     );
+  }
+
+  /// Announces the position of the caret of the author.
+  ///
+  /// The offset the editor gives is the position in the document of the
+  /// editor; the blocks of the scene know where each paragraph stands.
+  void _announceCursor(int offset) {
+    final void Function(String blockId, int offset)? callback = onCursorMoved;
+    if (callback == null) return;
+    final (int index, int inside)? position = _positionOf(offset);
+    if (position == null) return;
+    final (int blockIndex, int blockOffset) = position;
+    if (blockIndex < 0 || blockIndex >= blocks.length) return;
+    callback(blocks[blockIndex].id.value, blockOffset);
+  }
+
+  /// The block holding the caret at [offset], and the offset inside it.
+  ///
+  /// The editor lays the blocks out one after the other, each of them
+  /// followed by its newline.
+  (int, int)? _positionOf(int offset) {
+    if (blocks.isEmpty) return null;
+    int start = 0;
+    for (int index = 0; index < blocks.length; index++) {
+      final int length = blocks[index].plainText.length;
+      if (offset <= start + length) return (index, offset - start);
+      start += length + 1;
+    }
+    final int last = blocks.length - 1;
+    return (last, blocks[last].plainText.length);
   }
 
   /// The text covered by the selected anchor, in the text of the scene.

@@ -1,8 +1,21 @@
+import 'dart:math';
+
 import 'package:limpid_app/src/data/api_client.dart';
 import 'package:limpid_app/src/domain/errors.dart';
 import 'package:limpid_app/src/domain/plan_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_core/limpid_core.dart';
+
+/// La durée pendant laquelle deux commandes de paiement partagent la même
+/// clé d'idempotence, en millisecondes.
+///
+/// Quinze minutes : assez pour absorber un double-clic et une reprise
+/// d'une session encore ouverte, trop court pour ressusciter une session
+/// de paiement expirée.
+const int checkoutKeyWindowMs = 15 * 60 * 1000;
+
+/// Le nombre d'octets de l'entropie du nonce d'un dépôt.
+const int _nonceBytes = 16;
 
 /// La formule, les quotas et le paiement de l'auteur, servis par l'API.
 ///
@@ -15,7 +28,16 @@ import 'package:limpid_core/limpid_core.dart';
 /// `ServiceUnavailableException` quand le paiement n'est pas configuré.
 final class ApiPlanRepository implements PlanRepository {
   /// Crée un dépôt sur le dessus de [client].
-  const ApiPlanRepository({required this.client, this.checkoutOrigin});
+  ///
+  /// [clock] rend l'heure injectable : les tests font passer le temps sans
+  /// attendre. Le dépôt tire un **nonce** à sa naissance : il rend la clé
+  /// d'idempotence opaque, et deux dépôts ne se confondent jamais.
+  ApiPlanRepository({
+    required this.client,
+    this.checkoutOrigin,
+    DateTime Function()? clock,
+  }) : _clock = clock ?? DateTime.now,
+       _nonce = _newNonce();
 
   /// Le client de l'API.
   final ApiClient client;
@@ -27,6 +49,12 @@ final class ApiPlanRepository implements PlanRepository {
   /// s'ouvrir. La composition racine décide — l'écran ne connaît jamais
   /// l'adresse du site.
   final Uri? checkoutOrigin;
+
+  /// L'heure courante.
+  final DateTime Function() _clock;
+
+  /// Le nonce du dépôt, tiré une fois pour toutes.
+  final String _nonce;
 
   @override
   Future<AccountPlan> currentPlan() async {
@@ -138,6 +166,12 @@ final class ApiPlanRepository implements PlanRepository {
         'success_url': target.toString(),
         'cancel_url': target.toString(),
       },
+      // Un double-clic sur « Payer » ne doit pas ouvrir deux sessions de
+      // paiement : la cle d'idempotence fait rejouer la premiere reponse
+      // au lieu de creer une seconde session.
+      headers: <String, String>{
+        'idempotency-key': _idempotencyKeyOf(plan, period),
+      },
     );
     final Map<String, Object?> data = _objectOf(payload);
     return CheckoutSession(
@@ -171,6 +205,8 @@ final class ApiPlanRepository implements PlanRepository {
   static QuotaMeter? _meterOf(String? feature) => switch (feature) {
     'words' => QuotaMeter.words,
     'ai_rewrites' => QuotaMeter.aiUsage,
+    'ai_tokens' => QuotaMeter.aiTokens,
+    'ai_covers' => QuotaMeter.aiCovers,
     'storage_bytes' => QuotaMeter.storage,
     _ => null,
   };
@@ -185,6 +221,18 @@ final class ApiPlanRepository implements PlanRepository {
         : PlanStatus.active;
   }
 
+  /// La clé d'idempotence d'une commande de paiement.
+  ///
+  /// La clé tient dans une **fenêtre de temps** : deux clics dans la même
+  /// fenêtre jouent la même commande — le second reçoit la reponse du
+  /// premier — et une commande reprise plus tard ouvre une session neuve,
+  /// parce que l'ancienne a pu expirer.
+  String _idempotencyKeyOf(SubscriptionPlan plan, BillingPeriod period) {
+    final int window =
+        _clock().toUtc().millisecondsSinceEpoch ~/ checkoutKeyWindowMs;
+    return 'checkout-$_nonce-${plan.name}-${period.name}-$window';
+  }
+
   /// La clé d'une formule pour le service de paiement.
   ///
   /// Le serveur distingue le cycle annuel par un suffixe : `studio` pour le
@@ -192,6 +240,22 @@ final class ApiPlanRepository implements PlanRepository {
   static String _checkoutKeyOf(SubscriptionPlan plan, BillingPeriod period) {
     final String name = plan.name;
     return period == BillingPeriod.yearly ? '${name}_yearly' : name;
+  }
+
+  /// Tire un nonce qui rend la clé d'idempotence opaque.
+  ///
+  /// Le nonce n'est pas un secret : il sert à ce que deux dépôts ne
+  /// partagent jamais la même clé.
+  static String _newNonce() {
+    final Random random = Random.secure();
+    final List<int> bytes = List<int>.generate(
+      _nonceBytes,
+      (int _) => random.nextInt(256),
+      growable: false,
+    );
+    return bytes
+        .map((int byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
   }
 
   static Map<String, Object?> _objectOf(Object? value) {

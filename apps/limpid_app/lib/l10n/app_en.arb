@@ -144,6 +144,7 @@
     }
   },
   "libraryTitle": "Library",
+  "librarySectionCollaboration": "Distribution and collaboration",
   "librarySubtitle": "{count} projects · {published} published",
   "@librarySubtitle": {
     "placeholders": {
@@ -356,7 +357,7 @@
   "settingsExportData": "Export my data",
   "settingsDeleteAccount": "Delete my account",
   "settingsExportPersonalData": "Export all my data",
-  "settingsExportPersonalDataSubtitle": "Your projects, your comments, your audit log.",
+  "settingsExportPersonalDataSubtitle": "Your projects, your manuscripts, your files, your settings, your audit log.",
   "settingsExportPersonalDataReady": "Your data is ready",
   "settingsExportPersonalDataFailed": "The export failed.",
   "settingsExportPersonalDataUnavailable": "This service is not configured on this machine.",
@@ -455,5 +456,286 @@
       }
     }
   },
-  "billingCurrentUsage": "Usage"
+  "billingCurrentUsage": "Usage",
+  "twoFactorTitle": "Two-factor authentication",
+  "twoFactorSubtitle": "A six-digit code is asked on every sign-in for the Pro and Studio plans.",
+  "twoFactorStateOff": "Disabled",
+  "twoFactorStateOn": "Enabled",
+  "twoFactorEnable": "Enable two-factor authentication",
+  "twoFactorSecretIntro": "Scan this code with your authenticator app, then enter the code it shows.",
+  "twoFactorSecretLabel": "Setup key",
+  "twoFactorConfirm": "Enable",
+  "twoFactorDisable": "Disable",
+  "twoFactorRecoveryCodes": "Recovery codes",
+  "twoFactorRecoveryIntro": "Keep these codes: each one is used once, if your device is no longer available.",
+  "twoFactorVerify": "Verify",
+  "twoFactorProofMissing": "Two-factor authentication is on: enter your code to continue.",
+  "twoFactorRequired": "Your plan requires two-factor authentication. Enable it to keep using the app.",
+  "twoFactorInvalidCode": "That code is not right.",
+  "twoFactorUnavailable": "Two-factor authentication is not configured on this device.",
+  "twoFactorEnabled": "Two-factor authentication is on.",
+  "teamsTitle": "Teams",
+  "teamsSubtitle": "A Studio account can work together, with roles and seats.",
+  "teamsEmpty": "You do not belong to any team.",
+  "teamsCreate": "Create a team",
+  "teamsName": "Team name",
+  "teamsMembers": "Members",
+  "teamsInvite": "Invite",
+  "teamsInviteAccount": "Account identifier",
+  "teamsInviteEmail": "Invite by email",
+  "teamsInviteSent": "The invitation has been sent.",
+  "teamsRoleOwner": "Owner",
+  "teamsRoleCoauthor": "Co-author",
+  "teamsRoleBeta": "Beta reader",
+  "teamsRoleReader": "Reader",
+  "teamsRole": "Role",
+  "teamsRemove": "Remove from the team",
+  "teamsLeave": "Leave the team",
+  "teamsSeats": "Seats",
+  "teamsSeatsUsed": "{used} / {total} seats used",
+  "teamsSeatFull": "The team has no seat left.",
+  "teamsDeleteConfirm": "Delete this team? Its projects are not deleted.",
+  "apiKeysTitle": "API keys",
+  "apiKeysSubtitle": "A key gives a program access to your account. It is shown only once.",
+  "apiKeysEmpty": "You have no API key yet.",
+  "apiKeysCreate": "Create a key",
+  "apiKeysName": "Key name",
+  "apiKeysScopeRead": "Read",
+  "apiKeysScopeWrite": "Write",
+  "apiKeysSecret": "The secret key",
+  "apiKeysSecretWarning": "Copy it now: it will never be shown again.",
+  "apiKeysRotate": "Rotate",
+  "apiKeysDelete": "Delete",
+  "webhooksTitle": "Webhooks",
+  "webhooksSubtitle": "Limpid calls your service when an event happens.",
+  "webhooksEmpty": "You have no endpoint yet.",
+  "webhooksCreate": "Add an endpoint",
+  "webhooksUrl": "Endpoint URL",
+  "webhooksEvents": "Events",
+  "webhooksSecret": "Signing secret",
+  "webhooksRotateSecret": "Rotate the secret",
+  "webhooksDeliveries": "Deliveries",
+  "webhooksDeliveryPending": "Pending",
+  "webhooksDeliveryDelivered": "Delivered",
+  "webhooksDeliveryFailed": "Failed",
+  "webhooksReplay": "Replay",
+  "webhooksNever": "Never",
+  "webhooksStudioOnly": "The API and the webhooks are reserved to the Studio plan.",
+  "kdpTitle": "Amazon KDP publishing",
+  "kdpSubtitle": "Submit a book to Amazon Kindle Direct Publishing.",
+  "kdpEmpty": "You have no submission yet.",
+  "kdpCreate": "Prepare a submission",
+  "kdpIsbn": "ISBN",
+  "kdpTitleLabel": "Title",
+  "kdpSubtitleLabel": "Subtitle",
+  "kdpDescription": "Description",
+  "kdpKeywords": "Keywords",
+  "kdpBisac": "BISAC category",
+  "kdpLanguage": "Language",
+  "kdpPrepare": "Prepare the package",
+  "kdpSubmit": "Submit to Amazon",
+  "kdpStateDraft": "Draft",
+  "kdpStateSubmitted": "Submitted",
+  "kdpStateLive": "Live",
+  "kdpStateRefused": "Refused by Amazon",
+  "kdpStateFailed": "Submission failed",
+  "kdpNotConfigured": "The submission is not configured on this machine.",
+  "kdpRefused": "Amazon refused this submission.",
+  "kdpRefusedReason": "Reason for the refusal",
+  "kdpFixAndRetry": "Fix and retry",
+  "billingAiTokens": "AI tokens",
+  "billingAiCovers": "AI covers",
+  "twoFactorCopy": "Copy the codes",
+  "twoFactorCopied": "Codes copied to the clipboard.",
+  "twoFactorCodeLabel": "Six-digit code or recovery code",
+  "twoFactorDisabled": "Two-factor authentication is off.",
+  "twoFactorSecretUrlLabel": "Setup address",
+  "twoFactorFailed": "Two-factor authentication could not be changed.",
+  "searchTitle": "Search",
+  "searchSubtitle": "Find a passage in your books, even offline.",
+  "searchFieldHint": "A word, a name, a sentence…",
+  "searchFieldLabel": "Search in the books",
+  "searchClear": "Clear the search",
+  "searchIdleTitle": "What are you looking for?",
+  "searchIdleMessage": "The passages of your books will show up here, as soon as you type a word.",
+  "searchEmptyTitle": "No passage",
+  "searchEmptyMessage": "No passage of your books carries those words.",
+  "searchFailureTitle": "The search failed",
+  "searchFailureMessage": "The index could not be read.",
+  "searchRetry": "Try again",
+  "searchResultCount": "{count} passages",
+  "@searchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchInProject": "in {project}",
+  "@searchInProject": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInScene": "in {scene}",
+  "@searchInScene": {
+    "placeholders": {
+      "scene": {
+        "type": "String"
+      }
+    }
+  },
+  "searchOpenResult": "Open the passage",
+  "hierarchyTitle": "Title",
+  "hierarchyAddSeries": "Add a series",
+  "hierarchyAddVolume": "Add a volume",
+  "hierarchyAddChapter": "Add a chapter",
+  "hierarchyAddScene": "Add a scene",
+  "hierarchyMoveUp": "Move the scene up",
+  "hierarchyMoveDown": "Move the scene down",
+  "shareTitle": "Read-only share",
+  "shareSubtitle": "A link that opens this book read-only, without an account.",
+  "shareCreate": "Share",
+  "shareEmpty": "This book is not shared.",
+  "shareLinkTitle": "Share link",
+  "shareLinkMessage": "This link is the only way in: copy it now, it will never be shown again.",
+  "shareCopy": "Copy the link",
+  "shareCopied": "Link copied.",
+  "shareRevoke": "Revoke",
+  "shareRevoked": "The share has been revoked.",
+  "shareRevokedBadge": "Revoked",
+  "shareLive": "Active",
+  "shareExpiresAt": "Expires on {date}",
+  "@shareExpiresAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFailure": "The share did not go through.",
+  "shareUnavailable": "Sharing is not available on this device.",
+  "hierarchyMoveBlock": "Move the block",
+  "historyTitle": "History",
+  "historySubtitle": "The revisions of the scene, and what each one changed.",
+  "historyEmptyTitle": "No revision",
+  "historyEmptyMessage": "The scene has no recorded version yet.",
+  "historyFailureTitle": "The history could not be read",
+  "historyFailureMessage": "The local database did not answer. Try again.",
+  "historyRevisionLabel": "Revision {number}",
+  "@historyRevisionLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "historyBlockCount": "{count} blocks",
+  "@historyBlockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "historyDetailTitle": "What the revision changed",
+  "historyChangeAdded": "Block added",
+  "historyChangeRemoved": "Block removed",
+  "historyChangeModified": "Block changed",
+  "historyChangeMoved": "Block moved",
+  "historyChangeBefore": "Before",
+  "historyChangeAfter": "After",
+  "historyChangePlaceBefore": "Position {place}",
+  "@historyChangePlaceBefore": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "historyChangePlaceAfter": "Position {place}",
+  "@historyChangePlaceAfter": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "historyNoChanges": "This revision changes no block.",
+  "historyChangeSummary": "{added} added · {removed} removed · {modified} changed · {moved} moved",
+  "@historyChangeSummary": {
+    "placeholders": {
+      "moved": {
+        "type": "int"
+      }
+    }
+  },
+  "adminTitle": "Back office",
+  "adminSubtitle": "The accounts of the service, their plans and the feature flags.",
+  "adminAccountsTitle": "Accounts",
+  "adminAccountsEmpty": "No account to show.",
+  "adminFlagsTitle": "Feature flags",
+  "adminFlagsEmpty": "No feature flag.",
+  "adminColumnPlan": "Plan",
+  "adminAccountProjects": "{count} projects",
+  "@adminAccountProjects": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminAccountCollaborations": "{count} collaborations",
+  "@adminAccountCollaborations": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminAccountMessages": "{count} messages",
+  "@adminAccountMessages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminAccountOperations": "{count} operations",
+  "@adminAccountOperations": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminAccountSeats": "Seats",
+  "adminAccountLastActivity": "Last activity",
+  "adminAccountPurged": "Erased data",
+  "adminUnknownPlan": "Unknown plan",
+  "adminNever": "Never",
+  "adminFlagUpdatedBy": "Updated by {admin}",
+  "@adminFlagUpdatedBy": {
+    "placeholders": {
+      "admin": {
+        "type": "String"
+      }
+    }
+  },
+  "adminFlagUpdated": "The feature flag is up to date.",
+  "adminFlagFailed": "The feature flag could not be changed.",
+  "adminForbiddenTitle": "This page is reserved for administrators.",
+  "adminForbiddenMessage": "The server refused the read: this account is not an administrator.",
+  "syncResynchronizing": "Syncing again…",
+  "syncResynchronized": "Your changes are up to date.",
+  "syncOperationRefused": "A change could not be sent: {message}.",
+  "@syncOperationRefused": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  }
 }

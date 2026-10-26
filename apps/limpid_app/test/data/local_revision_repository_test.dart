@@ -5,6 +5,7 @@ import 'package:limpid_app/src/data/app_database.dart';
 import 'package:limpid_app/src/data/local_revision_repository.dart';
 import 'package:limpid_app/src/domain/revision_repository.dart';
 import 'package:limpid_core/limpid_core.dart';
+import 'package:limpid_sync/limpid_sync.dart';
 
 import 'support.dart';
 
@@ -190,6 +191,65 @@ void main() {
       expect(members, hasLength(1));
       expect(members.single.id, const AuthorId('author-1'));
       expect(members.single.role, ProjectRole.owner);
+    });
+  });
+
+  group('historique des versions', () {
+    /// Ecrit le journal d'un document : un paragraphe, puis sa correction.
+    Future<void> writeTheDocument() async {
+      await database.snapshots.write(
+        DocumentSnapshot(
+          documentId: const DocumentId('document-1'),
+          since: 0,
+          maxLamport: 2,
+          operations: <SyncOp>[
+            insertBlockOp(documentId: 'document-1'),
+            const UpdateContentOp(
+              doc: DocumentId('document-1'),
+              lamport: 2,
+              author: AuthorId('author-1'),
+              blockId: BlockId('block-1'),
+              content: TextContent('Il ne pleuvait plus.'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    test('rend les révisions du document, de la plus ancienne à la plus '
+        'récente', () async {
+      await writeTheDocument();
+
+      final List<DocumentRevision> revisions = await repository.loadRevisions(
+        'document-1',
+      );
+
+      expect(revisions, hasLength(2));
+      expect(revisions.first.lamport, 1);
+      expect(revisions.last.lamport, 2);
+      expect(revisions.last.blockCount, 1);
+    });
+
+    test('ne rend aucune révision pour un document inconnu', () async {
+      expect(await repository.loadRevisions('document-inconnu'), isEmpty);
+    });
+
+    test('compare deux révisions bloc par bloc', () async {
+      await writeTheDocument();
+
+      final RevisionComparison comparison = await repository.compareRevisions(
+        'document-1',
+        from: const VersionRef(lamport: 1, author: AuthorId('author-1')),
+        to: const VersionRef(lamport: 2, author: AuthorId('author-1')),
+      );
+
+      expect(comparison.modifiedCount, 1);
+      expect(comparison.changes.single.blockId, const BlockId('block-1'));
+      expect(
+        comparison.changes.single.beforeText,
+        'Il pleuvait sur la falaise.',
+      );
+      expect(comparison.changes.single.afterText, 'Il ne pleuvait plus.');
     });
   });
 }

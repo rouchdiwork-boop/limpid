@@ -44,6 +44,18 @@ enum QuotaMeter {
 
   /// Le stockage occupé par le compte.
   storage,
+
+  /// Les jetons consommés par l'IA.
+  ///
+  /// Le serveur publie ce compteur à part des réécritures : le produit se
+  /// vend en jetons, et l'auteur veut voir ce qu'il a consommé.
+  aiTokens,
+
+  /// Les couvertures IA produites dans le mois.
+  ///
+  /// La formule Écrivain en accorde cinq par mois : c'est une promesse
+  /// du catalogue, et l'auteur doit voir ce qu'il en a consumed.
+  aiCovers,
 }
 
 /// La lecture d'un compteur : sa limite et sa consommation.

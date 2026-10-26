@@ -6,11 +6,14 @@ import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_core/limpid_core.dart';
 
+import '../support/hierarchy_stub.dart';
+
 /// A [ManuscriptRepository] that records what the interface asks it to do.
 ///
 /// The fake is shared by the onboarding and the settings tests: it keeps the
 /// projects it is given and the ones the interface creates.
-final class FakeManuscriptRepository implements ManuscriptRepository {
+final class FakeManuscriptRepository extends StubHierarchyRepository
+    implements ManuscriptRepository {
   /// Creates the fake with the projects the author already owns.
   FakeManuscriptRepository({List<Project> projects = const <Project>[]})
     : _projects = List<Project>.of(projects);

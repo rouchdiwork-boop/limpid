@@ -47,11 +47,22 @@ List<SceneBlock> sceneBlocksOf(CrdtDocument document) {
 }
 
 /// The highest Lamport timestamp carried by a document.
+///
+/// The metadata counts too : a scene that holds only its title has already
+/// been written, and the first line the author types must not reuse its
+/// timestamp. The CRDT identifies an operation by its document, its Lamport
+/// timestamp and its author : a reused timestamp would make the new
+/// operation look like the old one, and the CRDT would drop it.
 int lamportOf(CrdtDocument document) {
   int lamport = 0;
   for (final Block block in document.blocks) {
     if (block.lamport > lamport) {
       lamport = block.lamport;
+    }
+  }
+  for (final MetaEntry entry in document.metaEntries.values) {
+    if (entry.lamport > lamport) {
+      lamport = entry.lamport;
     }
   }
   return lamport;

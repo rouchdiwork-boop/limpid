@@ -1,12 +1,18 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:limpid_app/src/app/dependencies.dart';
 import 'package:limpid_app/src/app/limpid_app.dart';
 import 'package:limpid_app/src/bootstrap/app_bootstrap.dart';
+import 'package:limpid_app/src/domain/admin_repository.dart';
+import 'package:limpid_app/src/domain/kdp_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/publication_repository.dart';
+import 'package:limpid_app/src/domain/share_repository.dart';
+import 'package:limpid_app/src/domain/team_repository.dart';
+import 'package:limpid_app/src/domain/two_factor_repository.dart';
+import 'package:limpid_app/src/domain/webhook_repository.dart';
 import 'package:limpid_app/src/features/revision/revision_providers.dart';
+import 'package:limpid_app/src/features/search/search_providers.dart';
 import 'package:limpid_app/src/features/settings/settings_providers.dart';
 
 /// Entry point of the Limpid application.
@@ -40,9 +46,17 @@ Future<void> main() async {
           dependencies.publication,
         ),
         revisionRepositoryProvider.overrideWithValue(dependencies.revision),
+        searchRepositoryProvider.overrideWithValue(dependencies.search),
+        adminRepositoryProvider.overrideWithValue(dependencies.admin),
         planRepositoryProvider.overrideWithValue(dependencies.plans),
+        twoFactorRepositoryProvider.overrideWithValue(dependencies.twoFactor),
+        teamRepositoryProvider.overrideWithValue(dependencies.teams),
+        shareRepositoryProvider.overrideWithValue(dependencies.shares),
+        kdpRepositoryProvider.overrideWithValue(dependencies.kdp),
+        webhookRepositoryProvider.overrideWithValue(dependencies.webhooks),
         localDataEraserProvider.overrideWithValue(dependencies.localDataEraser),
         authorIdProvider.overrideWithValue(dependencies.author),
+        navigatorKeyProvider.overrideWithValue(dependencies.navigatorKey),
       ],
       child: const LimpidApp(),
     ),

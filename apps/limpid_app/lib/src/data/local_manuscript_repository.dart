@@ -1,6 +1,9 @@
+import 'package:limpid_app/src/data/account_op_queue_store.dart';
+import 'package:limpid_app/src/data/account_snapshot_store.dart';
 import 'package:limpid_app/src/data/app_database.dart';
 import 'package:limpid_app/src/data/published_book_reader.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
+import 'package:limpid_app/src/domain/scene_metadata.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_sync/limpid_sync.dart';
 
@@ -91,9 +94,10 @@ final class LocalManuscriptRepository
   Future<void> deleteProject(String projectId) async {
     final List<String> documents = await database.manuscripts.deleteProject(
       projectId,
+      accountId: _currentAuthor().value,
     );
     for (final String documentId in documents) {
-      await database.snapshots.remove(DocumentId(documentId));
+      await _snapshots.remove(DocumentId(documentId));
       await _removeQueuedOperations(documentId);
     }
   }
@@ -123,13 +127,195 @@ final class LocalManuscriptRepository
       scene.chapterId.value,
     );
     final Scene saved = scene.copyWith(updatedAt: _now());
-    await database.manuscripts.saveScene(saved, projectId: projectId);
+    await database.manuscripts.saveScene(
+      saved,
+      projectId: projectId,
+      accountId: _currentAuthor().value,
+    );
     return saved;
   }
 
   @override
+  Future<List<Series>> listSeries(String projectId) =>
+      database.manuscripts.listSeries(projectId);
+
+  @override
+  Future<Series> createSeries({
+    required String projectId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final DateTime now = _now();
+    final List<Series> existing = await database.manuscripts.listSeries(
+      projectId,
+    );
+    final Series series = Series(
+      id: SeriesId(_ids.generate().value),
+      projectId: ProjectId(projectId),
+      title: title,
+      synopsis: synopsis,
+      order: _nextOrder(existing.map((Series item) => item.order)),
+      createdAt: now,
+      updatedAt: now,
+    );
+    await database.manuscripts.saveSeries(series, projectId: projectId);
+    await _attachSeries(projectId, series.id);
+    return series;
+  }
+
+  @override
+  Future<List<Volume>> listVolumes(String seriesId) =>
+      database.manuscripts.listVolumes(seriesId);
+
+  @override
+  Future<List<Chapter>> listChaptersOfVolume(String volumeId) =>
+      database.manuscripts.listChaptersOfVolume(volumeId);
+
+  @override
+  Future<Volume> createVolume({
+    required String seriesId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final DateTime now = _now();
+    final String? projectId = await database.manuscripts.resolveSeriesProject(
+      seriesId,
+    );
+    final List<Volume> existing = await database.manuscripts.listVolumes(
+      seriesId,
+    );
+    final Volume volume = Volume(
+      id: VolumeId(_ids.generate().value),
+      seriesId: SeriesId(seriesId),
+      title: title,
+      synopsis: synopsis,
+      order: _nextOrder(existing.map((Volume item) => item.order)),
+      createdAt: now,
+      updatedAt: now,
+    );
+    await database.manuscripts.saveVolume(volume, projectId: projectId);
+    await _attachVolume(seriesId, volume.id);
+    return volume;
+  }
+
+  @override
+  Future<Chapter> createChapter({
+    required String projectId,
+    String? volumeId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final DateTime now = _now();
+    final List<Chapter> existing = await database.manuscripts.listChapters(
+      projectId,
+    );
+    final Chapter chapter = Chapter(
+      id: ChapterId(_ids.generate().value),
+      volumeId: volumeId == null ? null : VolumeId(volumeId),
+      title: title,
+      synopsis: synopsis,
+      order: _nextOrder(existing.map((Chapter item) => item.order)),
+      createdAt: now,
+      updatedAt: now,
+    );
+    await database.manuscripts.saveChapter(chapter, projectId: projectId);
+    await _attachChapter(projectId, chapter.id);
+    final String? volume = volumeId;
+    if (volume != null) {
+      await _attachChapterToVolume(volume, chapter.id);
+    }
+    return chapter;
+  }
+
+  @override
+  Future<Scene> createScene({
+    required String chapterId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final DateTime now = _now();
+    final String sceneId = _ids.generate().value;
+    final DocumentId documentId = DocumentId(sceneId);
+    final List<Scene> existing = await database.manuscripts.listScenes(
+      chapterId,
+    );
+    final Scene scene = Scene(
+      id: SceneId(sceneId),
+      chapterId: ChapterId(chapterId),
+      documentId: documentId,
+      title: title,
+      synopsis: synopsis,
+      order: _nextOrder(existing.map((Scene item) => item.order)),
+      createdAt: now,
+      updatedAt: now,
+    );
+    await database.manuscripts.saveScene(
+      scene,
+      accountId: _currentAuthor().value,
+    );
+
+    // La scene nait avec son titre dans son document : elle est une vraie
+    // scene, elle se retrouve apres le redemarrage et elle se synchronise
+    // comme tout le reste de l'ecriture.
+    await applyOperations(<SyncOp>[
+      SetMetaOp(
+        doc: documentId,
+        lamport: await _nextLamport(documentId),
+        author: _currentAuthor(),
+        key: sceneTitleMetaKey,
+        value: title,
+      ),
+    ]);
+    return scene;
+  }
+
+  @override
+  Future<Scene> moveScene({
+    required String sceneId,
+    required int targetIndex,
+  }) async {
+    final Scene? scene = await database.manuscripts.findScene(sceneId);
+    if (scene == null) {
+      throw StateError('The scene "$sceneId" does not exist.');
+    }
+    final List<Scene> siblings = await database.manuscripts.listScenes(
+      scene.chapterId.value,
+    );
+    final List<Scene> remaining = siblings
+        .where((Scene item) => item.id.value != sceneId)
+        .toList(growable: false);
+    final int index = targetIndex.clamp(0, remaining.length);
+    final OrderKey? lower = index == 0 ? null : remaining[index - 1].order;
+    final OrderKey? upper = index == remaining.length
+        ? null
+        : remaining[index].order;
+
+    final Scene moved = scene.copyWith(
+      order: OrderKey.between(lower, upper),
+      updatedAt: _now(),
+    );
+    await database.manuscripts.saveScene(
+      moved,
+      accountId: _currentAuthor().value,
+    );
+
+    // L'operation porte l'index fractionnaire et rien d'autre : le texte
+    // de la scene ne bouge pas.
+    await applyOperations(<SyncOp>[
+      SetMetaOp(
+        doc: moved.documentId,
+        lamport: await _nextLamport(moved.documentId),
+        author: _currentAuthor(),
+        key: sceneOrderMetaKey,
+        value: moved.order.value,
+      ),
+    ]);
+    return moved;
+  }
+
+  @override
   Future<CrdtDocument> loadDocument(String documentId) async {
-    final DocumentSnapshot? snapshot = await database.snapshots.read(
+    final DocumentSnapshot? snapshot = await _snapshots.read(
       DocumentId(documentId),
     );
     if (snapshot == null) {
@@ -151,10 +337,27 @@ final class LocalManuscriptRepository
       for (final MapEntry<String, List<SyncOp>> entry in byDocument.entries) {
         await _applyToDocument(DocumentId(entry.key), entry.value);
       }
+      await _applySceneOrders(operations);
+      final OpQueue queue = _queue;
       for (final SyncOp operation in operations) {
-        await database.queue.enqueue(operation);
+        await queue.enqueue(operation);
       }
     });
+  }
+
+  /// Writes the position of the scenes the operations carry.
+  ///
+  /// The position of a scene is a metadata of its document: an operation
+  /// that comes from another device moves the scene here too.
+  Future<void> _applySceneOrders(List<SyncOp> operations) async {
+    for (final SyncOp operation in operations) {
+      if (operation is! SetMetaOp) continue;
+      if (operation.key != sceneOrderMetaKey) continue;
+      await database.manuscripts.updateSceneOrder(
+        operation.doc,
+        OrderKey(operation.value),
+      );
+    }
   }
 
   /// Applies the operations to the local document and writes the journal.
@@ -165,9 +368,7 @@ final class LocalManuscriptRepository
     DocumentId documentId,
     List<SyncOp> operations,
   ) async {
-    final DocumentSnapshot? snapshot = await database.snapshots.read(
-      documentId,
-    );
+    final DocumentSnapshot? snapshot = await _snapshots.read(documentId);
     final Set<String> known = snapshot == null
         ? <String>{}
         : snapshot.operations
@@ -186,7 +387,7 @@ final class LocalManuscriptRepository
     final List<SyncOp> journal = snapshot == null
         ? fresh
         : <SyncOp>[...snapshot.operations, ...fresh];
-    await database.snapshots.write(
+    await _snapshots.write(
       DocumentSnapshot(
         documentId: documentId,
         since: snapshot?.since ?? 0,
@@ -238,16 +439,92 @@ final class LocalManuscriptRepository
     );
   }
 
+  /// Adds a series to the list of a project.
+  Future<void> _attachSeries(String projectId, SeriesId seriesId) async {
+    final Project? project = await database.manuscripts.findProject(
+      projectId,
+      _currentAuthor().value,
+    );
+    if (project == null) return;
+    if (project.seriesIds.contains(seriesId)) return;
+    await database.manuscripts.saveProject(
+      project.copyWith(seriesIds: <SeriesId>[...project.seriesIds, seriesId]),
+    );
+  }
+
+  /// Adds a volume to the list of a series.
+  Future<void> _attachVolume(String seriesId, VolumeId volumeId) async {
+    final Series? series = await database.manuscripts.findSeries(seriesId);
+    if (series == null) return;
+    if (series.volumeIds.contains(volumeId)) return;
+    await database.manuscripts.saveSeries(
+      series.copyWith(volumeIds: <VolumeId>[...series.volumeIds, volumeId]),
+      projectId: series.projectId.value,
+    );
+  }
+
+  /// Adds a chapter to the list of a volume.
+  Future<void> _attachChapterToVolume(
+    String volumeId,
+    ChapterId chapterId,
+  ) async {
+    final Volume? volume = await database.manuscripts.findVolume(volumeId);
+    if (volume == null) return;
+    if (volume.chapterIds.contains(chapterId)) return;
+    await database.manuscripts.saveVolume(
+      volume.copyWith(chapterIds: <ChapterId>[...volume.chapterIds, chapterId]),
+    );
+  }
+
+  /// The fractional index that comes after every index of [existing].
+  ///
+  /// The index is computed strictly after the last one, so an index that
+  /// exists is never rewritten: a creation never moves a sibling.
+  OrderKey _nextOrder(Iterable<OrderKey> existing) {
+    OrderKey? last;
+    for (final OrderKey key in existing) {
+      if (last == null || key.isAfter(last)) last = key;
+    }
+    if (last == null) return OrderKey.initial;
+    return OrderKey.between(last, null);
+  }
+
+  /// The next Lamport timestamp of a document.
+  ///
+  /// The timestamp is the one of the last operation the document knows,
+  /// advanced by one tick: the operation is always newer than the ones that
+  /// came before it.
+  Future<int> _nextLamport(DocumentId documentId) async {
+    final DocumentSnapshot? snapshot = await _snapshots.read(documentId);
+    return (snapshot?.maxLamport ?? 0) + 1;
+  }
+
   /// Removes the queued operations of a document.
+  ///
+  /// Only the operations of the current account are removed: the queue of
+  /// the other accounts belongs to them.
   Future<void> _removeQueuedOperations(String documentId) async {
-    final List<QueuedOp> pending = await database.queueStore.all();
+    final AccountOpQueueStore queue = _queueStore;
+    final List<QueuedOp> pending = await queue.all();
     final List<String> keys = pending
         .where((QueuedOp entry) => entry.documentId == documentId)
         .map((QueuedOp entry) => entry.operationKey)
         .toList(growable: false);
     if (keys.isEmpty) return;
-    await database.queueStore.removeAll(keys);
+    await queue.removeAll(keys);
   }
+
+  /// The queue of the operations of the current account.
+  AccountOpQueueStore get _queueStore =>
+      database.queueFor(() => _currentAuthor().value);
+
+  /// The queue of the operations of the current account, with the retry
+  /// policy of `limpid_sync`.
+  OpQueue get _queue => OpQueue(store: _queueStore);
+
+  /// The snapshots of the documents of the current account.
+  AccountSnapshotStore get _snapshots =>
+      database.snapshotsFor(() => _currentAuthor().value);
 
   /// The highest Lamport timestamp of a journal.
   static int _maxLamport(List<SyncOp> journal) {

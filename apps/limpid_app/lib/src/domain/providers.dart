@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:limpid_app/src/domain/fallbacks.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
@@ -132,6 +133,17 @@ final Provider<PlanRepository> planRepositoryProvider =
 /// root of the application, which reads the identifier of the signed in
 /// author. The default — a local identifier — keeps the editor usable when
 /// nobody is signed in.
+/// La clé de navigation de l'application.
+///
+/// Les lectures distantes vivent dans des `FutureProvider`, qui n'ont pas
+/// de `BuildContext` : sans une clé de navigation, elles ne pourraient pas
+/// ouvrir la fenêtre du second facteur. La clé est donnée par la
+/// composition racine, et le routeur s'en sert.
+final Provider<GlobalKey<NavigatorState>> navigatorKeyProvider =
+    Provider<GlobalKey<NavigatorState>>(
+      (Ref ref) => GlobalKey<NavigatorState>(debugLabel: 'limpid'),
+    );
+
 final Provider<AuthorId> authorIdProvider = Provider<AuthorId>((Ref ref) {
   return const AuthorId(kLocalAuthorId);
 });

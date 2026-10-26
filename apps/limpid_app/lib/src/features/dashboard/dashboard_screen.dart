@@ -43,6 +43,7 @@ class DashboardScreen extends ConsumerWidget {
             title: strings.dashboardTitle,
             subtitle: _greetingOf(strings, authorName),
             onNewProject: () => context.go(AppRoutes.onboarding),
+            onSearch: () => context.go(AppRoutes.search),
           ),
           SizedBox(height: scope.spacing.space20),
           library.when(
@@ -75,6 +76,7 @@ class _DashboardHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onNewProject,
+    required this.onSearch,
   });
 
   /// The title of the screen.
@@ -85,6 +87,9 @@ class _DashboardHeader extends StatelessWidget {
 
   /// Called when the author asks for a new project.
   final VoidCallback onNewProject;
+
+  /// Called when the author asks to search in his books.
+  final VoidCallback onSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +122,15 @@ class _DashboardHeader extends StatelessWidget {
           ),
         ),
         SizedBox(width: scope.spacing.space16),
+        // La recherche est un geste de lecture, pas d'ecriture : elle tient
+        // dans un bouton d'icone, a cote du nouveau projet.
+        LimpidIconButton(
+          icon: LimpidIcons.search,
+          tooltip: strings.searchTitle,
+          size: LimpidButtonSize.small,
+          onPressed: onSearch,
+        ),
+        SizedBox(width: scope.spacing.space8),
         LimpidButton(
           label: strings.actionNewProject,
           icon: LimpidIcons.add,

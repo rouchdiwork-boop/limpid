@@ -4,10 +4,14 @@ import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_app/src/editor/editor_models.dart';
 import 'package:limpid_core/limpid_core.dart';
 
-/// The outline of a project: its chapters and their scenes.
+/// The outline of a project: its series, its tomes, its chapters and their
+/// scenes.
 ///
-/// The outline is read from the repository, chapter by chapter: the scenes
-/// of a chapter are needed to build the plan of the book.
+/// The outline is read from the repository, level by level: the series of
+/// the project, the tomes of every series, the chapters of every tome, and
+/// the scenes of every chapter. The chapters that hang directly on the
+/// project — the books that do not use the series and the tome levels — come
+/// last.
 final writingOutlineProvider = FutureProvider.family<WritingOutline, String>((
   Ref ref,
   String projectId,
@@ -15,29 +19,68 @@ final writingOutlineProvider = FutureProvider.family<WritingOutline, String>((
   final ManuscriptRepository repository = ref.watch(
     manuscriptRepositoryProvider,
   );
-  final List<Chapter> chapters = await repository.listChapters(projectId);
+  return readOutline(repository: repository, projectId: projectId);
+});
 
-  final List<OutlineChapter> outline = <OutlineChapter>[];
-  for (int index = 0; index < chapters.length; index++) {
-    final Chapter chapter = chapters[index];
+/// Reads the hierarchy of [projectId] from [repository].
+///
+/// The function only reads the repository: it never writes it. The chapter
+/// of the outline carries its number in the book, and the numbers follow the
+/// reading order — the chapters of the tomes, then the chapters of the
+/// project.
+Future<WritingOutline> readOutline({
+  required ManuscriptRepository repository,
+  required String projectId,
+}) async {
+  final List<Series> series = await repository.listSeries(projectId);
+  var chapterNumber = 0;
+
+  Future<OutlineChapter> chapterOf(Chapter chapter) async {
+    chapterNumber++;
     final List<Scene> scenes = await repository.listScenes(chapter.id.value);
-    outline.add(
-      OutlineChapter(
-        chapter: chapter,
-        scenes: <OutlineScene>[
-          for (int sceneIndex = 0; sceneIndex < scenes.length; sceneIndex++)
-            OutlineScene(
-              scene: scenes[sceneIndex],
-              chapterNumber: index + 1,
-              sceneNumber: sceneIndex + 1,
-            ),
-        ],
-      ),
+    return OutlineChapter(
+      chapter: chapter,
+      scenes: <OutlineScene>[
+        for (int index = 0; index < scenes.length; index++)
+          OutlineScene(
+            scene: scenes[index],
+            chapterNumber: chapterNumber,
+            sceneNumber: index + 1,
+          ),
+      ],
     );
   }
 
-  return WritingOutline(chapters: List<OutlineChapter>.unmodifiable(outline));
-});
+  final List<OutlineSeries> outlineSeries = <OutlineSeries>[];
+  for (final Series item in series) {
+    final List<Volume> volumes = await repository.listVolumes(item.id.value);
+    final List<OutlineVolume> outlineVolumes = <OutlineVolume>[];
+    for (final Volume volume in volumes) {
+      final List<Chapter> chapters = await repository.listChaptersOfVolume(
+        volume.id.value,
+      );
+      outlineVolumes.add(
+        OutlineVolume(
+          volume: volume,
+          chapters: <OutlineChapter>[
+            for (final Chapter chapter in chapters) await chapterOf(chapter),
+          ],
+        ),
+      );
+    }
+    outlineSeries.add(OutlineSeries(series: item, volumes: outlineVolumes));
+  }
+
+  final List<OutlineChapter> direct = <OutlineChapter>[
+    for (final Chapter chapter in await repository.listChapters(projectId))
+      if (chapter.volumeId == null) await chapterOf(chapter),
+  ];
+
+  return WritingOutline(
+    series: List<OutlineSeries>.unmodifiable(outlineSeries),
+    chapters: List<OutlineChapter>.unmodifiable(direct),
+  );
+}
 
 /// The state of the synchronisation, as the repository reports it.
 ///

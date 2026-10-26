@@ -6,7 +6,10 @@ import 'export_file_saver_io.dart'
 /// Saves the export of the personal data outside of the application.
 ///
 /// The desktop and the mobile applications write the file in the documents
-/// of the device; the web application has no file system and copies the
-/// content in the clipboard of the browser instead.
+/// of the device; the web application has no file system, and the browser
+/// downloads the archive itself.
+///
+/// The file is an **archive**, not a text: it can never go through the
+/// clipboard, which would corrupt it.
 Future<void> savePersonalDataExport(PersonalDataExport export) =>
     saveExportFile(export);

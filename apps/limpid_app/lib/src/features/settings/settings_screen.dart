@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
+import 'package:limpid_app/src/app/router.dart';
 import 'package:limpid_app/src/app/theme_controller.dart';
 import 'package:limpid_app/src/auth/auth_repository.dart';
 import 'package:limpid_app/src/auth/session_controller.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
+import 'package:limpid_app/src/features/security/two_factor_challenge.dart';
 import 'package:limpid_app/src/features/settings/local_data_erasure.dart';
 import 'package:limpid_app/src/features/settings/settings_data_section.dart';
 import 'package:limpid_app/src/features/settings/settings_dialogs.dart';
@@ -55,6 +58,8 @@ class SettingsScreen extends ConsumerWidget {
           _buildEditor(context, ref, goal),
           SizedBox(height: scope.spacing.space16),
           _buildSync(context, ref, status, pending, syncAction),
+          SizedBox(height: scope.spacing.space16),
+          _buildSecurity(context, strings),
           SizedBox(height: scope.spacing.space16),
           _buildDevices(context),
           SizedBox(height: scope.spacing.space16),
@@ -136,6 +141,38 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  /// The integrations of the account: the second factor, the API keys and
+  /// the outgoing webhooks.
+  ///
+  /// They live together because they answer the same question — how does a
+  /// program talk to this account — and because they share the same
+  /// guards: a key and a webhook are useless without the second factor.
+  Widget _buildSecurity(BuildContext context, AppLocalizations strings) {
+    return SettingsSection(
+      title: strings.settingsSectionSecurity,
+      children: <Widget>[
+        LimpidListTile(
+          title: strings.twoFactorTitle,
+          subtitle: strings.twoFactorSubtitle,
+          leading: const Icon(LimpidIcons.shield),
+          onTap: () => context.go(AppRoutes.twoFactor),
+        ),
+        LimpidListTile(
+          title: strings.apiKeysTitle,
+          subtitle: strings.apiKeysSubtitle,
+          leading: const Icon(LimpidIcons.code),
+          onTap: () => context.go(AppRoutes.apiKeys),
+        ),
+        LimpidListTile(
+          title: strings.webhooksTitle,
+          subtitle: strings.webhooksSubtitle,
+          leading: const Icon(LimpidIcons.globe),
+          onTap: () => context.go(AppRoutes.webhooks),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSync(
     BuildContext context,
     WidgetRef ref,
@@ -197,11 +234,21 @@ class SettingsScreen extends ConsumerWidget {
     ref.read(dailyWordGoalProvider.notifier).set(choice);
   }
 
+  /// Pushes the pending operations to the server.
+  ///
+  /// The synchronisation goes to the server: it passes through the window of
+  /// the second factor, and is repeated when the server refuses the proof.
+  /// The operations are idempotent — the CRDT applies them twice without
+  /// changing the manuscript.
   Future<void> _synchronize(BuildContext context, WidgetRef ref) async {
     final AppLocalizations strings = AppLocalizations.of(context);
     try {
-      await ref.read(syncActionProvider.notifier).synchronize();
-    } on Object {
+      await runWithTwoFactor(
+        context,
+        ref,
+        action: () => ref.read(syncActionProvider.notifier).synchronize(),
+      );
+    } on Exception {
       if (!context.mounted) {
         return;
       }
@@ -210,6 +257,20 @@ class SettingsScreen extends ConsumerWidget {
         message: strings.errorGeneric,
         variant: LimpidStatusVariant.danger,
       );
+    } on Object catch (error, stackTrace) {
+      // Une `Error` — et non une `Exception` — ne remonte pas dans le
+      // `on Exception` ci-dessus : sans ce filet, l'échec disparaît et le
+      // bouton semble ne rien faire. L'auteur voit un message, et la console
+      // porte la cause.
+      if (!context.mounted) {
+        return;
+      }
+      LimpidSnackbar.show(
+        context,
+        message: strings.errorGeneric,
+        variant: LimpidStatusVariant.danger,
+      );
+      debugPrint('La synchronisation a échoué : $error\n$stackTrace');
     }
   }
 

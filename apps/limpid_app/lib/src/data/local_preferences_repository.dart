@@ -5,10 +5,24 @@ import 'package:limpid_app/src/domain/repositories.dart';
 ///
 /// A preference must never break the interface: every read falls back on a
 /// safe value and every write is best effort.
+///
+/// ## The account of the preferences
+///
+/// The local database is shared by every account of the device: the
+/// preferences belong to the account of the session, and the preferences of
+/// an author are never shown to another. The account is resolved on every
+/// read and every write — a change of account takes effect at once.
 final class LocalPreferencesRepository implements PreferencesRepository {
   /// Creates a repository on top of [database].
-  LocalPreferencesRepository({required this.database, DateTime Function()? now})
-    : _now = now ?? DateTime.now;
+  ///
+  /// The account of the preferences is [accountId] when it is given, and the
+  /// account of the session of the device otherwise.
+  LocalPreferencesRepository({
+    required this.database,
+    String Function()? accountId,
+    DateTime Function()? now,
+  }) : _accountId = accountId ?? (() => database.account.accountId),
+       _now = now ?? DateTime.now;
 
   /// The daily goal of the design system, used when nothing is recorded.
   static const int defaultDailyGoal = 1500;
@@ -19,6 +33,7 @@ final class LocalPreferencesRepository implements PreferencesRepository {
   /// The local database of the application.
   final AppDatabase database;
 
+  final String Function() _accountId;
   final DateTime Function() _now;
 
   @override
@@ -26,6 +41,7 @@ final class LocalPreferencesRepository implements PreferencesRepository {
     try {
       final String? raw = await database.manuscripts.readPreference(
         dailyGoalKey,
+        accountId: _accountId(),
       );
       final int? words = int.tryParse(raw ?? '');
       if (words == null || words <= 0) return defaultDailyGoal;
@@ -39,7 +55,11 @@ final class LocalPreferencesRepository implements PreferencesRepository {
   Future<void> setDailyGoal(int? words) async {
     if (words == null || words <= 0) return;
     try {
-      await database.manuscripts.writePreference(dailyGoalKey, '$words');
+      await database.manuscripts.writePreference(
+        dailyGoalKey,
+        '$words',
+        accountId: _accountId(),
+      );
     } on Object {
       // A preference must never break the interface: the previous value is
       // kept when the write fails.
@@ -49,7 +69,9 @@ final class LocalPreferencesRepository implements PreferencesRepository {
   @override
   Future<int> writingStreak() async {
     try {
-      final List<DateTime> days = await database.manuscripts.listWritingDays();
+      final List<DateTime> days = await database.manuscripts.listWritingDays(
+        accountId: _accountId(),
+      );
       return _streak(days, _now());
     } on Object {
       return 0;

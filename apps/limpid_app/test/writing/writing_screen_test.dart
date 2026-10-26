@@ -311,4 +311,114 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets('the plan creates a scene in a chapter', (tester) async {
+    useSurface(tester, const Size(1440, 1100));
+    await pumpScreen(tester);
+
+    final AppLocalizations strings = stringsOf(tester);
+
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(WritingOutlinePanel),
+            matching: find.byTooltip(strings.hierarchyAddScene),
+          )
+          .first,
+    );
+    await settle(tester);
+
+    await tester.enterText(find.byType(TextField), 'La marée basse');
+    await settle(tester);
+    await tester.tap(find.widgetWithText(LimpidButton, strings.actionCreate));
+    await settle(tester);
+
+    final List<Scene> scenes = manuscript.scenes['chapitre-1']!;
+    expect(scenes, hasLength(3));
+    expect(scenes.last.title, 'La marée basse');
+    expect(
+      find.descendant(
+        of: find.byType(WritingOutlinePanel),
+        matching: find.text('La marée basse'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the plan reorders the scenes of a chapter', (tester) async {
+    useSurface(tester, const Size(1440, 1100));
+    await pumpScreen(tester);
+
+    final AppLocalizations strings = stringsOf(tester);
+    final Finder plan = find.byType(WritingOutlinePanel);
+
+    double topOf(String title) => tester
+        .getTopLeft(find.descendant(of: plan, matching: find.text(title)))
+        .dy;
+
+    expect(
+      topOf('La plage à marée basse'),
+      lessThan(topOf('Ce que le comptoir bavarde')),
+    );
+
+    await tester.tap(
+      find
+          .descendant(
+            of: plan,
+            matching: find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is IconButton &&
+                  widget.tooltip == strings.hierarchyMoveUp &&
+                  widget.onPressed != null,
+            ),
+          )
+          .last,
+    );
+    await settle(tester);
+
+    expect(
+      topOf('Ce que le comptoir bavarde'),
+      lessThan(topOf('La plage à marée basse')),
+    );
+    expect(
+      manuscript.scenes['chapitre-1']!.map((Scene scene) => scene.title),
+      <String>['Ce que le comptoir bavarde', 'La plage à marée basse'],
+    );
+  });
+
+  testWidgets('the plan shows a series that has no scene yet', (tester) async {
+    // Une serie qui ne porte encore aucune scene n'est pas un plan vide :
+    // l'auteur doit pouvoir lui ajouter un tome.
+    useSurface(tester, const Size(1440, 1100));
+    final FakeManuscriptRepository repository = FakeManuscriptRepository(
+      series: <Series>[
+        Series(
+          id: const SeriesId('serie-1'),
+          projectId: const ProjectId(_projectId),
+          title: 'La Saga du sel',
+          order: OrderKey('1'),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      harness(
+        const WritingScreen(projectId: _projectId),
+        manuscript: repository,
+        sync: sync,
+        ai: ai,
+      ),
+    );
+    await settle(tester);
+
+    final Finder plan = find.byType(WritingOutlinePanel);
+    expect(
+      find.descendant(of: plan, matching: find.text('La Saga du sel')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('outline-add-volume-serie-1')),
+      findsOneWidget,
+    );
+  });
 }

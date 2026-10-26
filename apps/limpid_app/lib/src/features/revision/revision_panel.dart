@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/domain/errors.dart';
 import 'package:limpid_app/src/domain/revision_repository.dart';
+import 'package:limpid_app/src/features/revision/presence_bar.dart';
+import 'package:limpid_app/src/features/revision/presence_models.dart';
 import 'package:limpid_app/src/features/revision/revision_models.dart';
 import 'package:limpid_app/src/features/revision/revision_providers.dart';
 import 'package:limpid_app/src/features/revision/revision_thread_card.dart';
@@ -28,6 +30,7 @@ class RevisionPanel extends ConsumerStatefulWidget {
     required this.threads,
     required this.members,
     required this.currentAuthorId,
+    this.peers = const <PresencePeerView>[],
     super.key,
   });
 
@@ -42,6 +45,12 @@ class RevisionPanel extends ConsumerStatefulWidget {
 
   /// The account of the author of the book.
   final AuthorId currentAuthorId;
+
+  /// The peers present on the manuscript being read.
+  ///
+  /// The relay owns the presence: the panel only displays the peers it was
+  /// given, and shows nothing when the author writes alone.
+  final List<PresencePeerView> peers;
 
   @override
   ConsumerState<RevisionPanel> createState() => _RevisionPanelState();
@@ -76,6 +85,10 @@ class _RevisionPanelState extends ConsumerState<RevisionPanel> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _PanelHeader(openCount: open.length),
+          PresenceBar(
+            peers: widget.peers,
+            label: AppLocalizations.of(context).revisionMembers,
+          ),
           _MembersRow(members: widget.members),
           Divider(
             height: _kHairline,

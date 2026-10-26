@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/app/router.dart';
+import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/features/project/publication_action.dart';
+import 'package:limpid_app/src/features/project/share_section.dart';
 import 'package:limpid_app/src/features/projects/project_cover.dart';
 import 'package:limpid_app/src/features/projects/projects_controller.dart';
+import 'package:limpid_app/src/features/writing/widgets/writing_hierarchy_dialog.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 
@@ -90,6 +93,8 @@ class ProjectScreen extends ConsumerWidget {
               );
             },
           ),
+          SizedBox(height: scope.spacing.space24),
+          ShareSection(projectId: projectId),
         ],
       ),
     );
@@ -206,7 +211,7 @@ class _ProjectHeader extends StatelessWidget {
   }
 }
 
-class _ChaptersCard extends StatelessWidget {
+class _ChaptersCard extends ConsumerWidget {
   const _ChaptersCard({required this.project, required this.chapters});
 
   final ProjectSummary project;
@@ -215,7 +220,7 @@ class _ChaptersCard extends StatelessWidget {
   final AsyncValue<List<(Chapter, int)>> chapters;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final strings = AppLocalizations.of(context);
     final scope = context.limpid;
     final List<(Chapter, int)> items =
@@ -228,6 +233,7 @@ class _ChaptersCard extends StatelessWidget {
         variant: LimpidButtonVariant.ghost,
         icon: LimpidIcons.add,
         size: LimpidButtonSize.small,
+        onPressed: () => _createChapter(context, ref),
       ),
       child: Padding(
         padding: EdgeInsets.only(top: scope.spacing.space12),
@@ -289,6 +295,40 @@ class _ChaptersCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Creates a chapter in the book.
+  ///
+  /// The chapter passes through the manuscript repository: it is a **CRDT
+  /// operation**, like every write. The book does not need a series nor a
+  /// volume: a chapter can hang directly on the project.
+  Future<void> _createChapter(BuildContext context, WidgetRef ref) async {
+    final AppLocalizations strings = AppLocalizations.of(context);
+    final String? title = await showHierarchyTitleDialog(
+      context: context,
+      title: strings.hierarchyAddChapter,
+    );
+    if (title == null || !context.mounted) return;
+
+    final String projectId = project.project.id.value;
+    try {
+      await ref
+          .read(manuscriptRepositoryProvider)
+          .createChapter(projectId: projectId, title: title);
+    } on Object {
+      if (!context.mounted) return;
+      // The failure is said: a chapter that was not created must not look
+      // like it was.
+      LimpidSnackbar.show(
+        context,
+        message: strings.errorGeneric,
+        variant: LimpidStatusVariant.danger,
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    ref.invalidate(projectChaptersProvider(projectId));
   }
 }
 

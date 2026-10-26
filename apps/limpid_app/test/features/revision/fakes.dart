@@ -11,20 +11,26 @@ const AuthorId kRevisionAuthor = AuthorId('auteur-1');
 /// A repository of discussions driven by the test.
 ///
 /// The fake records the discussions the panel writes, so that a test can
-/// assert that the resolution of a thread reaches the storage.
+/// assert that the resolution of a thread reaches the storage. It also
+/// serves the history of the documents it holds.
 final class FakeRevisionRepository implements RevisionRepository {
   /// Creates the fake.
   FakeRevisionRepository({
     List<CommentThread> threads = const <CommentThread>[],
     List<ProjectMember> members = const <ProjectMember>[],
+    Map<String, CrdtDocument> documents = const <String, CrdtDocument>{},
   }) : threads = List<CommentThread>.of(threads),
-       members = List<ProjectMember>.of(members);
+       members = List<ProjectMember>.of(members),
+       documents = Map<String, CrdtDocument>.of(documents);
 
   /// The discussions of the project.
   final List<CommentThread> threads;
 
   /// The collaborators of the project.
   final List<ProjectMember> members;
+
+  /// The documents whose history the fake serves.
+  final Map<String, CrdtDocument> documents;
 
   /// The discussions the panel wrote.
   final List<CommentThread> saved = <CommentThread>[];
@@ -50,6 +56,24 @@ final class FakeRevisionRepository implements RevisionRepository {
   @override
   Future<List<ProjectMember>> loadMembers(String projectId) async {
     return List<ProjectMember>.unmodifiable(members);
+  }
+
+  @override
+  Future<List<DocumentRevision>> loadRevisions(String documentId) async {
+    final CrdtDocument? document = documents[documentId];
+    if (document == null) return const <DocumentRevision>[];
+    return List<DocumentRevision>.unmodifiable(revisionsOf(document));
+  }
+
+  @override
+  Future<RevisionComparison> compareRevisions(
+    String documentId, {
+    required VersionRef from,
+    required VersionRef to,
+  }) async {
+    final CrdtDocument? document = documents[documentId];
+    if (document == null) return RevisionComparison.empty(from, to);
+    return compareDocumentRevisions(document, from: from, to: to);
   }
 }
 

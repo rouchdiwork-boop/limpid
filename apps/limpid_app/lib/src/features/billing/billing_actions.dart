@@ -13,6 +13,7 @@ import 'package:limpid_app/src/domain/plan_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/features/billing/billing_providers.dart';
 import 'package:limpid_app/src/features/billing/billing_side_panel.dart';
+import 'package:limpid_app/src/features/security/two_factor_challenge.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 
@@ -21,6 +22,10 @@ import 'package:limpid_design_system/limpid_design_system.dart';
 /// La formule gratuite se change sans paiement ; les autres ouvrent une
 /// session de paiement. Quand le service de paiement n'est pas configuré,
 /// l'écran le dit au lieu de faire semblant.
+///
+/// Le changement de formule et l'ouverture d'une session de paiement vont
+/// au serveur : ils passent par la fenêtre du second facteur, et sont
+/// répétés quand le serveur refuse la preuve.
 Future<void> choosePlan(
   BuildContext context,
   WidgetRef ref,
@@ -30,9 +35,13 @@ Future<void> choosePlan(
   final AppLocalizations strings = AppLocalizations.of(context);
   try {
     if (plan == SubscriptionPlan.free) {
-      await ref
-          .read(checkoutProvider.notifier)
-          .change(plan: plan, period: period);
+      await runWithTwoFactor(
+        context,
+        ref,
+        action: () => ref
+            .read(checkoutProvider.notifier)
+            .change(plan: plan, period: period),
+      );
       if (!context.mounted) return;
       LimpidSnackbar.show(
         context,
@@ -41,9 +50,12 @@ Future<void> choosePlan(
       );
       return;
     }
-    final CheckoutSession session = await ref
-        .read(checkoutProvider.notifier)
-        .open(plan: plan, period: period);
+    final CheckoutSession session = await runWithTwoFactor(
+      context,
+      ref,
+      action: () =>
+          ref.read(checkoutProvider.notifier).open(plan: plan, period: period),
+    );
     if (!context.mounted) return;
     LimpidSnackbar.show(
       context,
@@ -72,13 +84,25 @@ Future<void> choosePlan(
           ? LimpidStatusVariant.warning
           : LimpidStatusVariant.danger,
     );
-  } on Object {
+  } on Exception {
     if (!context.mounted) return;
     LimpidSnackbar.show(
       context,
       message: strings.errorGeneric,
       variant: LimpidStatusVariant.danger,
     );
+  } on Object catch (error, stackTrace) {
+    // Une `Error` — et non une `Exception` — ne remonte pas dans le
+    // `on Exception` ci-dessus : sans ce filet, l'échec disparaît et le
+    // bouton semble ne rien faire. L'auteur voit un message, et la console
+    // porte la cause.
+    if (!context.mounted) return;
+    LimpidSnackbar.show(
+      context,
+      message: strings.errorGeneric,
+      variant: LimpidStatusVariant.danger,
+    );
+    debugPrint('Le changement de formule a échoué : $error\n$stackTrace');
   }
 }
 

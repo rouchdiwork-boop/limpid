@@ -8,6 +8,13 @@ import 'package:limpid_sync/limpid_sync.dart';
 /// The default deadline of a request sent to the API.
 const Duration defaultApiTimeout = Duration(seconds: 20);
 
+/// The header carrying the proof of the second factor.
+///
+/// The server reads it case-insensitively. It is the same header on every
+/// platform, including the web, where the proof of a socket travels in the
+/// query string instead.
+const String twoFactorProofHeader = 'X-Limpid-2FA';
+
 /// The client of the Limpid API.
 ///
 /// The client speaks the real contract of `apps/limpid_api`:
@@ -26,6 +33,7 @@ final class ApiClient {
     required this.baseUrl,
     required this.client,
     this.tokenProvider,
+    this.twoFactorProof,
     this.requestTimeout = defaultApiTimeout,
     this.closeInjectedClient = false,
   });
@@ -44,6 +52,13 @@ final class ApiClient {
   /// application runs.
   final AuthTokenProvider? tokenProvider;
 
+  /// Resolves the proof of the second factor sent with every request.
+  ///
+  /// The proof is resolved for every call too: it expires, and the author
+  /// then proves the second factor again. The client reads no global — the
+  /// composition root hands it the resolver.
+  final String? Function()? twoFactorProof;
+
   /// The deadline applied to every request.
   final Duration requestTimeout;
 
@@ -60,10 +75,20 @@ final class ApiClient {
   }
 
   /// Sends a `POST` request and returns the payload of the envelope.
-  Future<Object?> post(String path, {Object? body}) async {
+  ///
+  /// [headers] are added to the request. They let a route that has a side
+  /// effect be protected by an idempotency key.
+  Future<Object?> post(
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+  }) async {
     final http.Response response = await _send(
-      (Map<String, String> headers) =>
-          client.post(_uri(path), headers: headers, body: _encodeBody(body)),
+      (Map<String, String> sent) => client.post(
+        _uri(path),
+        headers: <String, String>{...sent, ...?headers},
+        body: _encodeBody(body),
+      ),
     );
     return _payloadOf(response);
   }
@@ -73,6 +98,18 @@ final class ApiClient {
     final http.Response response = await _send(
       (Map<String, String> headers) =>
           client.patch(_uri(path), headers: headers, body: _encodeBody(body)),
+    );
+    return _payloadOf(response);
+  }
+
+  /// Sends a `PUT` request and returns the payload of the envelope.
+  ///
+  /// The back-office changes a feature flag that way: the route replaces the
+  /// indicator and renders it in its new state.
+  Future<Object?> put(String path, {Object? body}) async {
+    final http.Response response = await _send(
+      (Map<String, String> headers) =>
+          client.put(_uri(path), headers: headers, body: _encodeBody(body)),
     );
     return _payloadOf(response);
   }
@@ -96,6 +133,36 @@ final class ApiClient {
     (Map<String, String> headers) =>
         client.post(_uri(path), headers: headers, body: _encodeBody(body)),
   );
+
+  /// Downloads a file from the absolute address [url].
+  ///
+  /// The address is **signée** : elle porte sa propre autorisation, et elle
+  /// ne vient pas de l'API. Le client n'y joint donc **ni** le jeton de
+  /// session, **ni** la preuve du second facteur : les envoyer à un hôte
+  /// tiers les lui donnerait.
+  ///
+  /// Le délai de la requête s'applique comme aux autres appels.
+  Future<http.Response> download(Uri url) async {
+    try {
+      final http.Response response = await client
+          .get(url)
+          .timeout(requestTimeout);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _errorForStatus(response.statusCode, response.body);
+      }
+      return response;
+    } on TimeoutException catch (error) {
+      throw ApiTimeoutException(
+        'The API did not answer before the timeout.',
+        cause: error,
+      );
+    } on http.ClientException catch (error) {
+      throw ApiNetworkException(
+        'The API is unreachable: ${error.message}',
+        cause: error,
+      );
+    }
+  }
 
   /// Sends a `POST` request and returns the stream of the answer.
   ///
@@ -238,6 +305,10 @@ final class ApiClient {
     final String? token = await tokenProvider?.call();
     if (token != null && token.isNotEmpty) {
       headers['authorization'] = 'Bearer $token';
+    }
+    final String? proof = twoFactorProof?.call();
+    if (proof != null && proof.isNotEmpty) {
+      headers[twoFactorProofHeader] = proof;
     }
     return headers;
   }

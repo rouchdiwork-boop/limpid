@@ -103,13 +103,25 @@ void main() {
               'limit': 1073741824,
               'used': null,
             },
+            <String, Object?>{
+              'feature': 'ai_tokens',
+              'kind': 'counter',
+              'limit': 2000000,
+              'used': 341200,
+            },
+            <String, Object?>{
+              'feature': 'ai_covers',
+              'kind': 'counter',
+              'limit': 5,
+              'used': 2,
+            },
           ],
         });
       });
 
       final List<QuotaReading> readings = await repository.usage();
 
-      expect(readings, hasLength(3));
+      expect(readings, hasLength(5));
       expect(readings.first.meter, QuotaMeter.words);
       expect(readings.first.limit, 10000000);
       expect(readings.first.used, isNull);
@@ -117,6 +129,16 @@ void main() {
       expect(readings[1].used, 341);
       expect(readings[1].ratio, closeTo(0.341, 0.0001));
       expect(readings[2].meter, QuotaMeter.storage);
+      // Les jetons de l'IA se comptent a part des reecritures : le
+      // produit se vend en jetons, l'auteur veut voir ce qu'il consomme.
+      expect(readings[3].meter, QuotaMeter.aiTokens);
+      expect(readings[3].limit, 2000000);
+      expect(readings[3].used, 341200);
+      // Les couvertures se comptent a part : la formule en accorde cinq
+      // par mois, et l'auteur doit voir ce qu'il en a produit.
+      expect(readings[4].meter, QuotaMeter.aiCovers);
+      expect(readings[4].limit, 5);
+      expect(readings[4].used, 2);
     });
 
     test('ouvre une session de paiement', () async {
@@ -165,6 +187,49 @@ void main() {
       },
     );
 
+    test(
+      'porte une clé d idempotence : deux clics, une seule session',
+      () async {
+        // Un double-clic sur « Payer » ne doit pas ouvrir deux sessions de
+        // paiement : la cle d'idempotence fait rejouer la premiere reponse.
+        final List<String?> keys = <String?>[];
+        DateTime now = DateTime.utc(2026, 10, 26, 9);
+        final ApiPlanRepository repository = _repositoryOf(
+          (http.Request request) async {
+            keys.add(request.headers['idempotency-key']);
+            return _ok(<String, Object?>{
+              'session_id': 'cs_1',
+              'url': 'https://checkout.test/cs_1',
+              'status': 'open',
+            });
+          },
+          origin: Uri.parse('https://app.test'),
+          clock: () => now,
+        );
+
+        Future<CheckoutSession> open() => repository.openCheckout(
+          plan: SubscriptionPlan.studio,
+          period: BillingPeriod.yearly,
+          returnTo: Uri.parse('/abonnement'),
+        );
+
+        await open();
+        now = now.add(const Duration(minutes: 2));
+        await open();
+
+        expect(keys.first, isNotNull);
+        expect(keys.first, isNotEmpty);
+        expect(keys[1], keys.first);
+
+        // Une commande reprise plus tard ouvre une session neuve : l'ancienne
+        // a pu expirer.
+        now = now.add(const Duration(minutes: 20));
+        await open();
+
+        expect(keys[2], isNot(keys.first));
+      },
+    );
+
     test('remonte une erreur typée quand le serveur refuse', () async {
       final ApiPlanRepository repository = _repositoryOf(
         (http.Request request) async => http.Response(
@@ -191,12 +256,14 @@ void main() {
 ApiPlanRepository _repositoryOf(
   Future<http.Response> Function(http.Request request) handler, {
   Uri? origin,
+  DateTime Function()? clock,
 }) => ApiPlanRepository(
   client: ApiClient(
     baseUrl: Uri.parse('https://api.test'),
     client: MockClient(handler),
   ),
   checkoutOrigin: origin,
+  clock: clock,
 );
 
 /// Builds a successful answer carrying the envelope of the API.

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:limpid_app/src/auth/auth_repository.dart';
 import 'package:limpid_app/src/auth/local_auth_store.dart';
 import 'package:limpid_app/src/auth/session_stream.dart';
+import 'package:limpid_app/src/auth/two_factor_proof_holder.dart';
 
 /// The repository of the demonstration mode.
 ///
@@ -45,6 +46,9 @@ final class DemoAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {
+    // La preuve du second facteur appartient a la session : elle tombe avec
+    // elle, que l'ecran de securite ait ete ouvert ou non.
+    TwoFactorProofHolder.clear();
     final state = await _store.read();
     await _store.write(
       LocalAuthState(

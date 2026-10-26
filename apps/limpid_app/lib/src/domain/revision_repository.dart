@@ -50,6 +50,12 @@ class ProjectMember {
 ///
 /// The two halves meet in `features/revision/revision_anchors.dart`: the
 /// ranges come from the document, the discussion comes from here.
+///
+/// ## The history of the versions
+///
+/// The contract also carries the **history** of a document: the list of its
+/// revisions, and the comparison of two of them. The comparison is made
+/// block by block, on the states of the blocks — never on two texts.
 abstract interface class RevisionRepository {
   /// The discussions of a project, oldest first.
   Future<List<CommentThread>> loadThreads(String projectId);
@@ -62,6 +68,22 @@ abstract interface class RevisionRepository {
 
   /// The collaborators of a project, with the role they hold.
   Future<List<ProjectMember>> loadMembers(String projectId);
+
+  /// The revisions of a document, the oldest first.
+  ///
+  /// The revisions are the operations the document holds: every version of
+  /// every block is a point of the history.
+  Future<List<DocumentRevision>> loadRevisions(String documentId);
+
+  /// Compares two revisions of a document, block by block.
+  ///
+  /// The comparison says which blocks changed, and how: they were added,
+  /// they were removed, their content changed or they moved.
+  Future<RevisionComparison> compareRevisions(
+    String documentId, {
+    required VersionRef from,
+    required VersionRef to,
+  });
 }
 
 /// A repository keeping the discussions in the memory of the process.
@@ -76,6 +98,7 @@ final class InMemoryRevisionRepository implements RevisionRepository {
         const <String, List<CommentThread>>{},
     Map<String, List<ProjectMember>> members =
         const <String, List<ProjectMember>>{},
+    Map<String, CrdtDocument> documents = const <String, CrdtDocument>{},
   }) : _threads = <String, List<CommentThread>>{
          for (final MapEntry<String, List<CommentThread>> entry
              in threads.entries)
@@ -85,10 +108,12 @@ final class InMemoryRevisionRepository implements RevisionRepository {
          for (final MapEntry<String, List<ProjectMember>> entry
              in members.entries)
            entry.key: List<ProjectMember>.of(entry.value),
-       };
+       },
+       _documents = Map<String, CrdtDocument>.of(documents);
 
   final Map<String, List<CommentThread>> _threads;
   final Map<String, List<ProjectMember>> _members;
+  final Map<String, CrdtDocument> _documents;
 
   @override
   Future<List<CommentThread>> loadThreads(String projectId) async {
@@ -118,5 +143,23 @@ final class InMemoryRevisionRepository implements RevisionRepository {
     return List<ProjectMember>.unmodifiable(
       _members[projectId] ?? const <ProjectMember>[],
     );
+  }
+
+  @override
+  Future<List<DocumentRevision>> loadRevisions(String documentId) async {
+    final CrdtDocument? document = _documents[documentId];
+    if (document == null) return const <DocumentRevision>[];
+    return List<DocumentRevision>.unmodifiable(revisionsOf(document));
+  }
+
+  @override
+  Future<RevisionComparison> compareRevisions(
+    String documentId, {
+    required VersionRef from,
+    required VersionRef to,
+  }) async {
+    final CrdtDocument? document = _documents[documentId];
+    if (document == null) return RevisionComparison.empty(from, to);
+    return compareDocumentRevisions(document, from: from, to: to);
   }
 }

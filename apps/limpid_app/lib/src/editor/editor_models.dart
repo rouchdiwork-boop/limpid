@@ -88,30 +88,88 @@ class OutlineChapter {
   int get targetWordCount => chapter.targetWordCount;
 }
 
-/// The outline of a project: its chapters and their scenes.
+/// A tome of the outline of a project.
+///
+/// The tome is the level between the series and the chapter (D-02).
+@immutable
+class OutlineVolume {
+  /// Creates an outline volume.
+  const OutlineVolume({required this.volume, required this.chapters});
+
+  /// The tome of the repository.
+  final Volume volume;
+
+  /// The chapters of the tome, in reading order.
+  final List<OutlineChapter> chapters;
+
+  /// The title of the tome.
+  String get title => volume.title;
+}
+
+/// A series of the outline of a project.
+///
+/// The series is the first level of the hierarchy of a book (D-02): it
+/// groups the tomes of the project.
+@immutable
+class OutlineSeries {
+  /// Creates an outline series.
+  const OutlineSeries({required this.series, required this.volumes});
+
+  /// The series of the repository.
+  final Series series;
+
+  /// The tomes of the series, in reading order.
+  final List<OutlineVolume> volumes;
+
+  /// The title of the series.
+  String get title => series.title;
+}
+
+/// The outline of a project: its series, its tomes, its chapters and their
+/// scenes.
 ///
 /// The outline is a projection of the repository, never a hard coded list.
+/// The hierarchy of D-02 is whole: a book holds series, a series holds
+/// tomes, a tome holds chapters, and a chapter holds scenes. A book that
+/// does not use the series and the tome levels holds its chapters directly.
 @immutable
 class WritingOutline {
   /// Creates an outline.
-  const WritingOutline({required this.chapters});
+  const WritingOutline({
+    this.series = const <OutlineSeries>[],
+    this.chapters = const <OutlineChapter>[],
+  });
 
   /// An outline without any chapter.
   static const WritingOutline empty = WritingOutline(
+    series: <OutlineSeries>[],
     chapters: <OutlineChapter>[],
   );
 
-  /// The chapters of the project, in reading order.
+  /// The series of the project, in reading order.
+  final List<OutlineSeries> series;
+
+  /// The chapters that hang directly on the project, in reading order.
   final List<OutlineChapter> chapters;
+
+  /// Every chapter of the project, in reading order.
+  ///
+  /// The chapters of the tomes come first, then the chapters of the
+  /// project: the number a chapter carries is its number in the book.
+  List<OutlineChapter> get allChapters => <OutlineChapter>[
+    for (final OutlineSeries series in series)
+      for (final OutlineVolume volume in series.volumes) ...volume.chapters,
+    ...chapters,
+  ];
 
   /// Every scene of the project, in reading order.
   List<OutlineScene> get scenes => <OutlineScene>[
-    for (final OutlineChapter chapter in chapters) ...chapter.scenes,
+    for (final OutlineChapter chapter in allChapters) ...chapter.scenes,
   ];
 
   /// The first scene of the project, `null` when the project is empty.
   OutlineScene? get firstScene {
-    for (final OutlineChapter chapter in chapters) {
+    for (final OutlineChapter chapter in allChapters) {
       if (chapter.scenes.isNotEmpty) {
         return chapter.scenes.first;
       }
@@ -119,8 +177,14 @@ class WritingOutline {
     return null;
   }
 
-  /// Whether the project holds no scene at all.
-  bool get isEmpty => scenes.isEmpty;
+  /// Whether the plan holds no row at all.
+  ///
+  /// The plan is empty when it carries neither a series, nor a tome, nor a
+  /// chapter: the author has not built anything yet. A series without a tome
+  /// is **not** empty — the plan shows the series and lets the author add a
+  /// tome to it. The scenes do not decide: a book may have a plan before it
+  /// has a single scene.
+  bool get isPlanEmpty => series.isEmpty && chapters.isEmpty;
 }
 
 /// The state of the assistant panel.

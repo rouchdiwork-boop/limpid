@@ -7,6 +7,7 @@ import 'package:limpid_app/src/auth/local_auth_store.dart';
 import 'package:limpid_app/src/auth/supabase_auth_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/features/publication/publication_routes.dart';
+import 'package:limpid_app/src/features/revision/history/history_routes.dart';
 
 import '../features/publication/fakes.dart';
 
@@ -91,6 +92,16 @@ void main() {
       expect(PublicationRoutes.readerPattern, startsWith('/lire/'));
       expect(PublicationRoutes.showcase('a'), startsWith('/vitrine/'));
       expect(PublicationRoutes.reader('a'), startsWith('/lire/'));
+    });
+
+    test('la recherche est une page de la bibliotheque', () {
+      expect(AppRoutes.search, '/bibliotheque/recherche');
+      expect(AppRoutes.searchSegment, 'recherche');
+    });
+
+    test('l historique porte sur un document', () {
+      expect(HistoryRoutes.detail('doc-1'), '/documents/doc-1/historique');
+      expect(HistoryRoutes.detailPattern, startsWith('/documents/'));
     });
   });
 }

@@ -21,6 +21,122 @@ enum SyncStatus {
   conflict,
 }
 
+/// The technical code of the refusal of the protocol version of the client.
+///
+/// The server answers `409 schema_version_unsupported` when the version of
+/// the protocol the client speaks is older than the oldest version the
+/// server still accepts.
+const String schemaVersionUnsupportedCode = 'schema_version_unsupported';
+
+/// The server refused the protocol version of the client.
+///
+/// The client does not speak the language of the server any more: it pulls
+/// the tree of the project, replaces its local state by the one of the
+/// server and replays the operations the server has not accepted yet.
+///
+/// The error never reaches the interface: the client repairs itself, alone.
+final class SchemaVersionUnsupportedException implements Exception {
+  /// Creates the error.
+  const SchemaVersionUnsupportedException({required this.message});
+
+  /// The explanation of the refusal, as the server wrote it.
+  final String message;
+
+  @override
+  String toString() => 'SchemaVersionUnsupportedException: $message';
+}
+
+/// An event of the synchronisation.
+///
+/// The events tell what the synchronisation does from the inside: a
+/// resynchronization, a refusal of the server. They never ask anything to
+/// the author — the client catches up by itself.
+sealed class SyncEvent {
+  /// Creates an event.
+  const SyncEvent();
+}
+
+/// The server refused the protocol version of the client: the client
+/// resynchronizes itself.
+///
+/// The event opens the resynchronization: the client pulls the tree of the
+/// project, replaces its local state by the one of the server and replays
+/// the operations the server has not accepted yet.
+final class SyncResynchronizing extends SyncEvent {
+  /// Creates an event.
+  const SyncResynchronizing({
+    required this.documentId,
+    required this.projectId,
+  });
+
+  /// The document being resynchronised.
+  final String documentId;
+
+  /// The project the document belongs to.
+  final String projectId;
+
+  @override
+  String toString() => 'SyncResynchronizing($documentId, project: $projectId)';
+}
+
+/// The resynchronization is over.
+final class SyncResynchronized extends SyncEvent {
+  /// Creates an event.
+  const SyncResynchronized({
+    required this.documentId,
+    required this.replacedDocuments,
+    required this.replayedOperations,
+  });
+
+  /// The document whose local state was replaced by the one of the server.
+  final String documentId;
+
+  /// The number of documents the tree of the server described.
+  final int replacedDocuments;
+
+  /// The number of local operations that were replayed.
+  final int replayedOperations;
+
+  @override
+  String toString() =>
+      'SyncResynchronized($documentId, replayed: $replayedOperations)';
+}
+
+/// The server refused an operation.
+///
+/// The operation stays in the durable queue of the device: it is never
+/// dropped, and the author is told about it.
+final class SyncRefused extends SyncEvent {
+  /// Creates an event.
+  const SyncRefused({
+    required this.operationKey,
+    required this.code,
+    required this.message,
+  });
+
+  /// The identity of the refused operation.
+  final String operationKey;
+
+  /// The stable, technical reason of the refusal.
+  final String code;
+
+  /// The explanation of the refusal.
+  final String message;
+
+  @override
+  String toString() => 'SyncRefused($operationKey, $code)';
+}
+
+/// A repository of synchronisation that tells what it does.
+///
+/// The contract of the synchronisation only exposes the state of the
+/// synchronisation. This optional capability exposes the **events**: the
+/// resynchronizations, the refusals of the server.
+abstract interface class SyncEventSource {
+  /// The stream of the events of the synchronisation.
+  Stream<SyncEvent> watchEvents();
+}
+
 /// The reading and the writing of the manuscripts of the author.
 ///
 /// The contract is deliberately **local first**: it always answers from the
@@ -61,6 +177,69 @@ abstract interface class ManuscriptRepository {
   /// Creates or updates a scene.
   Future<Scene> saveScene(Scene scene);
 
+  /// The series of a project, in reading order.
+  ///
+  /// The series is the first level of the hierarchy of a book (D-02): it
+  /// groups the tomes of the project.
+  Future<List<Series>> listSeries(String projectId);
+
+  /// Creates a series in a project and returns it.
+  ///
+  /// The series is written and attached to the project: it survives the
+  /// restart of the application and comes back with the project.
+  Future<Series> createSeries({
+    required String projectId,
+    required String title,
+    String synopsis = '',
+  });
+
+  /// The volumes of a series, in reading order.
+  Future<List<Volume>> listVolumes(String seriesId);
+
+  /// The chapters of a volume, in reading order.
+  ///
+  /// The chapters a volume holds are the ones that hang on it; the other
+  /// chapters of the project belong to the project itself.
+  Future<List<Chapter>> listChaptersOfVolume(String volumeId);
+
+  /// Creates a volume in a series and returns it.
+  Future<Volume> createVolume({
+    required String seriesId,
+    required String title,
+    String synopsis = '',
+  });
+
+  /// Creates a chapter and returns it.
+  ///
+  /// The chapter hangs on [volumeId] when it is given, and directly on the
+  /// project otherwise: a book does not have to use the series and the
+  /// volume levels.
+  Future<Chapter> createChapter({
+    required String projectId,
+    String? volumeId,
+    required String title,
+    String synopsis = '',
+  });
+
+  /// Creates a scene in a chapter and returns it.
+  ///
+  /// The scene owns a CRDT document: the creation writes its title in that
+  /// document, so the scene is a real scene — it is found again after the
+  /// restart, and it synchronizes like any other writing.
+  Future<Scene> createScene({
+    required String chapterId,
+    required String title,
+    String synopsis = '',
+  });
+
+  /// Moves a scene inside its chapter and returns it.
+  ///
+  /// The move changes the fractional index of the scene and nothing else:
+  /// the text of the scene never moves. The new index is computed between
+  /// the order keys of the new neighbours, so an index that exists is never
+  /// rewritten (D-04).
+  Future<Scene> moveScene({required String sceneId, required int targetIndex});
+
   /// The CRDT document of a scene: the block tree of the manuscript.
   ///
   /// An unknown document yields an empty document, never an error: a scene
@@ -87,6 +266,11 @@ abstract interface class SyncRepository {
   ///
   /// Never throws: an unreachable server leaves the status at
   /// [SyncStatus.offline] and the queue intact.
+  ///
+  /// The one exception is the refusal of the second factor: the server
+  /// refuses the operations when the proof is missing, and the application
+  /// can repair that by asking the author for a code. The refusal therefore
+  /// reaches the caller, and the operations stay in the queue.
   Future<void> synchronize();
 }
 

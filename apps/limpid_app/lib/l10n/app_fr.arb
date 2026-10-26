@@ -144,6 +144,7 @@
     }
   },
   "libraryTitle": "Bibliothèque",
+  "librarySectionCollaboration": "Diffusion et collaboration",
   "librarySubtitle": "{count} projets · {published} publiés",
   "@librarySubtitle": {
     "placeholders": {
@@ -356,7 +357,7 @@
   "settingsExportData": "Exporter mes données",
   "settingsDeleteAccount": "Supprimer mon compte",
   "settingsExportPersonalData": "Exporter toutes mes données",
-  "settingsExportPersonalDataSubtitle": "Vos projets, vos commentaires, votre journal d’audit.",
+  "settingsExportPersonalDataSubtitle": "Vos projets, vos manuscrits, vos fichiers, vos réglages, votre journal d’audit.",
   "settingsExportPersonalDataReady": "Vos données sont prêtes",
   "settingsExportPersonalDataFailed": "L’export a échoué.",
   "settingsExportPersonalDataUnavailable": "Ce service n’est pas configuré sur ce poste.",
@@ -455,5 +456,286 @@
       }
     }
   },
-  "billingCurrentUsage": "Consommation"
+  "billingCurrentUsage": "Consommation",
+  "twoFactorTitle": "Double authentification",
+  "twoFactorSubtitle": "Un code à six chiffres est demandé à chaque connexion sur les formules Pro et Studio.",
+  "twoFactorStateOff": "Désactivée",
+  "twoFactorStateOn": "Activée",
+  "twoFactorEnable": "Activer la double authentification",
+  "twoFactorSecretIntro": "Scannez ce code avec votre application d’authentification, puis saisissez le code qu’elle affiche.",
+  "twoFactorSecretLabel": "Code de configuration",
+  "twoFactorConfirm": "Activer",
+  "twoFactorDisable": "Désactiver",
+  "twoFactorRecoveryCodes": "Codes de récupération",
+  "twoFactorRecoveryIntro": "Conservez ces codes : chacun sert une seule fois, si votre appareil n’est plus disponible.",
+  "twoFactorVerify": "Vérifier",
+  "twoFactorProofMissing": "La double authentification est active : saisissez votre code pour continuer.",
+  "twoFactorRequired": "Votre formule exige la double authentification. Activez-la pour continuer à utiliser l’application.",
+  "twoFactorInvalidCode": "Ce code n’est pas le bon.",
+  "twoFactorUnavailable": "La double authentification n’est pas configurée sur cet appareil.",
+  "twoFactorEnabled": "La double authentification est active.",
+  "teamsTitle": "Équipes",
+  "teamsSubtitle": "Un compte Studio peut travailler à plusieurs, avec des rôles et des sièges.",
+  "teamsEmpty": "Vous n’appartenez à aucune équipe.",
+  "teamsCreate": "Créer une équipe",
+  "teamsName": "Nom de l’équipe",
+  "teamsMembers": "Membres",
+  "teamsInvite": "Inviter",
+  "teamsInviteAccount": "Identifiant du compte",
+  "teamsInviteEmail": "Inviter par adresse",
+  "teamsInviteSent": "L’invitation est partie.",
+  "teamsRoleOwner": "Propriétaire",
+  "teamsRoleCoauthor": "Co-auteur",
+  "teamsRoleBeta": "Bêta-lecteur",
+  "teamsRoleReader": "Lecteur",
+  "teamsRole": "Rôle",
+  "teamsRemove": "Retirer de l’équipe",
+  "teamsLeave": "Quitter l’équipe",
+  "teamsSeats": "Sièges",
+  "teamsSeatsUsed": "{used} / {total} sièges utilisés",
+  "teamsSeatFull": "L’équipe n’a plus de siège disponible.",
+  "teamsDeleteConfirm": "Supprimer cette équipe ? Ses projets ne sont pas supprimés.",
+  "apiKeysTitle": "Clés d’API",
+  "apiKeysSubtitle": "Une clé donne à un programme l’accès à votre compte. Elle ne se montre qu’une fois.",
+  "apiKeysEmpty": "Vous n’avez pas encore de clé d’API.",
+  "apiKeysCreate": "Créer une clé",
+  "apiKeysName": "Nom de la clé",
+  "apiKeysScopeRead": "Lecture",
+  "apiKeysScopeWrite": "Écriture",
+  "apiKeysSecret": "La clé secrète",
+  "apiKeysSecretWarning": "Copiez-la maintenant : elle ne sera plus jamais affichée.",
+  "apiKeysRotate": "Renouveler",
+  "apiKeysDelete": "Supprimer",
+  "webhooksTitle": "Webhooks",
+  "webhooksSubtitle": "Limpid appelle votre service quand un événement arrive.",
+  "webhooksEmpty": "Vous n’avez pas encore de point de réception.",
+  "webhooksCreate": "Ajouter un point de réception",
+  "webhooksUrl": "Adresse de réception",
+  "webhooksEvents": "Événements",
+  "webhooksSecret": "Secret de signature",
+  "webhooksRotateSecret": "Renouveler le secret",
+  "webhooksDeliveries": "Livraisons",
+  "webhooksDeliveryPending": "En attente",
+  "webhooksDeliveryDelivered": "Livrée",
+  "webhooksDeliveryFailed": "Échouée",
+  "webhooksReplay": "Rejouer",
+  "webhooksNever": "Jamais",
+  "webhooksStudioOnly": "L’API et les webhooks sont réservés à la formule Studio.",
+  "kdpTitle": "Publication Amazon KDP",
+  "kdpSubtitle": "Déposez un livre chez Amazon Kindle Direct Publishing.",
+  "kdpEmpty": "Vous n’avez pas encore de dépôt.",
+  "kdpCreate": "Préparer un dépôt",
+  "kdpIsbn": "ISBN",
+  "kdpTitleLabel": "Titre",
+  "kdpSubtitleLabel": "Sous-titre",
+  "kdpDescription": "Description",
+  "kdpKeywords": "Mots-clés",
+  "kdpBisac": "Catégorie BISAC",
+  "kdpLanguage": "Langue",
+  "kdpPrepare": "Préparer le dossier",
+  "kdpSubmit": "Déposer chez Amazon",
+  "kdpStateDraft": "Brouillon",
+  "kdpStateSubmitted": "Déposé",
+  "kdpStateLive": "Publié",
+  "kdpStateRefused": "Refusé par Amazon",
+  "kdpStateFailed": "Échec du dépôt",
+  "kdpNotConfigured": "Le dépôt n’est pas configuré sur ce poste.",
+  "kdpRefused": "Amazon a refusé ce dépôt.",
+  "kdpRefusedReason": "Motif du refus",
+  "kdpFixAndRetry": "Corriger et réessayer",
+  "billingAiTokens": "Jetons IA",
+  "billingAiCovers": "Couvertures IA",
+  "twoFactorCopy": "Copier les codes",
+  "twoFactorCopied": "Codes copiés dans le presse-papiers.",
+  "twoFactorCodeLabel": "Code à six chiffres ou code de récupération",
+  "twoFactorDisabled": "La double authentification est désactivée.",
+  "twoFactorSecretUrlLabel": "Adresse de configuration",
+  "twoFactorFailed": "La double authentification n'a pas pu être modifiée.",
+  "searchTitle": "Rechercher",
+  "searchSubtitle": "Trouvez un passage dans vos livres, même hors connexion.",
+  "searchFieldHint": "Un mot, un nom, une phrase…",
+  "searchFieldLabel": "Chercher dans les livres",
+  "searchClear": "Effacer la recherche",
+  "searchIdleTitle": "Que cherchez-vous ?",
+  "searchIdleMessage": "Les passages de vos livres s’afficheront ici, dès que vous aurez tapé un mot.",
+  "searchEmptyTitle": "Aucun passage",
+  "searchEmptyMessage": "Aucun passage de vos livres ne porte ces mots.",
+  "searchFailureTitle": "La recherche a échoué",
+  "searchFailureMessage": "La base locale n’a pas répondu. Réessayez.",
+  "searchRetry": "Réessayer",
+  "searchResultCount": "{count} passages",
+  "@searchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchInProject": "Dans « {project} »",
+  "@searchInProject": {
+    "placeholders": {
+      "project": {
+        "type": "String"
+      }
+    }
+  },
+  "searchInScene": "Scène « {scene} »",
+  "@searchInScene": {
+    "placeholders": {
+      "scene": {
+        "type": "String"
+      }
+    }
+  },
+  "searchOpenResult": "Ouvrir le passage",
+  "hierarchyTitle": "Titre",
+  "hierarchyAddSeries": "Ajouter une série",
+  "hierarchyAddVolume": "Ajouter un tome",
+  "hierarchyAddChapter": "Ajouter un chapitre",
+  "hierarchyAddScene": "Ajouter une scène",
+  "hierarchyMoveUp": "Monter la scène",
+  "hierarchyMoveDown": "Descendre la scène",
+  "shareTitle": "Partage en lecture",
+  "shareSubtitle": "Un lien qui ouvre ce livre en lecture seule, sans compte.",
+  "shareCreate": "Partager",
+  "shareEmpty": "Ce livre n’est pas partagé.",
+  "shareLinkTitle": "Lien de partage",
+  "shareLinkMessage": "Ce lien est le seul accès : copiez-le maintenant, il ne sera plus jamais montré.",
+  "shareCopy": "Copier le lien",
+  "shareCopied": "Lien copié.",
+  "shareRevoke": "Révoquer",
+  "shareRevoked": "Le partage est révoqué.",
+  "shareRevokedBadge": "Révoqué",
+  "shareLive": "Actif",
+  "shareExpiresAt": "Expire le {date}",
+  "@shareExpiresAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFailure": "Le partage n’a pas abouti.",
+  "shareUnavailable": "Le partage n’est pas disponible sur ce poste.",
+  "hierarchyMoveBlock": "Déplacer le bloc",
+  "historyTitle": "Historique",
+  "historySubtitle": "Les révisions de la scène, et ce que chacune a changé.",
+  "historyEmptyTitle": "Aucune révision",
+  "historyEmptyMessage": "La scène n’a encore aucune version enregistrée.",
+  "historyFailureTitle": "L’historique n’a pas pu être lu",
+  "historyFailureMessage": "La base locale n’a pas répondu. Réessayez.",
+  "historyRevisionLabel": "Révision {number}",
+  "@historyRevisionLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "historyBlockCount": "{count} blocs",
+  "@historyBlockCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "historyDetailTitle": "Ce que la révision a changé",
+  "historyChangeAdded": "Bloc ajouté",
+  "historyChangeRemoved": "Bloc supprimé",
+  "historyChangeModified": "Bloc modifié",
+  "historyChangeMoved": "Bloc déplacé",
+  "historyChangeBefore": "Avant",
+  "historyChangeAfter": "Après",
+  "historyChangePlaceBefore": "Place {place}",
+  "@historyChangePlaceBefore": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "historyChangePlaceAfter": "Place {place}",
+  "@historyChangePlaceAfter": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "historyNoChanges": "Cette révision ne change aucun bloc.",
+  "historyChangeSummary": "{added} ajoutés · {removed} supprimés · {modified} modifiés · {moved} déplacés",
+  "@historyChangeSummary": {
+    "placeholders": {
+      "moved": {
+        "type": "int"
+      }
+    }
+  },
+  "adminTitle": "Back-office",
+  "adminSubtitle": "Les comptes du service, leurs formules et les indicateurs de fonctionnalité.",
+  "adminAccountsTitle": "Comptes",
+  "adminAccountsEmpty": "Aucun compte à afficher.",
+  "adminFlagsTitle": "Indicateurs",
+  "adminFlagsEmpty": "Aucun indicateur de fonctionnalité.",
+  "adminColumnPlan": "Formule",
+  "adminAccountProjects": "{count} projets",
+  "@adminAccountProjects": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminAccountCollaborations": "{count} collaborations",
+  "@adminAccountCollaborations": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminAccountMessages": "{count} messages",
+  "@adminAccountMessages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminAccountOperations": "{count} opérations",
+  "@adminAccountOperations": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminAccountSeats": "Sièges",
+  "adminAccountLastActivity": "Dernière activité",
+  "adminAccountPurged": "Données effacées",
+  "adminUnknownPlan": "Formule inconnue",
+  "adminNever": "Jamais",
+  "adminFlagUpdatedBy": "Modifié par {admin}",
+  "@adminFlagUpdatedBy": {
+    "placeholders": {
+      "admin": {
+        "type": "String"
+      }
+    }
+  },
+  "adminFlagUpdated": "L’indicateur est à jour.",
+  "adminFlagFailed": "L’indicateur n’a pas pu être modifié.",
+  "adminForbiddenTitle": "Cette page est réservée aux administrateurs.",
+  "adminForbiddenMessage": "Le serveur a refusé la lecture : ce compte n’est pas administrateur.",
+  "syncResynchronizing": "La synchronisation recommence…",
+  "syncResynchronized": "Vos modifications sont à jour.",
+  "syncOperationRefused": "Une modification n’a pas pu être envoyée : {message}.",
+  "@syncOperationRefused": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  }
 }

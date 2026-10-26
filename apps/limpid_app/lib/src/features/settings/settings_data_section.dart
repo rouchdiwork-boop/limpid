@@ -5,6 +5,7 @@ import 'package:limpid_app/src/domain/errors.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
+import 'package:limpid_app/src/features/security/two_factor_challenge.dart';
 import 'package:limpid_app/src/features/settings/gdpr_providers.dart';
 import 'package:limpid_app/src/features/settings/local_data_erasure.dart';
 import 'package:limpid_app/src/features/settings/settings_dialogs.dart';
@@ -117,12 +118,18 @@ class SettingsDataSection extends ConsumerWidget {
     }
   }
 
+  /// Exports the personal data of the author.
+  ///
+  /// The export goes to the server: it passes through the window of the
+  /// second factor, and is repeated when the server refuses the proof.
   Future<void> _exportPersonalData(BuildContext context, WidgetRef ref) async {
     final AppLocalizations strings = AppLocalizations.of(context);
     try {
-      final PersonalDataExport? result = await ref
-          .read(personalDataExportProvider.notifier)
-          .export();
+      final PersonalDataExport? result = await runWithTwoFactor(
+        context,
+        ref,
+        action: () => ref.read(personalDataExportProvider.notifier).export(),
+      );
       if (result == null || !context.mounted) {
         return;
       }
@@ -150,9 +157,29 @@ class SettingsDataSection extends ConsumerWidget {
         strings.settingsExportPersonalDataFailed,
         LimpidStatusVariant.danger,
       );
+    } on Object catch (error, stackTrace) {
+      // Une `Error` — et non une `Exception` — ne remonte pas dans le
+      // `on Exception` ci-dessus : sans ce filet, l'échec disparaît et le
+      // bouton semble ne rien faire. L'auteur voit un message, et la console
+      // porte la cause.
+      if (!context.mounted) {
+        return;
+      }
+      _showError(
+        context,
+        strings.settingsExportPersonalDataFailed,
+        LimpidStatusVariant.danger,
+      );
+      debugPrint('L\'export des données a échoué : $error\n$stackTrace');
     }
   }
 
+  /// Exports the manuscript of a project.
+  ///
+  /// The export goes to the server: it passes through the window of the
+  /// second factor, and is repeated when the server refuses the proof. The
+  /// refused export never produced a file: the repetition produces the one
+  /// the author sees.
   Future<void> _exportProject(
     BuildContext context,
     WidgetRef ref,
@@ -160,9 +187,13 @@ class SettingsDataSection extends ConsumerWidget {
   ) async {
     final AppLocalizations strings = AppLocalizations.of(context);
     try {
-      final ExportArtefact artefact = await ref
-          .read(exportRepositoryProvider)
-          .export(projectId: project.id.value, format: ExportFormat.markdown);
+      final ExportArtefact artefact = await runWithTwoFactor(
+        context,
+        ref,
+        action: () => ref
+            .read(exportRepositoryProvider)
+            .export(projectId: project.id.value, format: ExportFormat.markdown),
+      );
       if (!context.mounted) {
         return;
       }
@@ -181,9 +212,24 @@ class SettingsDataSection extends ConsumerWidget {
         return;
       }
       _showError(context, strings.exportFailed, LimpidStatusVariant.danger);
+    } on Object catch (error, stackTrace) {
+      // Une `Error` — et non une `Exception` — ne remonte pas dans le
+      // `on Exception` ci-dessus : sans ce filet, l'échec disparaît et le
+      // bouton semble ne rien faire. L'auteur voit un message, et la console
+      // porte la cause.
+      if (!context.mounted) {
+        return;
+      }
+      _showError(context, strings.exportFailed, LimpidStatusVariant.danger);
+      debugPrint('L\'export du manuscrit a échoué : $error\n$stackTrace');
     }
   }
 
+  /// Asks the server for the deletion of the account.
+  ///
+  /// The request goes to the server: it passes through the window of the
+  /// second factor, and is repeated when the server refuses the proof. The
+  /// call is idempotent — a second request answers the very same deadline.
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
     final AppLocalizations strings = AppLocalizations.of(context);
     final bool confirmed = await showAccountDeletionConfirmation(
@@ -194,9 +240,12 @@ class SettingsDataSection extends ConsumerWidget {
       return;
     }
     try {
-      final AccountDeletion? deletion = await ref
-          .read(accountDeletionProvider.notifier)
-          .requestDeletion();
+      final AccountDeletion? deletion = await runWithTwoFactor(
+        context,
+        ref,
+        action: () =>
+            ref.read(accountDeletionProvider.notifier).requestDeletion(),
+      );
       if (deletion == null || !context.mounted) {
         return;
       }
@@ -243,6 +292,20 @@ class SettingsDataSection extends ConsumerWidget {
         strings.settingsExportPersonalDataFailed,
         LimpidStatusVariant.danger,
       );
+    } on Object catch (error, stackTrace) {
+      // Une `Error` — et non une `Exception` — ne remonte pas dans le
+      // `on Exception` ci-dessus : sans ce filet, l'échec disparaît et le
+      // bouton semble ne rien faire. L'auteur voit un message, et la console
+      // porte la cause.
+      if (!context.mounted) {
+        return;
+      }
+      _showError(
+        context,
+        strings.settingsExportPersonalDataFailed,
+        LimpidStatusVariant.danger,
+      );
+      debugPrint('La suppression du compte a échoué : $error\n$stackTrace');
     }
   }
 

@@ -31,6 +31,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final LimpidThemeScope scope = context.limpid;
+    final AppLocalizations strings = AppLocalizations.of(context);
     final AsyncValue<LibrarySnapshot> library = ref.watch(libraryProvider);
     final String authorName = ref.watch(authorNameProvider);
 
@@ -44,6 +45,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
           SizedBox(height: scope.spacing.space20),
           _FilterBar(filter: _filter, onChanged: _selectFilter),
+          SizedBox(height: scope.spacing.space20),
+          _buildCollaboration(context, strings),
           SizedBox(height: scope.spacing.space20),
           library.when(
             loading: () => const LibraryLoading(),
@@ -63,6 +66,37 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   /// Keeps the stage the author filters on.
   void _selectFilter(ManuscriptStatus? status) {
     setState(() => _filter = status);
+  }
+
+  /// The pages qui accompagnent les livres de l'auteur.
+  ///
+  /// La diffusion chez Amazon et les equipes vivent dans la bibliotheque :
+  /// elles portent sur les livres, comme le reste de la page.
+  Widget _buildCollaboration(BuildContext context, AppLocalizations strings) {
+    final LimpidThemeScope scope = context.limpid;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          LimpidTextTransform.label(strings.librarySectionCollaboration),
+          style: LimpidTypography.labelStyle(color: scope.colors.fgSubtle),
+        ),
+        SizedBox(height: scope.spacing.space8),
+        LimpidListTile(
+          title: strings.kdpTitle,
+          subtitle: strings.kdpSubtitle,
+          leading: const Icon(LimpidIcons.globe),
+          onTap: () => context.go(AppRoutes.kdp),
+        ),
+        LimpidListTile(
+          title: strings.teamsTitle,
+          subtitle: strings.teamsSubtitle,
+          leading: const Icon(LimpidIcons.users),
+          onTap: () => context.go(AppRoutes.teams),
+        ),
+      ],
+    );
   }
 }
 

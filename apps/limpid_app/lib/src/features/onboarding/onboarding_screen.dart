@@ -299,6 +299,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       _showFailure(strings.demoModeMessage);
     } on Exception {
       _showFailure(strings.errorGeneric);
+    } on Object catch (error, stackTrace) {
+      // Une `Error` — et non une `Exception` — ne remonte pas dans le
+      // `on Exception` ci-dessus : sans ce filet, l'echec disparait et le
+      // bouton semble ne rien faire. L'auteur voit un message, et la
+      // console porte la cause.
+      _showFailure(strings.errorGeneric);
+      debugPrint('La creation du projet a echoue : $error\n$stackTrace');
     } finally {
       if (mounted) {
         setState(() => _isCreating = false);

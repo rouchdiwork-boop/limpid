@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,9 +9,13 @@ import 'package:limpid_app/src/data/app_database.dart';
 import 'package:limpid_app/src/data/local_sync_repository.dart';
 import 'package:limpid_app/src/data/project_identity_store.dart';
 import 'package:limpid_app/src/data/project_ops_transport.dart';
+import 'package:limpid_app/src/data/real_time_transport.dart';
+import 'package:limpid_app/src/domain/realtime.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
-import 'package:limpid_core/limpid_core.dart';
+import 'package:limpid_core/limpid_core.dart' hide SyncTransport;
+import 'package:limpid_sync/limpid_sync.dart' hide SyncStatus;
 
+import 'fake_relay.dart';
 import 'support.dart';
 
 void main() {
@@ -140,6 +145,176 @@ void main() {
       );
     });
   });
+
+  group('relais', () {
+    test('applique au document les opérations reçues par le relais', () async {
+      final AppDatabase database = await openMemoryDatabase();
+      addTearDown(database.close);
+      await _indexDocument(database);
+
+      final List<FakeRelayChannel> channels = <FakeRelayChannel>[];
+      final LocalSyncRepository repository = _repositoryOf(
+        database,
+        channels: channels,
+      );
+      addTearDown(repository.dispose);
+
+      final List<RealTimeEvent> events = <RealTimeEvent>[];
+      final StreamSubscription<RealTimeEvent> subscription = repository
+          .follow('document-1')
+          .listen(events.add);
+      addTearDown(subscription.cancel);
+      await _pump();
+
+      channels.single.emitOperations(<SyncOp>[
+        insertBlockOp(
+          documentId: 'document-1',
+          lamport: 4,
+          authorId: 'auteur-2',
+        ),
+      ]);
+      await _pump();
+
+      final DocumentSnapshot? snapshot = await database
+          .snapshotsFor(() => 'author-1')
+          .read(const DocumentId('document-1'));
+      expect(snapshot, isNotNull);
+      expect(snapshot!.operations, hasLength(1));
+      expect(snapshot.operations.single.lamport, 4);
+      expect(events.whereType<RealTimeOperations>(), hasLength(1));
+    });
+
+    test(
+      'n\'applique qu\'une fois la même opération reçue deux fois',
+      () async {
+        final AppDatabase database = await openMemoryDatabase();
+        addTearDown(database.close);
+        await _indexDocument(database);
+
+        final List<FakeRelayChannel> channels = <FakeRelayChannel>[];
+        final LocalSyncRepository repository = _repositoryOf(
+          database,
+          channels: channels,
+        );
+        addTearDown(repository.dispose);
+
+        final StreamSubscription<RealTimeEvent> subscription = repository
+            .follow('document-1')
+            .listen((_) {});
+        addTearDown(subscription.cancel);
+        await _pump();
+
+        final List<SyncOp> operations = <SyncOp>[
+          insertBlockOp(
+            documentId: 'document-1',
+            lamport: 4,
+            authorId: 'auteur-2',
+          ),
+        ];
+        channels.single.emitOperations(operations);
+        await _pump();
+        channels.single.emitOperations(operations);
+        await _pump();
+
+        final DocumentSnapshot? snapshot = await database
+            .snapshotsFor(() => 'author-1')
+            .read(const DocumentId('document-1'));
+        expect(snapshot!.operations, hasLength(1));
+      },
+    );
+
+    test('replie sur la file REST quand le canal se rouvre', () async {
+      final AppDatabase database = await openMemoryDatabase();
+      addTearDown(database.close);
+      await _indexDocument(database);
+
+      final List<FakeRelayChannel> channels = <FakeRelayChannel>[];
+      final _CountingRestTransport rest = _CountingRestTransport();
+      final LocalSyncRepository repository = LocalSyncRepository(
+        database: database,
+        transport: rest,
+        author: const AuthorId('author-1'),
+        realTime: RealTimeTransport(
+          baseUrl: Uri.parse('https://api.test'),
+          store: database.manuscripts,
+          rest: rest,
+          channelFactory: (String docId) {
+            final FakeRelayChannel channel = FakeRelayChannel(docId);
+            channels.add(channel);
+            return channel;
+          },
+        ),
+      );
+      addTearDown(repository.dispose);
+
+      final StreamSubscription<RealTimeEvent> subscription = repository
+          .follow('document-1')
+          .listen((_) {});
+      addTearDown(subscription.cancel);
+      await _pump();
+
+      expect(rest.pullCount, 0);
+
+      channels.single.emitConnected();
+      await _pump(const Duration(milliseconds: 60));
+
+      expect(rest.pullCount, greaterThan(0));
+    });
+  });
+}
+
+/// Builds a repository whose relay is driven by the test.
+LocalSyncRepository _repositoryOf(
+  AppDatabase database, {
+  required List<FakeRelayChannel> channels,
+}) {
+  final _CountingRestTransport rest = _CountingRestTransport();
+  return LocalSyncRepository(
+    database: database,
+    transport: rest,
+    author: const AuthorId('author-1'),
+    realTime: RealTimeTransport(
+      baseUrl: Uri.parse('https://api.test'),
+      store: database.manuscripts,
+      rest: rest,
+      channelFactory: (String docId) {
+        final FakeRelayChannel channel = FakeRelayChannel(docId);
+        channels.add(channel);
+        return channel;
+      },
+    ),
+  );
+}
+
+/// A REST transport that answers nothing, and counts the pulls it received.
+final class _CountingRestTransport implements SyncTransport {
+  /// The number of pulls the transport received.
+  int pullCount = 0;
+
+  @override
+  Future<PushResult> push(List<SyncOp> ops) async => PushResult.empty;
+
+  @override
+  Future<List<SyncOp>> pull({
+    required String docId,
+    required int since,
+    int limit = defaultPullLimit,
+  }) async {
+    pullCount++;
+    return const <SyncOp>[];
+  }
+
+  @override
+  Stream<TransportEvent> connect(String docId) =>
+      const Stream<TransportEvent>.empty();
+
+  @override
+  Future<void> dispose() async {}
+}
+
+/// Lets the pending microtasks and timers run.
+Future<void> _pump([Duration delay = const Duration(milliseconds: 20)]) async {
+  await Future<void>.delayed(delay);
 }
 
 /// Indexes a document, so the synchronisation knows the project it belongs

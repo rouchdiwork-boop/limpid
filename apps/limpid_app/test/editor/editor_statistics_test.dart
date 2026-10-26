@@ -62,4 +62,22 @@ void main() {
 
     expect(lamportOf(document), 1);
   });
+
+  test('the Lamport timestamp of a document counts its metadata', () {
+    // Une scene qui ne porte que son titre a deja ete ecrite : la premiere
+    // frappe du scripteur ne doit pas reprendre son horodatage, sinon le
+    // CRDT prendrait la nouvelle operation pour l'ancienne et l'effacerait.
+    const DocumentId id = DocumentId('document-1');
+    final CrdtDocument document = CrdtDocument.empty(id).apply(
+      const SetMetaOp(
+        doc: id,
+        lamport: 3,
+        author: kFakeAuthor,
+        key: 'sceneTitle',
+        value: 'La plage',
+      ),
+    );
+
+    expect(lamportOf(document), 3);
+  });
 }

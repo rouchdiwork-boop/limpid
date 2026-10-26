@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:limpid_app/src/data/api_client.dart';
+import 'package:limpid_app/src/domain/errors.dart';
 import 'package:limpid_sync/limpid_sync.dart';
 
 /// The HTTP client of the synchronisation.
@@ -21,6 +23,7 @@ final class SyncApiClient {
     required this.baseUrl,
     required this.client,
     this.tokenProvider,
+    this.twoFactorProof,
     this.requestTimeout = defaultRequestTimeout,
   });
 
@@ -32,6 +35,13 @@ final class SyncApiClient {
 
   /// Resolves the bearer token sent with every request.
   final AuthTokenProvider? tokenProvider;
+
+  /// Resolves the proof of the second factor sent with every request.
+  ///
+  /// The synchronisation reaches the same routes as the rest of the
+  /// application: the server refuses them when the proof is missing. The
+  /// proof is resolved for every call, like the token.
+  final String? Function()? twoFactorProof;
 
   /// The timeout applied to every request.
   final Duration requestTimeout;
@@ -85,7 +95,9 @@ final class SyncApiClient {
   /// The headers of a request.
   ///
   /// The token is resolved for every request: the session rotates it, and a
-  /// request sent with a stale token would be refused.
+  /// request sent with a stale token would be refused. The proof of the
+  /// second factor is resolved the same way: it expires, and the author then
+  /// proves the second factor again.
   Future<Map<String, String>> headers() async {
     final Map<String, String> headers = <String, String>{
       'content-type': 'application/json',
@@ -94,6 +106,10 @@ final class SyncApiClient {
     final String? token = await tokenProvider?.call();
     if (token != null && token.isNotEmpty) {
       headers['authorization'] = 'Bearer $token';
+    }
+    final String? proof = twoFactorProof?.call();
+    if (proof != null && proof.isNotEmpty) {
+      headers[twoFactorProofHeader] = proof;
     }
     return headers;
   }
@@ -143,13 +159,22 @@ final class SyncApiClient {
   }
 
   /// Builds the typed error matching an unsuccessful response.
-  SyncException _errorFor(http.Response response) {
+  ///
+  /// A refusal of the credentials becomes an [ApiUnauthorizedException]: the
+  /// application recognises it, and asks the author for the code of the
+  /// second factor when the refusal is about the proof. The other failures
+  /// stay the errors of `limpid_sync`: the operations wait in the queue.
+  Object _errorFor(http.Response response) {
     final ({String code, String message})? error = _decodeError(response.body);
     final String message =
         error?.message ?? 'The API answered ${response.statusCode}.';
     final String? code = error?.code;
     if (response.statusCode == 401 || response.statusCode == 403) {
-      return SyncAuthException(message, code: code ?? 'sync_unauthorized');
+      return ApiUnauthorizedException(
+        message,
+        code: code ?? 'sync_unauthorized',
+        statusCode: response.statusCode,
+      );
     }
     return SyncTransportException(
       message,

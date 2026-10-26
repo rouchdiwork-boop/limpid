@@ -44,6 +44,9 @@ void main() {
         theme: LimpidTheme.of(LimpidThemeVariant.paper),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        // Les textes de l'ecran sont asserts en francais : la locale est
+        // posee, sinon le poste de test choisirait l'anglais.
+        locale: const Locale('fr'),
         home: const ProjectScreen(projectId: 'heures'),
       ),
     );
@@ -64,6 +67,32 @@ void main() {
       order: OrderKey.initial,
     );
   }
+
+  testWidgets('le bouton de creation ajoute un chapitre au livre', (
+    tester,
+  ) async {
+    // Le bouton « Créer » de la carte des chapitres n'etait **branche a
+    // rien** : il etait desactive, et le livre n'avait pas de chapitre.
+    final FakeManuscriptRepository manuscripts = FakeManuscriptRepository(
+      projects: <Project>[project()],
+    );
+    final ProviderContainer container = await buildContainer(manuscripts);
+    useSurface(tester, const Size(1400, 1000));
+
+    await tester.pumpWidget(harness(container));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Créer'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Le premier chapitre');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Créer').last);
+    await tester.pumpAndSettle();
+
+    expect(manuscripts.createdChapters, hasLength(1));
+    expect(manuscripts.createdChapters.single.title, 'Le premier chapitre');
+  });
 
   testWidgets('the action asks for a confirmation before publishing', (
     tester,

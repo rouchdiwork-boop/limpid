@@ -1,6 +1,4 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
+import 'package:http/http.dart' as http;
 import 'package:limpid_app/src/data/api_client.dart';
 import 'package:limpid_app/src/domain/errors.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
@@ -25,15 +23,28 @@ final class ApiGdprRepository implements GdprRepository {
   Future<PersonalDataExport> exportPersonalData() async {
     final Object? payload = await client.get('/v1/me/export');
     final Map<String, Object?> data = _objectOf(payload);
-    final Map<String, Object?> account = _mapOf(data['account']);
-    final DateTime? exportedAt = _momentOf(account['exported_at']);
+
+    // Le serveur ne renvoie plus les donnees : il les.archive dans un ZIP
+    // et rend une URL signee, valable quinze minutes. L'archive est
+    // telechargee sans le jeton de session : l'URL porte sa propre
+    // autorisation, et lui envoyer le jeton le divulguerait a l'hote.
+    final String url = _stringOf(data['download_url']) ?? '';
+    if (url.isEmpty) {
+      throw const ApiMalformedResponseException(
+        'The API did not return the download address of the archive.',
+      );
+    }
+    final http.Response response = await client.download(Uri.parse(url));
+    final Map<String, Object?> counts = _mapOf(data['counts']);
 
     return PersonalDataExport(
-      fileName: _fileNameOf(exportedAt),
-      mimeType: 'application/json',
-      bytes: _encode(data),
-      generatedAt: exportedAt ?? DateTime.now().toUtc(),
-      projectCount: _countOf(data['projects']),
+      fileName:
+          _stringOf(data['file_name']) ??
+          _fileNameOf(_momentOf(data['exported_at'])),
+      mimeType: _stringOf(data['mime_type']) ?? 'application/zip',
+      bytes: response.bodyBytes,
+      generatedAt: _momentOf(data['exported_at']) ?? DateTime.now().toUtc(),
+      projectCount: _intOf(counts['projects']),
     );
   }
 
@@ -56,18 +67,15 @@ final class ApiGdprRepository implements GdprRepository {
     );
   }
 
-  /// Encodes the payload of the export as a readable file.
-  Uint8List _encode(Map<String, Object?> payload) {
-    final String encoded = const JsonEncoder.withIndent('  ').convert(payload);
-    return Uint8List.fromList(utf8.encode(encoded));
-  }
-
   /// The name of the file, dated after the export.
+  ///
+  /// Le serveur propose son nom : celui-ci n'est qu'un repli, pour le cas
+  /// ou la reponse ne le porterait pas.
   String _fileNameOf(DateTime? moment) {
     final DateTime day = moment ?? DateTime.now().toUtc();
     final String month = day.month.toString().padLeft(2, '0');
     final String date = day.day.toString().padLeft(2, '0');
-    return 'limpid-donnees-${day.year}-$month-$date.json';
+    return 'limpid-donnees-${day.year}-$month-$date.zip';
   }
 
   static Map<String, Object?> _objectOf(Object? value) {
@@ -87,9 +95,9 @@ final class ApiGdprRepository implements GdprRepository {
     return DateTime.tryParse(value)?.toUtc();
   }
 
-  static int _countOf(Object? value) {
-    if (value is List<dynamic>) return value.length;
-    return 0;
+  static String? _stringOf(Object? value) {
+    if (value is String) return value;
+    return null;
   }
 
   static int _intOf(Object? value) {

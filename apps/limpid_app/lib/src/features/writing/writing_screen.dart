@@ -3,12 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:limpid_app/src/domain/providers.dart';
+import 'package:limpid_app/src/domain/realtime.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_app/src/domain/revision_repository.dart';
 import 'package:limpid_app/src/editor/editor_controller.dart';
 import 'package:limpid_app/src/editor/editor_models.dart';
 import 'package:limpid_app/src/editor/editor_providers.dart';
 import 'package:limpid_app/src/editor/editor_statistics.dart';
+import 'package:limpid_app/src/features/actions/remote_runner.dart';
+import 'package:limpid_app/src/features/revision/presence_models.dart';
+import 'package:limpid_app/src/features/revision/presence_providers.dart';
 import 'package:limpid_app/src/features/revision/revision_anchors.dart';
 import 'package:limpid_app/src/features/revision/revision_models.dart';
 import 'package:limpid_app/src/features/revision/revision_panel.dart';
@@ -93,12 +97,31 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
 
     final List<ProjectMember> collaborators =
         members.value ?? const <ProjectMember>[];
+
+    // Le relais : l'écran suit le document ouvert, et les opérations que les
+    // autres auteurs produisent arrivent dans le manuscrit.
+    final PresenceScope scope = PresenceScope(
+      projectId: widget.projectId,
+      documentId: state.activeScene?.documentId.value,
+    );
+    final AsyncValue<RealtimeState> realtime = ref.watch(
+      realtimeProvider(scope),
+    );
+    _applyRemoteOperations(scope);
+    final List<SyncOp> remoteOperations =
+        realtime.value?.operations ?? const <SyncOp>[];
+
     final List<RevisionThread> revisionThreads = _revisionThreadsOf(
       state: state,
       threads: threads.value ?? const <CommentThread>[],
       members: collaborators,
     );
     final List<LimpidCommentAnchor> anchors = editorAnchorsOf(revisionThreads);
+    final List<PresencePeerView> peers = _peersOf(
+      realtime.value?.peers ?? const <PresencePeer>[],
+      members: collaborators,
+      document: state.document,
+    );
 
     return Scaffold(
       body: Column(
@@ -129,12 +152,18 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
               collaborators: collaborators,
               anchors: anchors,
               selection: selection,
+              peers: peers,
+              remoteOperations: remoteOperations,
             ),
           ),
           WritingStatusBar(
             wordCount: state.wordCount,
             readingMinutes: readingMinutesOf(state.wordCount),
             saveState: state.saveState,
+            peers: peers,
+            // L'historique des versions porte sur le document de la scene
+            // que l'ecran edite.
+            documentId: state.activeScene?.documentId.value ?? '',
           ),
         ],
       ),
@@ -152,16 +181,32 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
     required List<ProjectMember> collaborators,
     required List<LimpidCommentAnchor> anchors,
     required RevisionSelection selection,
+    required List<PresencePeerView> peers,
+    required List<SyncOp> remoteOperations,
   }) {
     final WritingController controller = ref.read(
       writingControllerProvider(widget.projectId).notifier,
     );
+
+    // L'appel à l'assistant part au serveur : il passe par le coureur, qui
+    // ouvre la fenêtre du second facteur quand le serveur refuse la preuve.
+    final RemoteRunner runner = remoteRunnerOf(context, ref);
 
     final Widget plan = WritingOutlinePanel(
       outline: outline.value ?? WritingOutline.empty,
       activeSceneId: state.activeScene?.id,
       onSelectScene: (OutlineScene scene) =>
           unawaited(controller.selectScene(scene)),
+      onCreateSeries: (String title) =>
+          unawaited(controller.createSeries(title)),
+      onCreateVolume: (String seriesId, String title) =>
+          unawaited(controller.createVolume(seriesId, title)),
+      onCreateChapter: (String? volumeId, String title) =>
+          unawaited(controller.createChapter(volumeId, title)),
+      onCreateScene: (String chapterId, String title) =>
+          unawaited(controller.createScene(chapterId, title)),
+      onMoveScene: (String sceneId, int targetIndex) =>
+          unawaited(controller.moveScene(sceneId, targetIndex)),
     );
 
     final Widget manuscript = WritingManuscriptPane(
@@ -179,14 +224,17 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
       onClearSelection: _clearSelection,
       onChanged: (List<SyncOp> operations) =>
           unawaited(controller.applyOperations(operations)),
+      remoteOperations: remoteOperations,
+      onCursorMoved: _publishCursor,
     );
 
     final Widget assistant = WritingAssistantPanel(
       state: state.ai,
       selection: state.selection,
       onAction: (String instruction) =>
-          unawaited(controller.askAssistant(instruction)),
-      onSend: (String question) => unawaited(controller.askAssistant(question)),
+          unawaited(controller.askAssistant(instruction, runner: runner)),
+      onSend: (String question) =>
+          unawaited(controller.askAssistant(question, runner: runner)),
       onDismiss: controller.dismissAssistant,
     );
 
@@ -195,6 +243,7 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
       threads: revisionThreads,
       members: collaborators,
       currentAuthorId: authorId,
+      peers: peers,
     );
 
     return LayoutBuilder(
@@ -306,5 +355,82 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
         _clearSelection();
       }
     });
+  }
+
+  /// Applies the operations the relay delivered to the manuscript.
+  ///
+  /// The operations arrive while the author writes: the document of the
+  /// screen is replaced by the one the CRDT built, and the text of the
+  /// other author appears.
+  void _applyRemoteOperations(PresenceScope scope) {
+    ref.listen<AsyncValue<RealtimeState>>(realtimeProvider(scope), (
+      AsyncValue<RealtimeState>? previous,
+      AsyncValue<RealtimeState> next,
+    ) {
+      final List<SyncOp> operations =
+          next.value?.operations ?? const <SyncOp>[];
+      if (operations.isEmpty) return;
+      ref
+          .read(writingControllerProvider(widget.projectId).notifier)
+          .applyRemoteOperations(operations);
+    });
+  }
+
+  /// Announces the position of the caret of the author.
+  ///
+  /// The relay tells the other authors where the author writes: the caret
+  /// travels with the presence of the document.
+  void _publishCursor(String blockId, int offset) {
+    final WritingState state = ref.read(
+      writingControllerProvider(widget.projectId),
+    );
+    final OutlineScene? scene = state.activeScene;
+    if (scene == null) return;
+    final SyncRepository repository = ref.read(syncRepositoryProvider);
+    if (repository is! RealTimeSyncRepository) return;
+    unawaited(
+      repository.publishCursor(
+        scene.documentId.value,
+        PresenceCursor(blockId: blockId, offset: offset),
+      ),
+    );
+  }
+
+  /// The peers present on the document, as the review panel shows them.
+  List<PresencePeerView> _peersOf(
+    List<PresencePeer> peers, {
+    required List<ProjectMember> members,
+    required CrdtDocument? document,
+  }) {
+    return peers
+        .map(
+          (PresencePeer peer) => PresencePeerView(
+            userId: peer.userId,
+            displayName: _nameOf(peer.userId, members),
+            paragraph: _paragraphOf(peer.cursor, document),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  /// The name the interface shows for the account [userId].
+  String _nameOf(String userId, List<ProjectMember> members) {
+    for (final ProjectMember member in members) {
+      if (member.id.value == userId) return member.displayName;
+    }
+    return userId;
+  }
+
+  /// The paragraph the caret stands in, `null` when the document does not
+  /// know the block.
+  int? _paragraphOf(PresenceCursor? cursor, CrdtDocument? document) {
+    if (cursor == null || document == null) return null;
+    final List<Block> blocks = document.blocks
+        .where((Block block) => !block.deleted)
+        .toList(growable: false);
+    for (int index = 0; index < blocks.length; index++) {
+      if (blocks[index].id.value == cursor.blockId) return index + 1;
+    }
+    return null;
   }
 }

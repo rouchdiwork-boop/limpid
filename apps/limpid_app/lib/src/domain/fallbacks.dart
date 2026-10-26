@@ -9,10 +9,12 @@
 /// domaine ne connaît que le domaine.
 library;
 
+import 'package:limpid_app/src/domain/admin_repository.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
 import 'package:limpid_app/src/domain/plan_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
+import 'package:limpid_app/src/domain/search_repository.dart';
 import 'package:limpid_core/limpid_core.dart';
 
 /// An in-memory [ManuscriptRepository].
@@ -27,6 +29,10 @@ final class DemoManuscriptRepository implements ManuscriptRepository {
   DemoManuscriptRepository();
 
   final Map<ProjectId, Project> _projects = <ProjectId, Project>{};
+  final Map<SeriesId, Series> _series = <SeriesId, Series>{};
+  final Map<VolumeId, Volume> _volumes = <VolumeId, Volume>{};
+  final Map<ChapterId, Chapter> _chapters = <ChapterId, Chapter>{};
+  final Map<SceneId, Scene> _scenes = <SceneId, Scene>{};
   final UlidGenerator _ids = UlidGenerator();
   OrderKey? _lastOrder;
 
@@ -76,17 +82,169 @@ final class DemoManuscriptRepository implements ManuscriptRepository {
   }
 
   @override
-  Future<List<Chapter>> listChapters(String projectId) async =>
-      const <Chapter>[];
+  Future<List<Chapter>> listChapters(String projectId) async {
+    final List<Chapter> chapters = _chapters.values
+        .where((Chapter chapter) => chapter.volumeId == null)
+        .toList(growable: false);
+    return List<Chapter>.unmodifiable(chapters);
+  }
 
   @override
-  Future<Chapter> saveChapter(Chapter chapter) async => chapter;
+  Future<Chapter> saveChapter(Chapter chapter) async {
+    _chapters[chapter.id] = chapter;
+    return chapter;
+  }
 
   @override
-  Future<List<Scene>> listScenes(String chapterId) async => const <Scene>[];
+  Future<List<Scene>> listScenes(String chapterId) async {
+    final List<Scene> scenes = _scenes.values
+        .where((Scene scene) => scene.chapterId.value == chapterId)
+        .toList(growable: false);
+    return List<Scene>.unmodifiable(scenes);
+  }
 
   @override
-  Future<Scene> saveScene(Scene scene) async => scene;
+  Future<Scene> saveScene(Scene scene) async {
+    _scenes[scene.id] = scene;
+    return scene;
+  }
+
+  @override
+  Future<List<Series>> listSeries(String projectId) async {
+    final List<Series> series = _series.values
+        .where((Series item) => item.projectId.value == projectId)
+        .toList(growable: false);
+    return List<Series>.unmodifiable(series);
+  }
+
+  @override
+  Future<Series> createSeries({
+    required String projectId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final DateTime now = DateTime.now().toUtc();
+    final Series series = Series(
+      id: SeriesId(_ids.generate().toString()),
+      projectId: ProjectId(projectId),
+      title: title,
+      synopsis: synopsis,
+      order: OrderKey.between(_lastOrder, null),
+      createdAt: now,
+      updatedAt: now,
+    );
+    _lastOrder = series.order;
+    _series[series.id] = series;
+    return series;
+  }
+
+  @override
+  Future<List<Volume>> listVolumes(String seriesId) async {
+    final List<Volume> volumes = _volumes.values
+        .where((Volume item) => item.seriesId.value == seriesId)
+        .toList(growable: false);
+    return List<Volume>.unmodifiable(volumes);
+  }
+
+  @override
+  Future<Volume> createVolume({
+    required String seriesId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final DateTime now = DateTime.now().toUtc();
+    final Volume volume = Volume(
+      id: VolumeId(_ids.generate().toString()),
+      seriesId: SeriesId(seriesId),
+      title: title,
+      synopsis: synopsis,
+      order: OrderKey.between(_lastOrder, null),
+      createdAt: now,
+      updatedAt: now,
+    );
+    _lastOrder = volume.order;
+    _volumes[volume.id] = volume;
+    return volume;
+  }
+
+  @override
+  Future<List<Chapter>> listChaptersOfVolume(String volumeId) async {
+    final List<Chapter> chapters = _chapters.values
+        .where((Chapter chapter) => chapter.volumeId?.value == volumeId)
+        .toList(growable: false);
+    return List<Chapter>.unmodifiable(chapters);
+  }
+
+  @override
+  Future<Chapter> createChapter({
+    required String projectId,
+    String? volumeId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final DateTime now = DateTime.now().toUtc();
+    final Chapter chapter = Chapter(
+      id: ChapterId(_ids.generate().toString()),
+      volumeId: volumeId == null ? null : VolumeId(volumeId),
+      title: title,
+      synopsis: synopsis,
+      order: OrderKey.between(_lastOrder, null),
+      createdAt: now,
+      updatedAt: now,
+    );
+    _lastOrder = chapter.order;
+    _chapters[chapter.id] = chapter;
+    return chapter;
+  }
+
+  @override
+  Future<Scene> createScene({
+    required String chapterId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final DateTime now = DateTime.now().toUtc();
+    final String id = _ids.generate().toString();
+    final Scene scene = Scene(
+      id: SceneId(id),
+      chapterId: ChapterId(chapterId),
+      documentId: DocumentId(id),
+      title: title,
+      synopsis: synopsis,
+      order: OrderKey.between(_lastOrder, null),
+      createdAt: now,
+      updatedAt: now,
+    );
+    _lastOrder = scene.order;
+    _scenes[scene.id] = scene;
+    return scene;
+  }
+
+  @override
+  Future<Scene> moveScene({
+    required String sceneId,
+    required int targetIndex,
+  }) async {
+    final Scene? scene = _scenes[SceneId(sceneId)];
+    if (scene == null) {
+      throw StateError('The scene "$sceneId" does not exist.');
+    }
+    final List<Scene> siblings = await listScenes(scene.chapterId.value);
+    final List<Scene> remaining = siblings
+        .where((Scene item) => item.id.value != sceneId)
+        .toList(growable: false);
+    final int index = targetIndex.clamp(0, remaining.length);
+    final OrderKey? lower = index == 0 ? null : remaining[index - 1].order;
+    final OrderKey? upper = index == remaining.length
+        ? null
+        : remaining[index].order;
+    final Scene moved = scene.copyWith(
+      order: OrderKey.between(lower, upper),
+      updatedAt: DateTime.now().toUtc(),
+    );
+    _scenes[moved.id] = moved;
+    return moved;
+  }
 
   @override
   Future<CrdtDocument> loadDocument(String documentId) async =>
@@ -243,4 +401,49 @@ final class UnavailableAiRepository
     required String selection,
     required String instruction,
   }) => throw const ServiceUnavailableException();
+}
+
+/// A [SearchRepository] that has no local database to search.
+///
+/// The search is **local**: without the database of the device, there is no
+/// index to sweep. The repository refuses rather than pretending that the
+/// books of the author hold no passage.
+final class UnavailableSearchRepository
+    implements SearchRepository, UnavailableService {
+  /// Creates the repository.
+  const UnavailableSearchRepository();
+
+  @override
+  Future<List<SearchResult>> search(
+    String query, {
+    int limit = defaultSearchLimit,
+  }) async => throw const ServiceUnavailableException();
+}
+
+/// Un [AdminRepository] qui ne peut pas atteindre le serveur.
+///
+/// Le back-office n'existe que sur un serveur configure : l'ecran dit
+/// alors que le service n'est pas disponible, il ne montre aucun compte.
+final class UnavailableAdminRepository
+    implements AdminRepository, UnavailableService {
+  /// Cree le depot indisponible.
+  const UnavailableAdminRepository();
+
+  @override
+  Future<List<AdminAccount>> accounts() async =>
+      throw const ServiceUnavailableException();
+
+  @override
+  Future<AdminAccount> account(String userId) async =>
+      throw const ServiceUnavailableException();
+
+  @override
+  Future<List<AdminFeatureFlag>> featureFlags() async =>
+      throw const ServiceUnavailableException();
+
+  @override
+  Future<AdminFeatureFlag> setFeatureFlag(
+    String key, {
+    required bool isEnabled,
+  }) async => throw const ServiceUnavailableException();
 }

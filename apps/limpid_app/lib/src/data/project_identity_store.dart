@@ -12,6 +12,15 @@ import 'project_declaration.dart';
 /// instead of creating a second one.
 const String projectAliasKeyPrefix = 'sync.project_alias.';
 
+/// The account that holds the aliases of the renamed projects.
+///
+/// An alias is not the data of an author: it is a fact about the
+/// identifiers of the device — the project formerly known as `x` is now
+/// known as `y` — and every account that collaborates on the project needs
+/// it. The aliases therefore live apart from the preferences of the
+/// authors, which belong to an account.
+const String deviceAliasAccountId = 'device-aliases';
+
 /// The identity of the projects on the device.
 ///
 /// The store answers the two questions the synchronisation asks about a
@@ -94,9 +103,13 @@ final class ProjectIdentityStore {
         <Object?>[serverProjectId, projectId],
       );
       await _execute(
-        'INSERT INTO preferences (key, value) VALUES (?, ?) '
-        'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-        <Object?>['$projectAliasKeyPrefix$projectId', serverProjectId],
+        'INSERT INTO preferences (account_id, key, value) VALUES (?, ?, ?) '
+        'ON CONFLICT(account_id, key) DO UPDATE SET value = excluded.value',
+        <Object?>[
+          deviceAliasAccountId,
+          '$projectAliasKeyPrefix$projectId',
+          serverProjectId,
+        ],
       );
     });
   }
@@ -105,11 +118,15 @@ final class ProjectIdentityStore {
   ///
   /// The answer is [projectId] itself when the project never changed its
   /// identifier.
+  ///
+  /// The alias is a fact about the identifiers of the device: it is shared
+  /// by every account that collaborates on the project.
   Future<String> canonicalId(String projectId) async {
     final List<QueryRow> rows = await _database
         .customSelect(
-          'SELECT value FROM preferences WHERE key = ?',
+          'SELECT value FROM preferences WHERE account_id = ? AND key = ?',
           variables: <Variable<Object>>[
+            const Variable<String>(deviceAliasAccountId),
             Variable<String>('$projectAliasKeyPrefix$projectId'),
           ],
         )

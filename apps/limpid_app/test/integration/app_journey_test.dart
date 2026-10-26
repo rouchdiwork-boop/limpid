@@ -32,6 +32,7 @@ import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_screen.dart';
 import 'package:limpid_app/src/features/library/library_screen.dart';
 import 'package:limpid_app/src/features/project/project_screen.dart';
+import 'package:limpid_app/src/features/writing/widgets/writing_outline_panel.dart';
 import 'package:limpid_app/src/features/writing/writing_screen.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
@@ -48,32 +49,23 @@ const String kAuthorEmail = 'camille@example.test';
 /// The title of the book the author creates during the journey.
 const String kBookTitle = 'Les Heures de Cendre';
 
-/// The identifier of the chapter of the project.
-const String kChapterId = 'chapitre-1';
+/// The title of the series the author creates during the journey.
+const String kSeriesTitle = 'Les Saisons';
 
-/// The title of the chapter of the project.
+/// The title of the tome the author creates during the journey.
+const String kVolumeTitle = 'L\'Automne';
+
+/// The title of the chapter the author creates during the journey.
 const String kChapterTitle = 'La falaise';
 
-/// The identifier of the scene the author writes in.
-const String kSceneId = 'scene-1';
-
-/// The title of the scene the author writes in.
+/// The title of the scene the author creates during the journey.
 const String kSceneTitle = 'La marée basse';
-
-/// The identifier of the CRDT document of the scene.
-const String kDocumentId = 'document-scene-1';
-
-/// The identifier of the block holding the paragraph of the scene.
-const String kBlockId = 'block-1';
-
-/// The paragraph the scene holds when the author opens it.
-const String kFirstParagraph = 'Il pleuvait sur la falaise.';
 
 /// The words the author adds to the paragraph.
 const String kContinuation = ' Le vent se levait.';
 
 /// The paragraph once the author has written.
-const String kParagraph = '$kFirstParagraph$kContinuation';
+const String kParagraph = 'Il pleuvait sur la falaise.$kContinuation';
 
 /// The number of words of the paragraph.
 const int kParagraphWords = 9;
@@ -215,37 +207,6 @@ void main() {
       expect(projects, hasLength(1));
       expect(projects.single.title, kBookTitle);
 
-      // The project holds a chapter, a scene and the paragraph the author
-      // wrote the day before: the data layer is the real one.
-      await manuscripts.saveChapter(
-        const Chapter(
-          id: ChapterId(kChapterId),
-          title: kChapterTitle,
-          order: OrderKey.initial,
-        ),
-      );
-      await manuscripts.saveScene(
-        const Scene(
-          id: SceneId(kSceneId),
-          chapterId: ChapterId(kChapterId),
-          documentId: DocumentId(kDocumentId),
-          title: kSceneTitle,
-          order: OrderKey.initial,
-        ),
-      );
-      await manuscripts.applyOperations(const <SyncOp>[
-        InsertBlockOp(
-          doc: DocumentId(kDocumentId),
-          lamport: 1,
-          author: kAuthor,
-          blockId: BlockId(kBlockId),
-          parent: null,
-          order: OrderKey.initial,
-          type: BlockType.paragraph,
-          content: TextContent(kFirstParagraph),
-        ),
-      ]);
-
       // 4. The project appears in the library.
       //
       // The wizard invalidates the library itself: the test does not touch
@@ -282,52 +243,66 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(ProjectScreen), findsOneWidget);
+
+      // 6. The studio opens on the plan of the book.
+      await tester.tap(
+        find.widgetWithText(LimpidButton, strings.projectContinueWriting),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(WritingScreen), findsOneWidget);
+      expect(find.byType(WritingOutlinePanel), findsOneWidget);
+
+      // 7. The author builds the hierarchy of the book **from the plan**:
+      // the series, the tome, the chapter and the scene. Nothing is written
+      // in the database by the test: every level is created by the interface.
+      await _createFromThePlan(
+        tester,
+        strings,
+        'outline-add-series',
+        kSeriesTitle,
+      );
+      await _createFromThePlan(
+        tester,
+        strings,
+        'outline-add-volume-',
+        kVolumeTitle,
+      );
+      await _createFromThePlan(
+        tester,
+        strings,
+        'outline-add-chapter-',
+        kChapterTitle,
+      );
+      await _createFromThePlan(
+        tester,
+        strings,
+        'outline-add-scene-',
+        kSceneTitle,
+      );
+
+      final Finder plan = find.byType(WritingOutlinePanel);
       expect(
-        find.descendant(
-          of: find.byType(ProjectScreen),
-          matching: find.text(kChapterTitle),
-        ),
+        find.descendant(of: plan, matching: find.text(kSeriesTitle)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: plan, matching: find.text(kVolumeTitle)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: plan, matching: find.text(kChapterTitle)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: plan, matching: find.text(kSceneTitle)),
         findsOneWidget,
       );
 
-      // 6. The studio opens on the scene of the chapter.
-      await tester.tap(
-        find.widgetWithText(LimpidButton, strings.projectContinueWriting),
-      );
-      await tester.pumpAndSettle();
-      expect(find.byType(WritingScreen), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byType(WritingScreen),
-          matching: find.text(kSceneTitle),
-        ),
-        findsWidgets,
-      );
-
-      // The author leaves the studio and comes back: the editor is rebuilt
-      // on the blocks of the CRDT document. It is the only moment the editor
-      // knows the identifier of the block the scene holds — the editor is
-      // built before the document arrives, and it never takes the blocks
-      // that arrive later.
-      container
-          .read(appRouterProvider)
-          .go(AppRoutes.project(projects.single.id.value));
-      await tester.pumpAndSettle();
-      expect(find.byType(ProjectScreen), findsOneWidget);
-
-      await tester.tap(
-        find.widgetWithText(LimpidButton, strings.projectContinueWriting),
-      );
-      await tester.pumpAndSettle();
-      expect(find.byType(WritingScreen), findsOneWidget);
-
+      // 8. The author writes in the scene the interface created.
       final QuillController editor = tester
           .widget<QuillEditor>(find.byType(QuillEditor))
           .controller;
 
-      // The author writes: the editor turns the text into CRDT operations
-      // and hands them over to the controller, which writes them through the
-      // repository.
       editor.replaceText(
         0,
         0,
@@ -351,14 +326,112 @@ void main() {
         findsOneWidget,
       );
 
-      // The document is re-read from the local database: the text is
-      // persisted, not only displayed.
-      final CrdtDocument document = await manuscripts.loadDocument(kDocumentId);
+      // The author leaves the studio and comes back: the editor is rebuilt
+      // on the blocks of the CRDT document. It is the only moment the editor
+      // knows the identifier of the block the scene holds — the editor is
+      // built before the document arrives, and it never takes the blocks
+      // that arrive later.
+      container
+          .read(appRouterProvider)
+          .go(AppRoutes.project(projects.single.id.value));
+      await tester.pumpAndSettle();
+      expect(find.byType(ProjectScreen), findsOneWidget);
+
+      await tester.tap(
+        find.widgetWithText(LimpidButton, strings.projectContinueWriting),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(WritingScreen), findsOneWidget);
+
+      // 9. The manuscript survives the restart: the text is persisted, not
+      // only displayed.
+      final List<Scene> scenes = await manuscripts.listScenes(
+        (await manuscripts.listChaptersOfVolume(
+          (await manuscripts.listVolumes(
+            (await manuscripts.listSeries(
+              projects.single.id.value,
+            )).single.id.value,
+          )).single.id.value,
+        )).single.id.value,
+      );
+      expect(scenes, hasLength(1));
+
+      final CrdtDocument document = await manuscripts.loadDocument(
+        scenes.single.documentId.value,
+      );
       expect(document.blocks, hasLength(1));
       expect(document.blocks.single.content.plainText, kParagraph);
+
+      // 10. The hierarchy survives the restart too : a **new** repository,
+      // opened on the same database, finds the book the interface built.
+      final LocalManuscriptRepository afterRestart = LocalManuscriptRepository(
+        database: database,
+        author: kAuthor,
+      );
+      final List<Series> series = await afterRestart.listSeries(
+        projects.single.id.value,
+      );
+      expect(series, hasLength(1));
+      expect(series.single.title, kSeriesTitle);
+
+      final List<Volume> volumes = await afterRestart.listVolumes(
+        series.single.id.value,
+      );
+      expect(volumes, hasLength(1));
+      expect(volumes.single.title, kVolumeTitle);
+
+      final List<Chapter> chapters = await afterRestart.listChaptersOfVolume(
+        volumes.single.id.value,
+      );
+      expect(chapters, hasLength(1));
+      expect(chapters.single.title, kChapterTitle);
+
+      final List<Scene> persisted = await afterRestart.listScenes(
+        chapters.single.id.value,
+      );
+      expect(persisted, hasLength(1));
+      expect(persisted.single.title, kSceneTitle);
     });
   });
 }
+
+/// Creates an element of the hierarchy from the plan of the book.
+///
+/// The test drives the interface : elle presse le bouton du niveau, elle
+/// écrit le titre dans la boîte de dialogue, elle valide. La base n'est
+/// jamais touchée directement.
+Future<void> _createFromThePlan(
+  WidgetTester tester,
+  AppLocalizations strings,
+  String prefix,
+  String title,
+) async {
+  await tester.tap(_action(prefix));
+  await tester.pumpAndSettle();
+
+  await tester.enterText(find.byType(TextField), title);
+  await tester.pumpAndSettle();
+  await tester.tap(find.widgetWithText(LimpidButton, strings.actionCreate));
+  await tester.pumpAndSettle();
+}
+
+/// The action of the plan whose key starts with [prefix].
+///
+/// Les actions du plan portent une cle : le test les trouve sans dependre
+/// du libelle annonce, qui change avec la langue.
+///
+/// Le plan porte deux familles d'actions : celles d'une ligne — un bouton
+/// d'icone, dans la ligne du tome ou du chapitre — et celle du projet
+/// entier, un bouton large qui porte son libelle. Les deux familles
+/// partagent le prefixe du chapitre : le test cherche donc toujours le
+/// bouton d'icone, jamais celui du projet.
+Finder _action(String prefix) => find.descendant(
+  of: find.byWidgetPredicate((Widget widget) {
+    final Key? key = widget.key;
+    return key is ValueKey<String> && key.value.startsWith(prefix);
+  }),
+  matching: find.byType(IconButton),
+);
 
 /// Builds the application under test.
 ///

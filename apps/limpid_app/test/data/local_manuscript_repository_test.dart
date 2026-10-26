@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:limpid_app/src/data/app_database.dart';
 import 'package:limpid_app/src/data/local_manuscript_repository.dart';
 import 'package:limpid_core/limpid_core.dart';
+import 'package:limpid_sync/limpid_sync.dart';
 
 import 'support.dart';
 
@@ -174,6 +175,190 @@ void main() {
       expect(saved.title, 'La falaise revisited');
       final List<Scene> scenes = await repository.listScenes('chapter-1');
       expect(scenes.first.title, 'La falaise revisited');
+    });
+  });
+
+  group('hiérarchie du livre', () {
+    test(
+      'crée la série, le tome, le chapitre et la scène, et les relit',
+      () async {
+        final Project project = await repository.createProject(title: 'Livre');
+
+        final Series series = await repository.createSeries(
+          projectId: project.id.value,
+          title: 'Les Saisons',
+        );
+        final Volume volume = await repository.createVolume(
+          seriesId: series.id.value,
+          title: 'L\'Automne',
+        );
+        final Chapter chapter = await repository.createChapter(
+          projectId: project.id.value,
+          volumeId: volume.id.value,
+          title: 'La falaise',
+        );
+        await repository.createScene(
+          chapterId: chapter.id.value,
+          title: 'La marée basse',
+        );
+
+        final List<Series> seriesList = await repository.listSeries(
+          project.id.value,
+        );
+        expect(seriesList.map((Series item) => item.title), <String>[
+          'Les Saisons',
+        ]);
+
+        final List<Volume> volumes = await repository.listVolumes(
+          series.id.value,
+        );
+        expect(volumes.map((Volume item) => item.title), <String>[
+          'L\'Automne',
+        ]);
+
+        final List<Chapter> chapters = await repository.listChaptersOfVolume(
+          volume.id.value,
+        );
+        expect(chapters.map((Chapter item) => item.title), <String>[
+          'La falaise',
+        ]);
+
+        final List<Scene> scenes = await repository.listScenes(
+          chapter.id.value,
+        );
+        expect(scenes.map((Scene item) => item.title), <String>[
+          'La marée basse',
+        ]);
+        expect(scenes.single.chapterId, chapter.id);
+      },
+    );
+
+    test('la scène créée porte son titre dans son document', () async {
+      final Project project = await repository.createProject(title: 'Livre');
+      final Chapter chapter = await repository.createChapter(
+        projectId: project.id.value,
+        title: 'La falaise',
+      );
+      final Scene scene = await repository.createScene(
+        chapterId: chapter.id.value,
+        title: 'La marée basse',
+      );
+
+      final CrdtDocument document = await repository.loadDocument(
+        scene.documentId.value,
+      );
+      expect(document.meta['title'], 'La marée basse');
+    });
+
+    test('le chapitre est une vue ordonnée de ses scènes', () async {
+      final Project project = await repository.createProject(title: 'Livre');
+      final Chapter chapter = await repository.createChapter(
+        projectId: project.id.value,
+        title: 'La falaise',
+      );
+
+      await repository.createScene(
+        chapterId: chapter.id.value,
+        title: 'Première',
+      );
+      await repository.createScene(
+        chapterId: chapter.id.value,
+        title: 'Deuxième',
+      );
+      await repository.createScene(
+        chapterId: chapter.id.value,
+        title: 'Troisième',
+      );
+
+      final List<Scene> scenes = await repository.listScenes(chapter.id.value);
+      expect(scenes.map((Scene item) => item.title), <String>[
+        'Première',
+        'Deuxième',
+        'Troisième',
+      ]);
+    });
+
+    test('déplacer une scène ne déplace que l\'index fractionnaire : le texte '
+        'reste identique', () async {
+      final Project project = await repository.createProject(title: 'Livre');
+      final Chapter chapter = await repository.createChapter(
+        projectId: project.id.value,
+        title: 'La falaise',
+      );
+      await repository.createScene(
+        chapterId: chapter.id.value,
+        title: 'Première',
+      );
+      final Scene second = await repository.createScene(
+        chapterId: chapter.id.value,
+        title: 'Deuxième',
+      );
+      await repository.applyOperations(<SyncOp>[
+        insertBlockOp(
+          documentId: second.documentId.value,
+          lamport: 5,
+          blockId: 'block-2',
+          text: 'Le vent se levait.',
+        ),
+      ]);
+
+      final String before = (await repository.loadDocument(
+        second.documentId.value,
+      )).blocks.single.content.plainText;
+      final int queuedBefore = (await database.queueStore.all()).length;
+
+      final Scene moved = await repository.moveScene(
+        sceneId: second.id.value,
+        targetIndex: 0,
+      );
+
+      final String after = (await repository.loadDocument(
+        second.documentId.value,
+      )).blocks.single.content.plainText;
+      expect(after, before);
+      expect(after, 'Le vent se levait.');
+
+      // L'operation du deplacement porte l'index et rien d'autre.
+      final List<QueuedOp> queued = await database.queueStore.all();
+      expect(queued.length, queuedBefore + 1);
+      final SyncOp operation = queued.last.operation;
+      expect(operation, isA<SetMetaOp>());
+      final SetMetaOp meta = operation as SetMetaOp;
+      expect(meta.key, 'scene.order');
+      expect(meta.value, moved.order.value);
+    });
+
+    test('la scène déplacée est à sa nouvelle place après relecture', () async {
+      final Project project = await repository.createProject(title: 'Livre');
+      final Chapter chapter = await repository.createChapter(
+        projectId: project.id.value,
+        title: 'La falaise',
+      );
+      final Scene first = await repository.createScene(
+        chapterId: chapter.id.value,
+        title: 'Première',
+      );
+      final Scene second = await repository.createScene(
+        chapterId: chapter.id.value,
+        title: 'Deuxième',
+      );
+
+      await repository.moveScene(sceneId: second.id.value, targetIndex: 0);
+
+      // Un nouveau depot, ouvert sur la meme base : c'est le redemarrage.
+      final LocalManuscriptRepository afterRestart = LocalManuscriptRepository(
+        database: database,
+        author: const AuthorId('author-1'),
+      );
+      final List<Scene> scenes = await afterRestart.listScenes(
+        chapter.id.value,
+      );
+      expect(scenes.map((Scene item) => item.title), <String>[
+        'Deuxième',
+        'Première',
+      ]);
+      expect(scenes.first.id, second.id);
+      expect(scenes.last.id, first.id);
     });
   });
 

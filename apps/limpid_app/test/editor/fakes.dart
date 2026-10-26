@@ -10,14 +10,19 @@ const AuthorId kFakeAuthor = AuthorId('auteur-1');
 /// A manuscript repository backed by in-memory chapters, scenes and documents.
 ///
 /// The fake records the operations the editor hands over, so that a test can
-/// assert that an edition reaches the repository.
+/// assert that an edition reaches the repository. It knows the hierarchy of
+/// the book — the series, the tomes, the chapters and the scenes — so that
+/// the plan of the writing screen can be driven by the test.
 final class FakeManuscriptRepository implements ManuscriptRepository {
   /// Creates the fake.
   FakeManuscriptRepository({
     this.chapters = const <Chapter>[],
     this.scenes = const <String, List<Scene>>{},
     this.documents = const <String, CrdtDocument>{},
-  });
+    List<Series> series = const <Series>[],
+    List<Volume> volumes = const <Volume>[],
+  }) : _series = List<Series>.of(series),
+       _volumes = List<Volume>.of(volumes);
 
   /// The chapters of the project, in reading order.
   final List<Chapter> chapters;
@@ -27,6 +32,9 @@ final class FakeManuscriptRepository implements ManuscriptRepository {
 
   /// The document of every scene, keyed by the identifier of the document.
   final Map<String, CrdtDocument> documents;
+
+  final List<Series> _series;
+  final List<Volume> _volumes;
 
   /// The batches of operations the editor handed over to the repository.
   final List<List<SyncOp>> appliedOperations = <List<SyncOp>>[];
@@ -81,6 +89,126 @@ final class FakeManuscriptRepository implements ManuscriptRepository {
   @override
   Future<Scene> saveScene(Scene scene) {
     throw UnimplementedError('The fake repository does not save scenes.');
+  }
+
+  @override
+  Future<List<Series>> listSeries(String projectId) async => _series;
+
+  @override
+  Future<Series> createSeries({
+    required String projectId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final Series series = Series(
+      id: SeriesId('serie-${_series.length + 1}'),
+      projectId: ProjectId(projectId),
+      title: title,
+      synopsis: synopsis,
+      order: OrderKey.initial,
+    );
+    _series.add(series);
+    return series;
+  }
+
+  @override
+  Future<List<Volume>> listVolumes(String seriesId) async => <Volume>[
+    for (final Volume volume in _volumes)
+      if (volume.seriesId.value == seriesId) volume,
+  ];
+
+  @override
+  Future<Volume> createVolume({
+    required String seriesId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final Volume volume = Volume(
+      id: VolumeId('tome-${_volumes.length + 1}'),
+      seriesId: SeriesId(seriesId),
+      title: title,
+      synopsis: synopsis,
+      order: OrderKey.initial,
+    );
+    _volumes.add(volume);
+    return volume;
+  }
+
+  @override
+  Future<List<Chapter>> listChaptersOfVolume(String volumeId) async =>
+      <Chapter>[
+        for (final Chapter chapter in chapters)
+          if (chapter.volumeId?.value == volumeId) chapter,
+      ];
+
+  @override
+  Future<Chapter> createChapter({
+    required String projectId,
+    String? volumeId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final Chapter chapter = Chapter(
+      id: ChapterId('chapitre-${chapters.length + 1}'),
+      volumeId: volumeId == null ? null : VolumeId(volumeId),
+      title: title,
+      synopsis: synopsis,
+      order: OrderKey.initial,
+    );
+    chapters.add(chapter);
+    scenes[chapter.id.value] = <Scene>[];
+    return chapter;
+  }
+
+  @override
+  Future<Scene> createScene({
+    required String chapterId,
+    required String title,
+    String synopsis = '',
+  }) async {
+    final List<Scene> existing = scenes[chapterId] ?? const <Scene>[];
+    final Scene scene = Scene(
+      id: SceneId('scene-${existing.length + 1}'),
+      chapterId: ChapterId(chapterId),
+      documentId: DocumentId('scene-${existing.length + 1}-document'),
+      title: title,
+      synopsis: synopsis,
+      order: OrderKey.initial,
+    );
+    scenes[chapterId] = <Scene>[...existing, scene];
+    return scene;
+  }
+
+  @override
+  Future<Scene> moveScene({
+    required String sceneId,
+    required int targetIndex,
+  }) async {
+    for (final MapEntry<String, List<Scene>> entry in scenes.entries) {
+      final List<Scene> siblings = entry.value;
+      final int index = siblings.indexWhere(
+        (Scene scene) => scene.id.value == sceneId,
+      );
+      if (index < 0) continue;
+      final List<Scene> remaining = siblings
+          .where((Scene scene) => scene.id.value != sceneId)
+          .toList(growable: false);
+      final int target = targetIndex.clamp(0, remaining.length);
+      final OrderKey? lower = target == 0 ? null : remaining[target - 1].order;
+      final OrderKey? upper = target == remaining.length
+          ? null
+          : remaining[target].order;
+      final Scene moved = siblings[index].copyWith(
+        order: OrderKey.between(lower, upper),
+      );
+      scenes[entry.key] = <Scene>[
+        ...remaining.take(target),
+        moved,
+        ...remaining.skip(target),
+      ];
+      return moved;
+    }
+    throw StateError('The scene "$sceneId" does not exist.');
   }
 }
 
