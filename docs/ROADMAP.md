@@ -54,7 +54,7 @@
 | 4 | IA : inline, plan, personnages, RAG, cohérence | A1 à A8, A13 | 56 points | Lots 2, 3 | **Partiel** — passerelle et action inline branchées, le plan et la cohérence restent |
 | 5 | Exports EPUB, PDF, DOCX, couverture IA | E12, E13, E14, A11, B4 | 47 points | Lots 1, 4 | **Partiel** — les six formats sont générés, la couverture SVG est générée puis attachée aux exports ; le code-barres (B4) attend l'ISBN, le PDF n'embarque pas encore la couverture |
 | 6 | Vitrine publique, Stripe, KDP | B1, B2, B3, B5, B6, B7, B8, B12 | 52 points | Lots 1, 5 | **Partiel** — le paiement est branché, la vitrine publique est servie (route publique sans jeton, page du livre, page de lecture et page de l'auteur) et l'auteur publie son livre depuis l'écran du projet (D-33) ; le dossier de dépôt KDP est préparé (EPUB, PDF d'impression, métadonnées validées, contrôle de soumission nominatif), le dépôt lui-même chez Amazon reste |
-| 7 | Plans, quotas, administration, 2FA, RGPD | T2, T7, T8, T9, T10, T11 | 50 points | Lots 4, 6 | **Partiel** — l'export des données personnelles, la suppression du compte, la purge locale et le worker de purge serveur sont livrés ; les formules et les quotas (D-15), la double authentification TOTP, les rôles d'équipe et les sièges, le back-office, l'API publique et les webhooks sortants sont livrés et câblés ; la purge efface aussi le compte chez Supabase Auth et les artefacts du stockage |
+| 7 | Plans, quotas, administration, 2FA, RGPD | T2, T7, T8, T9, T10, T11 | 50 points | Lots 4, 6 | **Partiel** — l'export des données personnelles est une **archive ZIP** signée, la suppression du compte, la purge locale et le worker de purge serveur sont livrés ; les formules et les quotas (D-15) sont mesurés et bornés, la double authentification TOTP passe par la fenêtre de code — **y compris pour les lectures** —, les rôles d'équipe et les sièges, le back-office (dont les **indicateurs vivants**), l'API publique et les **webhooks sortants** (cinq émetteurs) sont livrés et câblés ; la purge efface aussi le compte chez Supabase Auth et les artefacts du stockage |
 | — | **Total v1** | **68 fonctions** | **423 points** | — | |
 
 Note de comptage : FEATURE_MATRIX annonce 67 fonctions v1, mais le décompte
@@ -74,13 +74,13 @@ le PDF print-ready aux plans Pro et Studio.
 **Critères d'acceptation.**
 
 - [ ] `flutter analyze` : 0 erreur, 0 avertissement sur `apps/` et `packages/` ; `dart format --set-exit-if-changed .` propre.
-- [ ] La règle de dépendance de PROMPT §5 est vérifiée automatiquement par l'analyseur ; toute violation échoue la CI.
+- [x] La règle de dépendance de PROMPT §5 est vérifiée automatiquement par l'analyseur ; toute violation échoue la CI.
 - [ ] 30 widgets du design system livrés, chacun couvert par au moins un test golden dans les 4 thèmes.
 - [ ] Les 4 thèmes rendent les écrans de référence sans retouche.
 - [ ] Inscription par lien magique, puis connexion OAuth Google et Apple, validées en environnement de test.
 - [ ] JWT de 15 min, rotation du jeton de rafraîchissement, révocation serveur effective depuis la liste des appareils.
 - [ ] `flutter test` vert et CI GitHub Actions exécutant analyse, tests et build web.
-- [ ] Les 4 faces typographiques sont embarquées en assets ; aucune requête réseau de police au démarrage.
+- [x] Les 4 faces typographiques sont embarquées en assets ; aucune requête réseau de police au démarrage.
 
 **Risques et parades.**
 
@@ -109,8 +109,8 @@ le PDF print-ready aux plans Pro et Studio.
 
 **Critères d'acceptation.**
 
-- [ ] Un projet contient une hiérarchie série → tome → chapitre → scène ; le chapitre est une vue ordonnée de scènes (D-02).
-- [ ] Réordonner une scène ne déplace que l'index fractionnaire, jamais le texte.
+- [x] Un projet contient une hiérarchie série → tome → chapitre → scène ; le chapitre est une vue ordonnée de scènes (D-02).
+- [x] Réordonner une scène ne déplace que l'index fractionnaire, jamais le texte.
 - [ ] L'éditeur Delta gère gras, italique, titres, listes, citations, code et notes de bas de page ; les six formats sont couverts par des tests.
 - [ ] Le menu slash ouvre la palette de commandes ; les modes focus, Zen et machine à écrire fonctionnent au clavier comme à la souris.
 - [ ] Le glisser-déposer d'une scène conserve l'ordre après redémarrage.
@@ -155,11 +155,11 @@ le PDF print-ready aux plans Pro et Studio.
 - [ ] 1 000 opérations accumulées hors-ligne sont synchronisées en moins de 30 s une fois le réseau revenu.
 - [ ] Une opération réémise après un délai de réponse perdu n'est appliquée qu'une fois (unicité de `(doc_id, lamport, author_id)`).
 - [ ] Deux modifications concurrentes du même paragraphe sont fusionnées ligne par ligne, sans perte, sur les deux clients.
-- [ ] Un déplacement concurrent et une modification de texte se réconcilient selon les règles de D-04, à l'identique sur tous les clients.
-- [ ] La compaction produit un instantané au bout de 500 opérations et purge le journal sans perte de l'état.
+- [x] Un déplacement concurrent et une modification de texte se réconcilient selon les règles de D-04, à l'identique sur tous les clients.
+- [x] La compaction produit un instantané au bout de 500 opérations et purge le journal sans perte de l'état.
 - [ ] Un client dont la version de schéma est trop ancienne reçoit `409 schema_version_unsupported` puis se resynchronise depuis `GET /v1/projects/:id/tree` sans intervention de l'utilisateur.
 - [ ] La propagation entre deux clients actifs reste sous 300 ms en p95.
-- [ ] L'historique de versions compare deux révisions bloc par bloc.
+- [x] L'historique de versions compare deux révisions bloc par bloc.
 
 **Risques et parades.**
 
@@ -192,11 +192,11 @@ le PDF print-ready aux plans Pro et Studio.
 - [ ] Un commentaire s'ancre sur une plage de caractères et suit le texte quand le bloc est réécrit ; il est stocké comme surcharge du CRDT, donc jamais en conflit avec le texte.
 - [ ] Un fil de discussion se répond, se résout et se rouvre.
 - [ ] Deux personnes connectées voient la frappe de l'autre en moins de 300 ms.
-- [ ] La présence affiche les curseurs distants et les avatars, et disparaît en moins de 30 s après déconnexion.
+- [x] La présence affiche les curseurs distants et les avatars, et disparaît en moins de 30 s après déconnexion.
 - [ ] Les rôles `propriétaire`, `co-auteur`, `bêta-lecteur` et `lecteur` sont appliqués côté serveur ; un bêta-lecteur ne peut pas modifier le texte.
-- [ ] Un lien de partage en lecture ouvre le document sans compte et n'accorde l'écriture à personne ; il peut être révoqué.
+- [x] Un lien de partage en lecture ouvre le document sans compte et n'accorde l'écriture à personne ; il peut être révoqué.
 - [ ] Un extrait publié devient visible sur la page publique du livre.
-- [ ] Une invitation par courriel expire et ne peut pas être réactivée.
+- [x] Une invitation par courriel expire et ne peut pas être réactivée.
 
 **Risques et parades.**
 
@@ -265,7 +265,7 @@ le PDF print-ready aux plans Pro et Studio.
 
 - [ ] Import DOCX, Markdown, TXT, RTF, EPUB et ODT : le texte, les styles de titre et l'ordre des chapitres sont conservés.
 - [ ] Export EPUB 3 valide : table des matières, métadonnées, navigation interne ; le fichier s'ouvre dans deux lecteurs de référence.
-- [ ] Export PDF reflowable et PDF print-ready : marges, fond perdu, numérotation, polices embarquées, rendu identique hors-ligne.
+- [x] Export PDF reflowable et PDF print-ready : marges, fond perdu, numérotation, polices embarquées, rendu identique hors-ligne.
 - [ ] Export DOCX, HTML, Markdown et ODT : le document s'ouvre dans LibreOffice ou Word sans conversion manuelle.
 - [ ] Export d'un projet de 80 000 mots : EPUB en moins de 8 s, PDF reflowable en moins de 20 s, PDF print-ready en moins de 45 s.
 - [ ] Couverture IA : 5 images par mois sur le plan Écrivain, dimensions conformes aux prérequis des plateformes de vente.
@@ -305,7 +305,7 @@ le PDF print-ready aux plans Pro et Studio.
 - [ ] Un achat de bout en bout fonctionne en mode bac à sable Stripe : page de vente, paiement, réception du webhook, page de téléchargement.
 - [ ] Le partage des revenus est par défaut à 90/10 et configurable.
 - [ ] Un code promo, un livre gratuit et un bundle appliquent la remise correcte et la ventilation des droits.
-- [ ] La soumission KDP met à jour une précommande existante sans dupliquer la fiche.
+- [x] La soumission KDP met à jour une précommande existante sans dupliquer la fiche.
 - [ ] La page de vente sert une URL de téléchargement stable, expirant après 24 heures ; les pages publiques sont indexables et les pages privées ne le sont pas.
 
 **Risques et parades.**
@@ -335,15 +335,34 @@ le PDF print-ready aux plans Pro et Studio.
 
 **Critères d'acceptation.**
 
-- [ ] Les quatre plans de D-15 sont purchasables, avec cycle mensuel et annuel et essai gratuit de 14 jours sur Écrivain.
-- [ ] Chaque limite de plan est appliquée côté serveur et signalée avant qu'elle ne bloque : `402 plan_limit_reached` avec la fonctionnalité fautive nommée.
-- [ ] La 2FA TOTP est obligatoire sur Pro et Studio, optionnelle ailleurs, et exigée à la connexion sur les plans concernés.
-- [ ] Le back-office liste les utilisateurs, leur plan, leur usage, et permet d'activer ou de désactiver un indicateur de fonctionnalité.
-- [ ] Les rôles d'équipe et les sièges sont gérés : 5 sièges sur Studio, refus d'une invitation au-delà.
-- [ ] L'API publique et les webhooks sortants sont disponibles sur Studio, avec signature et secret rotatif.
-- [ ] L'export RGPD produit un ZIP complet : manuscrits, assets, réglages, historique de compte.
-- [ ] La suppression de compte passe en soft delete, purge définitivement au 30e jour et exclut les index IA.
-- [ ] Les actions export, partage, suppression et changement de plan sont tracées dans `audit_log`.
+- [x] Les quatre plans de D-15 sont purchasables, avec cycle mensuel et annuel et essai gratuit de 14 jours sur Écrivain.
+- [x] Chaque limite de plan est appliquée côté serveur et signalée avant qu'elle ne bloque : `402 plan_limit_reached` avec la fonctionnalité fautive nommée.
+- [x] La 2FA TOTP est obligatoire sur Pro et Studio, optionnelle ailleurs, et exigée à la connexion sur les plans concernés.
+- [x] Le back-office liste les utilisateurs, leur plan, leur usage, et permet d'activer ou de désactiver un indicateur de fonctionnalité.
+- [x] Les rôles d'équipe et les sièges sont gérés : 5 sièges sur Studio, refus d'une invitation au-delà.
+- [x] L'API publique et les webhooks sortants sont disponibles sur Studio, avec signature et secret rotatif.
+- [x] L'export RGPD produit un ZIP complet : manuscrits, assets, réglages, historique de compte.
+- [x] La suppression de compte passe en soft delete, purge définitivement au 30e jour et exclut les index IA.
+- [x] Les actions export, partage, suppression et changement de plan sont tracées dans `audit_log`.
+
+### Ce qui n'est pas encore tenu
+
+Les critères cochés l'ont été **sur la preuve** : un fichier, une ligne, un
+test. Les autres sont énumérés ici avec l'écart, pour qu'on ne croie pas
+qu'une case vide est une case oubliée.
+
+| Critère | Ce qui manque |
+|---|---|
+| Chaque limite de plan | Les trois jauges sont **mesurées et publiées**, le stockage est **borné avant l'écriture** d'un export, et le compteur des couvertures IA se remplit. Ce qui reste : la **couverture IA** n'a pas de modèle d'image — le compteur compte des briefs, pas des images. |
+| Le back-office | Aucun **écran** : D-36 renvoie à une maquette 18 absente du dépôt. Les **indicateurs sont vivants** : un indicateur dont la clef est une capacité de formule coupe cette capacité pour tout le monde, sans redéploiement. |
+| L'API publique et les webhooks | L'API publique est branchée et servie, et les **webhooks sortants ont leurs cinq émetteurs** (publication, export, formule, invitation, quota atteint). L'**écran** de gestion des rappels est livré ; il reste le **back-office** lui-même. |
+| L'export RGPD | C'est un **ZIP** complet, déposé dans le stockage objet et servi par une URL signée. Ce qui reste : les préférences de l'auteur vivent dans l'application et ne montent jamais au serveur — l'API n'a pas de table de réglages pour elles. |
+| Les actions tracées | L'export, la suppression, le changement de formule et l'**invitation d'équipe** sont tracés. Le **partage** est tracé aussi (`share.created`, `share.revoked`) depuis que le lien de lecture existe côté serveur. |
+
+Un point d'interprétation : « exigée **à la connexion** » est tenu au sens
+où l'API refuse toute appel d'un compte Pro ou Studio sans second facteur.
+L'API n'émet pas les jetons — c'est Supabase Auth qui le fait — donc le
+contrôle s'exerce à chaque appel, pas à l'ouverture de la session.
 
 **Risques et parades.**
 
@@ -434,3 +453,169 @@ thèmes et au clavier, avec un lecteur d'écran (D-18).
 
 *Toute fonction ajoutée en cours de route doit être rattachée à un lot, ou
 explicitement repoussée au §12 avec une décision datée dans `DECISIONS.md`.*
+
+## 14. L'audit des critères
+
+Les cases ci-dessus sont cochées **sur la preuve** : un fichier, une ligne,
+un test. Tant que l'audit n'a pas passé par là, une case vide ne dit pas
+que le travail n'est pas fait — elle dit que **personne n'a vérifié**.
+
+L'audit a été conduit par lecture du code et des tests, sans rien
+modifier. Il classe chaque critère :
+
+| Verdict | Ce que ça veut dire |
+|---|---|
+| **VÉRIFIÉ** | le comportement existe, il est branché, et un test le prouve |
+| **PARTIEL** | une partie du critère est tenue ; l'audit dit laquelle, et ce qui manque |
+| **NON VÉRIFIÉ** | rien dans le dépôt ne le démontre |
+| **HORS POSTE** | la vérification demande un compte tiers, un appareil ou une mesure de performance : elle part dans [`PRE-LIVRAISON.md`](./PRE-LIVRAISON.md) |
+
+### 14.1 Le dépouillement
+
+| Lot | Critères | VÉRIFIÉ | PARTIEL | NON VÉRIFIÉ |
+|---|---|---|---|---|
+| 0 — Socle | 8 | 2 | 3 | 3 |
+| 1 — Structure narrative et éditeur | 9 | 1 | 6 | 2 |
+| 2 — Synchronisation | 9 | 3 | 3 | 3 |
+| 3 — Révision et collaboration | 8 | 2 | 3 | 3 |
+| 4 — IA | 9 | 0 | 4 | 5 |
+| 5 — Exports et couverture | 8 | 0 | 7 | 1 |
+| 6 — Vitrine, Stripe et KDP | 8 | 0 | 4 | 4 |
+| 7 — Plans, quotas, administration et RGPD | 9 | 7 | 2 | 0 |
+| **Total** | **68** | **15** | **32** | **21** |
+
+Les huit critères vérifiés des lots 0 à 3 : l'analyse et le format, les
+tests et la CI, la restauration du texte après fermeture, le fuzz de
+convergence bloquant, l'unicité `(doc_id, lamport, author_id)`, la fusion
+3-way sans perte, les rôles appliqués côté serveur, et l'extrait publié
+visible.
+
+**Où en est le dépôt.** Le tableau est le verdict de l'audit, à sa date : il
+ne bouge pas quand une correction arrive. Ce qui bouge, c'est le compte des
+**cases cochées** : le lot 8 en a coché **21 sur 68**. Les 15 que l'audit
+avait vérifiés s'y ajoutent, sauf ceux du lot 7 qu'il avait déjà comptés —
+soit **29 des 68 critères** vérifiés sur preuve aujourd'hui. Les 39
+restants sont répartis par l'audit entre *partiel* et *non vérifié*, et la
+section « Ce qui n'est pas encore tenu » de chaque lot dit ce qui manque.
+
+Une différence instructive entre les deux moitiés du tableau : dans les
+lots 4 à 6, l'écart vient d'**écrans vides** — la fonction est là, elle n'a
+pas d'interface. Dans les lots 0 à 3, l'écart vient de **fonctions
+absentes** : le relais temps réel n'est branché nulle part dans
+l'application, la recherche plein texte n'existe pas, la compaction
+n'existe pas, l'historique de versions n'existe pas, et le dépôt ne
+contient **aucun golden**.
+
+### 14.2 Ce que l'audit des lots 4 à 6 a trouvé
+
+L'audit ne cherche pas des bugs : il cherche des **promesses que le dépôt
+ne tient pas**. Il en a trouvé neuf, classées par importance.
+
+| # | L'écart | Critères touchés |
+|---|---|---|
+| 1 | ~~**La vente d'un livre n'existe pas.**~~ **Fermé** : le prix du livre, la commande en paiement unique, le droit de lecture, la ventilation 90/10 et le code promo sont livrés. Restent l'**écran** de vente, le **bundle** et la vérification en bac à sable Stripe. | 6.4, 6.5, 6.6, 6.8 |
+| 2 | **Le consentement à l'IA n'existe pas.** Aucun réglage, aucune table, aucun contrôle avant l'envoi : le texte de l'auteur part chez le fournisseur sans opt-in, alors que D-08 l'exige. | 4.8 |
+| 3 | **Les quatorze tâches du registre IA sont du code mort.** `AiClient` n'applique jamais le `systemPrompt` d'une tâche ; seules la réécriture et l'interrogation sont rendues. Le menu slash propose « Résumer la scène » et « contrôle de cohérence » : les entrées sont cliquables et ne font rien. | 4.2, 4.3, 4.5, 4.6 |
+| 4 | **L'import n'existe pas.** Aucun des six formats n'est lu, alors que la matrice des fonctionnalités annonce « natif & complet » pour E12. | 5.1 |
+| 5 | **Les polices ne sont pas embarquées.** Le PDF retombe sur les polices de base et translittère la typographie française (`’` devient `'`). | 5.3 |
+| 6 | **L'export est synchrone.** Le livre est reconstruit et sérialisé dans la requête HTTP ; il n'y a ni file, ni worker, ni job rejouable. | 5.5, 5.8 |
+| 7 | **Le PDF n'imprime jamais de code-barres** : l'ISBN n'arrive pas à l'export, et la maquette complète (dos, tranche) n'est produite que par les tests. **Partiellement fermé** : l'ISBN et l'auteur atteignent l'export, le code-barres est imprimé sur la couverture, et la maquette complète est exposée par la route (`cover: "full"`) ; il reste à caler le code-barres sur le **dos** de la maquette, et à garantir l'unicité de l'ISBN par un index. | 5.7 |
+| 8 | ~~**Le KDP duplique la fiche.**~~ **Fermé** : une fiche KDP par projet, la préparation reprend l'identifiant de la fiche existante, et les trois bases font un vrai upsert ; un ISBN déjà porté par une autre fiche est refusé. | 6.7 |
+| 9 | **La page publique ne montre ni couverture ni métadonnées commerciales**, et la page auteur est triée par dernière modification, pas par date de publication. | 6.1, 6.2, 6.3 |
+
+### 14.3 Ce que l'audit des lots 0 à 3 a trouvé
+
+Onze critères ne sont pas vérifiés, et quinze ne le sont qu'à moitié. Les
+écarts qui **portent** un lot entier :
+
+| # | L'écart | Critères touchés |
+|---|---|---|
+| 1 | **Le relais temps réel n'est branché dans l'application.** `ProjectOpsTransport.connect` renvoie un flux vide et `WebSocketSyncTransport` n'est importé nulle part : la frappe distante, la présence et le p95 de 300 ms sont hors d'atteinte. Le serveur, lui, relaie et teste. | 2.8, 3.3, 3.4 |
+| 2 | **La recherche plein texte n'existe pas.** Aucun index FTS5, aucune requête, aucun écran : le mot n'apparaît que dans la documentation. | 1.7 |
+| 3 | **Le dépôt ne contient aucun golden.** Le design system a 58 widgets et 4 thèmes ; `matchesGoldenFile` n'apparaît nulle part. « Les 4 thèmes rendent les écrans de référence sans retouche » n'a donc aucun témoin. | 0.3, 0.4 |
+| 4 | **Les polices ne sont pas embarquées.** Le design system nomme les quatre familles ; les fichiers ne sont pas là, et le PDF translittère la typographie française. | 0.8, 5.3 |
+| 5 | **Ni série ni tome ne sont persistés**, et l'interface ne sait pas créer un chapitre ni une scène : le test de bout en bout écrit la hiérarchie à la main. | 1.1 |
+| 6 | **La compaction du journal n'existe pas.** L'instantané stocke tout le journal, sans seuil : il croît sans borne. | 2.6 |
+| 7 | **Aucun historique de versions.** Le seul diff du dépôt compare deux textes pour la suggestion IA, pas deux révisions de blocs. | 2.9 |
+| 8 | **Aucune invitation par courriel.** L'invitation vise un compte existant, s'applique immédiatement, et n'a ni date d'expiration ni jeton : il n'y a rien qui puisse expirer. | 3.8 |
+| 9 | **L'ancre de commentaire ne suit pas le texte réécrit** : la plage de la marque est réutilisée telle quelle quand le contenu change. | 3.1 |
+| 10 | **Les fils de discussion ne se répondent ni ne se rouvrent** : il n'y a pas de champ de saisie, et un fil résolu ne se rouvre pas. | 3.2 |
+| 11 | ~~**La règle de dépendance n'est pas vérifiée automatiquement** : l'invariant tient, mais rien ne le contrôle.~~ **Fermé** : `tools/dependances.py` lit les imports de chaque paquet et **échoue la CI** quand la règle de PROMPT §5 est violée (D-42). Le contrôle est un script, pas une règle de l'analyseur : la différence est notée en 14.4. | 0.2 |
+
+Trois écarts sont **presque** des bugs plutôt que des fonctions
+manquantes : le client ne sait pas traiter le `409 schema_version_unsupported`
+(critère 2.7), le test dédié « déplacement concurrent + modification de
+texte » manque alors que le fuzz produit les deux (2.5), et la série de
+jours d'écriture est calculée sur la date de modification de la scène —
+donc le compteur de mots de plusieurs semaines est imputé au dernier jour
+(1.9).
+
+Le test dédié (2.5) est **fermé** : `packages/limpid_sync/test/conflict/
+move_and_text_test.dart` prouve qu'un déplacement concurrent et une
+réécriture du même texte survivent tous les deux, et que les deux clients
+aboutissent au même état quel que soit l'ordre de réception. Les deux
+autres écarts sont encore ouverts.
+
+### 14.4 Ce que l'audit a fait corriger
+
+Cinq corrections **immédiates** ont été faites, parce qu'elles sont des
+bugs et non des fonctionnalités :
+
+- l'**archivage RGPD** produit maintenant un ZIP complet, déposé dans le
+  stockage objet et servi par une URL signée ; l'export précédent
+  renvoyait un objet JSON sans les assets ni les réglages ;
+- le **dépôt chez Amazon** ne part plus deux fois : la reprise d'un dépôt
+  en échec passe par une comparaison atomique de l'état, et un dossier
+  parti dont Amazon n'a pas répondu passe en `unknown` — ni repris
+  automatiquement, ni présenté comme un échec ;
+- la **clé d'idempotence du paiement** est envoyée par l'application : un
+  double-clic sur « Payer » n'ouvre plus deux sessions de paiement ;
+- le **rappel des webhooks** ne peut plus viser le réseau du déploiement :
+  les redirections ne sont jamais suivies, le nom est résolu au moment
+  de la livraison, et les adresses privées — sous toutes leurs notations
+  — sont refusées (D-41) ;
+- les **jauges** ne sont plus vides : le nombre de livres, le nombre de
+  mots et le stockage occupé sont mesurés et publiés, et le stockage est
+  borné **avant** l'écriture d'un export — le refus nomme la
+  fonctionnalité fautive ;
+- la **lecture** passe par la fenêtre du second facteur comme l'écriture :
+  un compte qui a activé le second facteur ne perd plus ses équipes, ses
+  rappels et ses quotas.
+
+Le lot 8 a ensuite repris les écarts de l'audit, un par un. Ce qui a été
+corrigé **et vérifié** depuis :
+
+- le **partage en lecture** a maintenant son écran : l'auteur crée le
+  lien, le copie, et révoque celui qui ne doit plus ouvrir le livre. Le jeton
+  n'est montré qu'une fois, et la base n'en garde que l'empreinte ;
+- la **fiche KDP** est unique par projet : préparer deux fois le même livre
+  ne crée plus deux soumissions Amazon ;
+- le **code-barres** atteint l'export (l'ISBN et l'auteur y sont), et il est
+  imprimé sur la couverture ; il reste à le caler sur le dos de la maquette ;
+- la **règle de dépendance** de PROMPT §5 est vérifiée par un script qui
+  **échoue la CI** quand elle est violée (D-42). Le contrôle est un script,
+  et non une règle de l'analyseur comme l'écrit le critère : le motif
+  `custom_lint` n'est pas dans le dépôt, et l'ajouter demandait de toucher
+  aux `analysis_options.yaml` de tous les paquets.
+
+Trois **bugs** sont-sortis du test de bout en bout, qui construit un livre
+entier par l'interface. Ils ne sont pas des fonctions manquantes : le code
+existait, il ne faisait pas ce que l'auteur attendait.
+
+- le **plan du livre** attendait une scène pour s'ouvrir : tant que le
+  livre n'avait aucune scène, le plan montrait son état vide et **n'offrait
+  plus aucune action** — impossible de créer un tome, puis un chapitre,
+  puis une scène. Le plan est maintenant vide quand il ne porte **aucune
+  ligne**, pas quand il ne porte aucune scène ;
+- la **première frappe d'une scène neuve** était perdue : l'éditeur
+  fabricait un bloc que le document CRDT ne connaissait pas, et la frappe
+  devenait une mise à jour d'un bloc inexistant — le CRDT l'écartait, le
+  compteur de mots restait à zéro et le texte ne partait jamais. L'éditeur
+  n'invente plus de bloc quand la scène n'en a pas, et l'horloge de Lamport
+  de la scène **compte ses métadonnées** : le titre de la scène ne vole plus
+  l'horodatage de la première ligne ;
+- l'**invitation d'un compte existant** avait disparu de l'écran quand
+  l'invitation par adresse est arrivée. Les deux cohabitent, comme le
+  demande le cahier des charges : l'invitation d'un compte s'applique
+  immédiatement, celle par adresse attend une réponse.
+

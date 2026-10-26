@@ -126,10 +126,11 @@ démarrage et sert `/health`.
 | Document | Contenu |
 |---|---|
 | [`docs/PROMPT.md`](docs/PROMPT.md) | Cahier des charges et prompt de construction |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Journal de décisions, D-01 à D-35 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Journal de décisions, D-01 à D-42 |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Architecture, synchronisation, API, déploiement |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Les 8 lots de la v1, risques, hors périmètre |
 | [`docs/FEATURE_MATRIX.md`](docs/FEATURE_MATRIX.md) | Les fonctions v1, leur origine et leur couverture |
+| [`docs/PRE-LIVRAISON.md`](docs/PRE-LIVRAISON.md) | Ce qui reste à vérifier hors de ce poste : comptes tiers, appareils, droit |
 
 ## Statut du projet
 

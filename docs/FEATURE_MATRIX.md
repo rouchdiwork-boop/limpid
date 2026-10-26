@@ -6,6 +6,15 @@
 
 **Légende** : ● natif & complet · ◐ présent mais partiel · ○ absent · ★ différenciateur Limpid
 
+> **Ces marques décrivent la couverture visée**, c'est-à-dire la
+> consolidation des dix-neuf plateformes de référence en une seule
+> spécification. Elles ne disent pas ce qui est **livré** aujourd'hui : une
+> ligne marquée ● peut être un travail started mais pas terminé. L'état
+> réel, critère par critère, se lit dans
+> [`ROADMAP.md`](./ROADMAP.md) — et l'audit qui l'établit est dans
+> `docs/PRE-LIVRAISON.md` pour ce qui ne peut pas se vérifier depuis ce
+> poste.
+
 ---
 
 ## 1. Cartographie des plateformes de référence
@@ -33,7 +42,7 @@
 | **Anthra** | Gestion | Multi-roman, tableau de bord d'écriture | Vue multi-projets, tableaux de bord |
 
 **Conclusion de l'analyse.** Aucun acteur ne couvre plus de 45 % de l'ensemble.
-Les trois-гоal gaps : **IA contextuelle sérieuse** (RAG sur le manuscrit),
+Les trois grands gaps : **IA contextuelle sérieuse** (RAG sur le manuscrit),
 **temps réel hors-ligne**, et **vente/distribution intégrée**.
 
 ---

@@ -386,7 +386,8 @@ Exigences non négociables :
 | Isolation | Row-Level Security sur toutes les tables multi-utilisateur (livres publics en lecture seule) |
 | Audit | `audit_log` sur actions sensibles (export, partage, suppression, changement de plan) |
 | Export utilisateur | ZIP complet (manuscrits + assets + settings) — obligation RGPD |
-| Suppression | Soft delete 30 jours + purge définitive + exclusion des index IA |
+| Suppression | Soft delete 30 jours + purge définitive de toutes les tables personnelles + exclusion des index IA |
+| Purge (portée et exceptions) | La purge efface les tables déclarées comme personnelles dans `apps/limpid_api/lib/src/db/personal_data_tables.dart` ; un test échoue si une table du schéma n'est pas déclarée. Sont conservés, avec la raison écrite dans la déclaration : le journal d'audit (un an, D-19), le registre des purges, la trace des suppressions des tiers et les événements Stripe (aucune donnée personnelle). L'indicateur de fonctionnalité reste — c'est la configuration du service — mais l'identifiant de l'administrateur qui l'a changé est vidé |
 | Analyse continue | Audit OSV des dépendances Dart + CodeQL sur l'outillage JavaScript — voir D-35 |
 
 ---
@@ -974,3 +975,264 @@ webhooks reconstruct l'état, jamais le client ».
 - La liste des migrations n'est plus écrite en dur dans le test : elle est
   lue depuis le répertoire, et ajouter une migration ne casse plus le test.
 
+---
+
+## D-38 — La garde de jetons de l'IA
+
+**Date** : 2026-10-26
+
+**Décision.** Le produit se vend en tokens d'IA : la page tarifaire vend
+« IA standard, 500 k tokens / mois » et « IA premium · 2 M tokens / mois ».
+Le domaine partagé décrit ce quota, le serveur compte les jetons réellement
+consommés, et deux gardes les bornent.
+
+### Les nombres, et d'où ils viennent
+
+| Formule | Tokens / mois | Origine |
+|---|---|---|
+| Gratuit | aucun plafond | la page tarifaire n'annonce aucun quota de jetons pour la formule gratuite |
+| Écrivain | 500 000 | maquette, page tarifaire : « IA standard, 500 k tokens / mois » |
+| Pro | 2 000 000 | maquette, page tarifaire : « IA premium · 2 M tokens / mois » |
+| Studio | 2 000 000 | maquette, page tarifaire : « Tout le plan Pro » |
+
+Le Studio reprend donc l'allocation du Pro, en cycle annuel comme en cycle
+mensuel : les jetons se comptent par mois, quel que soit le cycle de
+facturation.
+
+La formule gratuite ne vend pas de jetons : elle n'en plafonne pas. Sa
+consommation d'IA reste encadrée par les deux réécritures quotidiennes
+(D-15) et par la garde par requête. Son exposition au coût est donc
+bornée — deux appels par jour, chacun sous le plafond d'un appel — et c'est
+le point à surveiller le jour où le tarif des tokens sera connu. C'est une
+décision écrite, pas un oubli : la stratégie de facturation à l'usage n'est
+pas tranchée (D-25), et la formule gratuite pourra alors recevoir un
+plafond lui aussi.
+
+### Les deux gardes
+
+1. **La garde par requête** est une **constante**, pas un quota de formule :
+   16 000 tokens par appel, l'entrée estimée plus le plafond de sortie que
+   la demande réclame (4 096 par défaut, le plafond de la fournisseur).
+   Elle protège le budget du service d'un appel qui dérape — une invite
+   devenue un chapitre collé par mégarde, une génération sans fin. Elle
+   vaut pour toutes les formules : le quota de la formule borne le mois,
+   ce plafond borne l'appel. C'est le coût **possible** de l'appel qui est
+   mesuré, pas son coût probable : c'est ce coût-là que le budget doit
+   couvrir.
+2. **La garde par période** est le quota mensuel de la formule, compté par
+   la mécanique existante : une fonctionnalité de quota à période mensuelle,
+   le même compteur que les exports et les couvertures. Le compteur s'arrête
+   au seuil atteint ; le dépassement éventuel est borné par la garde par
+   requête.
+
+Le « garde par jour » de D-08 n'est pas un troisième garde : il est porté
+par la garde par requête et par le compteur de réécritures quotidiennes.
+
+### Le compte
+
+Le compte vient de la **fournisseur** quand elle le rapporte : l'API
+Anthropic répond `usage.input_tokens` et `usage.output_tokens`, et la
+passerelle additionne l'usage du flux. Ce compte est le seul exact, et
+c'est lui qui est compté.
+
+Quand la fournisseur ne dit rien — une passeuse de test, un fournisseur
+local silencieux — le compte est **estimé**, et il est marqué comme une
+estimation : `isTokenCountEstimated` dans l'événement de fin,
+`tokens_estimated` dans la réponse, une trace dans le journal. Une
+estimation qui se fait passer pour un relevé finit dans la facture de
+l'auteur. Elle est comptée comme un usage quand même : c'est elle qui
+protège le budget.
+
+### La réponse
+
+Une demande refusée est refusée **avant** l'appel à la fournisseur, en
+`429 quota_exceeded`. Les détails portent la limite, la consommation, la
+période et `reset_at` : le premier instant du mois suivant, en ISO 8601.
+L'interface montre cette date à l'auteur, et un auteur qui ne sait pas
+quand son quota revient écrit au support. La garde par requête n'a pas de
+période — son budget est libéré dès que la demande est refusée — : elle
+porte donc `reset_at` nul, et son message dit ce qu'il faut faire
+(réduire la demande).
+
+### Conséquences
+
+- `PlanQuota.monthlyAiTokens` entre dans le domaine partagé, avec la
+  valeur par défaut zéro : zéro veut dire « aucun plafond de jetons », et
+  une description de quota construite avant la vente des jetons continue de
+  compiler.
+- `QuotaFeature.aiTokens` entre dans le catalogue du serveur : le
+  compteur paraît dans l'instantané des quotas (`GET /v1/me/quota`) et
+  l'allocation dans le catalogue public (`GET /v1/plans`).
+- L'application ne montre pas encore la jauge des jetons : son écran lit
+  trois compteurs, le quatrième attend son tour.
+- La stratégie de facturation à l'usage reste ouverte (D-25) : ce lot
+  **compte et plafonne**, il ne facture rien.
+
+
+
+---
+
+## D-39 — L'API publique ne demande pas la preuve du second facteur
+
+**Date** : 2026-10-26
+
+**Décision.** L'API publique (`/v1/api/`) s'authentifie par sa **clé
+d'API**, pas par le jeton de session. Comme le préfixe est exempt du
+middleware de session, il est exempt du contrôle du second facteur : une
+clé d'API n'a pas à porter la preuve `X-Limpid-2FA`.
+
+**Pourquoi.** La preuve du second facteur est attachée à une **session** :
+elle est obtenue par l'écran, dans le contexte d'un compte connecté. Une
+clé d'API est une **ressource** : elle se configure, se renouvelle, se
+révoque, et sert depuis un serveur. Exiger la preuve sur cette surface
+rendrait l'API inutilisable depuis un programme — il faudrait y porter une
+session, ce qui n'est pas le modèle.
+
+Les contrôles qui protègent cette surface sont ailleurs :
+
+| Contrôle | Où il est |
+|---|---|
+| La clé n'est stockée que par empreinte SHA-256 | `api_key_service.dart` |
+| Le secret n'est montré qu'une fois | la création et la rotation |
+| La clé se renouvelle et se révoque | `POST /v1/api-keys/<id>/rotate`, `DELETE` |
+| La formule Studio est exigée | `ApiAccessGuard`, sur **toutes** les routes |
+| Chaque appel est journalisé | le journal d'audit, le limiteur de débit |
+
+**Ce que la décision ne dit pas.** Le limiteur de débit se sert de l'adresse
+du client pour l'API publique, là où il se sert du compte pour le reste :
+une clé d'API n'est pas connue du limiteur avant d'être lue. C'est un
+choix à revoir quand le volume le justifiera.
+
+**Conséquences.** Un compte Studio dont la clé est volée donne accès à
+l'API publique sans second facteur. Le remède est la révocation de la
+clé, qui est immédiate et journalisée — pas un second facteur que le
+programme n'a pas.
+
+---
+
+## D-40 — La clé d'idempotence du paiement vit dans une fenêtre de quinze minutes
+
+**Date** : 2026-10-26
+
+**Décision.** L'application envoie une clé `Idempotency-Key` à
+`POST /v1/checkout`. La clé est tirée d'un **nonce** propre au dépôt, de
+la formule, du cycle, et d'une **fenêtre de quinze minutes** : deux
+commandes dans la même fenêtre partagent la même clé, et le serveur rejoue
+la réponse de la première au lieu d'ouvrir une seconde session de
+paiement.
+
+**Pourquoi.** Le serveur sait déjà rejouer une commande (D-36, service
+d'idempotence), mais l'application ne lui donnait pas de clé : un
+double-clic sur « Payer » ouvrait **deux** sessions chez le prestataire de
+paiement, et l'auteur pouvait payer deux fois.
+
+La fenêtre est le compromis entre deux bornes :
+
+| Fenêtre | Ce qu'elle donne | Ce qu'elle coûte |
+|---|---|---|
+| nulle | chaque clic ouvre une session | un double-clic paie deux fois |
+| infinie | un clic paie toujours une fois | une session expirée est ressuscitée, et l'auteur ne peut plus commander |
+| quinze minutes | un double-clic et une reprise immédiate sont absorbés | une commande vraiment nouvelle passe par une nouvelle clé |
+
+La clé est **opaque** (le nonce) et **scopée au compte** par le serveur :
+deux auteurs ne se gênent jamais, et personne ne peut deviner la clé
+d'un autre.
+
+**Ce que la décision ne dit pas.** Le serveur ne connaît pas l'intention
+de l'auteur : il rejoue la réponse quand la clé et le corps sont les mêmes,
+et refuse quand ils diffèrent (`409 idempotency_key_conflict`). Une
+formule changée après une commande annulée produit donc une clé
+différente — c'est voulu.
+
+**Conséquences.** Un double-clic sur « Payer » ouvre une seule session.
+Une commande reprise après quinze minutes ouvre une session neuve, même
+si l'ancienne est encore ouverte : l'auteur peut avoir deux sessions
+ouvertes chez le prestataire, mais il n'en paie qu'une — la formule du
+compte est singularisée par le rappel de paiement.
+
+---
+
+## D-41 — Le secret de signature des rappels est stocké en clair, et l'URL de rappel est jugée deux fois
+
+**Date** : 2026-10-26
+
+**Décision.** Deux règles sur les points de rappel sortants.
+
+1. Le **secret de signature** est stocké en clair dans la table
+   `webhook_endpoints`. La **clé d'API**, elle, n'est stockée que par son
+   empreinte SHA-256.
+2. L'URL de rappel est jugée **deux fois** : à la déclaration (le schéma
+   est `https`, l'hôte n'est pas privé) et **au moment de la livraison**
+   (le nom est résolu, chaque adresse obtenue est jugée, et les
+   redirections ne sont **jamais** suivies).
+
+**Pourquoi.** Les deux secrets n'ont pas le même usage : une clé d'API
+n'est que **vérifiée** — son empreinte suffit — alors qu'un secret de
+signature doit **signer** la charge, donc être présent en clair au moment
+de l'envoi. Le chiffrer au repos demanderait une clé que l'application
+n'a pas aujourd'hui ; c'est un travail, pas une évidence.
+
+L'URL, elle, est une **surface d'éjection** : le serveur y écrit la
+charge de l'événement. La valider une seule fois, à la déclaration, ne
+suffit pas : un nom public peut désigner une adresse interne
+(`127.0.0.1.nip.io`), un enregistrement peut changer entre la déclaration
+et la livraison, et un serveur de rappel peut **rediriger** vers une
+adresse interne. La résolution se fait donc au moment d'écrire, et un
+`303` transformerait sinon la livraison en lecture vers le réseau du
+déploiement.
+
+**Ce que la décision ne dit pas.** Le nom est résolu par le système : un
+résolveur menteur (un `dns` qui renvoie une adresse publique puis, au
+moment de la connexion, une adresse privée) passe entre les deux. La
+ parade est la résolution au dernier moment, avant l'écriture — c'est ce
+qui est fait — et non la garantie absolue.
+
+**Conséquences.**
+
+- Une fuite de la base expose les secrets de signature de tous les
+  auteurs. Le remède est la **rotation** : chaque point de rappel porte
+  un secret précédent, valable vingt-quatre heures, et l'endpoint se
+  renouvelle. Une fuite n'est pas indolore, elle est bornée.
+- Un rappel qui se résout vers une adresse interne est **refusé** à la
+  livraison, et la livraison le dit : elle n'est pas une erreur muette.
+- Les redirections ne sont pas suivies : un rappel doit viser l'adresse
+  déclarée, pas celle vers laquelle son serveur nous enverrait.
+
+## D-42 — La règle de dépendance est vérifiée par la CI, et l'éditeur a le droit d'utiliser le design system
+
+**Date** : 2026-10-26
+
+**Décision.** La règle de dépendance de PROMPT §5 est contrôlée par un
+**script de la CI** (`tools/dependances.py`), et non par une règle de
+l'analyseur. Deux corrections y sont inscrites :
+
+1. `limpid_quill` (l'éditeur) a le droit d'importer
+   `limpid_design_system` : l'éditeur **est** fait des widgets du design
+   system, il n'a pas de theme propre ;
+2. `limpid_api` a le droit d'importer `limpid_import` : la route d'import
+   lit les six formats, c'est le lecteur qui les rend.
+
+**Pourquoi.** L'invariant existe pour une raison précise : `limpid_core`
+est partagé par le client Flutter et par le serveur Dart, donc il ne doit
+jamais importer `package:flutter/*`. Tant que rien ne le contrôle, une
+importation d'un jour suffit à rendre le paquet incompréhensible pour le
+serveur — et l'échec n'apparaît qu'à la compilation du serveur, loin de
+la faute.
+
+Un paquet `custom_lint` aurait donné la règle **dans** l'analyseur, comme
+l'écrit le critère. Le motif n'est pas dans le dépôt, et l'ajouter
+demanderait de toucher aux `analysis_options.yaml` de tous les paquets —
+donc de casser l'analyse de tout le monde pour un gain de forme. Le script
+fait ce que la règle demande : **une violation échoue la CI**. La
+difference — un script plutôt qu'une règle de l'analyseur — est notée
+dans la feuille de route.
+
+**Conséquences.**
+
+- Le script lit les `import` et les `export` de chaque paquet, et ignore
+  les commentaires : un paquet peut *parler* de `package:flutter/*` pour
+  expliquer pourquoi il ne l'importe pas.
+- Un paquet **pur Dart** (qui ne depend pas du SDK Flutter) ne peut pas
+  importer `package:flutter/*` : le serveur n'a pas Flutter.
+- La CI l'exécute à côté de la vérification des clés de traduction, et la
+  vérification de vague l'exécute aussi.

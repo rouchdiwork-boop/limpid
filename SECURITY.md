@@ -46,13 +46,17 @@ comme une bonne intention, la divulgation publique n'est pas nécessaire.
 | Mots de passe | Argon2id via Supabase Auth, aucun hash maison |
 | Sessions | JWT court (15 min) + refresh rotatif, révocation serveur |
 | 2FA | TOTP obligatoire pour les plans Pro et Studio |
-| Données au repos | TLS 1.3 en transit ; SQLCipher local ; R2 chiffré (SSE) |
+| Données au repos | TLS 1.3 en transit ; R2 chiffré (SSE) ; SQLCipher local **prévu mais pas encore livré** — il est sur la [liste de pré-livraison](docs/PRE-LIVRAISON.md) |
 | E2EE | Option premium : chiffrement client du contenu des ouvrages |
 | Secrets | Variables d'environnement et gestionnaire, **jamais** dans le dépôt |
 | Isolation | Row-Level Security sur toutes les tables multi-utilisateur |
-| Journal d'audit | Export, partage, suppression, changement de plan |
+| Journal d'audit | Export, partage, suppression, changement de plan, invitation d'équipe |
 | Export utilisateur | ZIP complet (manuscrits, assets, réglages) — RGPD |
 | Suppression | Soft delete 30 jours, puis purge définitive et exclusion des index IA |
+| Webhooks sortants | L'URL de rappel est jugée **deux fois** | Schéma `https` et hôte public à la déclaration ; **nom résolu** et adresses privées refusées à la livraison ; **redirections jamais suivies** (D-41) |
+| Secrets de signature | Le secret d'un point de rappel est **stocké en clair** : le serveur doit signer | Une fuite de la base l'expose ; la **rotation** le borne (D-41). La clé d'API, elle, n'est stockée que par son empreinte |
+| Partage en lecture | Le jeton d'un partage n'est **stocké que par son empreinte** SHA-256, et il n'est rendu **qu'une fois** | La route `/v1/shares/<jeton>/document` est publique : elle rend le document, rien d'autre, et elle est **limitée en débit**. Un jeton inconnu, révoqué ou expiré répond le même `404` : rien ne dit à un tiers qu'un partage a existé |
+| Invitation d'équipe | Le jeton d'une invitation n'est **stocké que par son empreinte** ; l'invitation **expire** et ne se réactive pas | Le membre n'entre dans l'équipe qu'à l'acceptation, et l'acceptation vérifie que l'adresse du compte est celle qui a été invitée — sinon c'est un `404`, jamais un « cette invitation existe, pour quelqu'un d'autre ». L'invitation reçue **disparaît avec le compte** : la purge l'atteint par l'adresse |
 
 ## Règles pour les contributeurs
 

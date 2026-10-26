@@ -321,6 +321,8 @@ synchronisation sont créées par Drift lui-même.
 |---|---|---|---|
 | `projects` | Racine du manuscrit : titre, synopsis, état, identifiants des séries et des chapitres | `(updated_at DESC, id)` | Persistant |
 | `chapters` | Chapitre d'un projet : titre, synopsis, état, position fractionnaire | `(project_id, order_key)` | Persistant |
+| `series` | Série d'un projet : le premier niveau de la hiérarchie, avec la liste ordonnée de ses tomes | `(project_id, order_key)` | Persistant |
+| `volumes` | Tome d'une série : le deuxième niveau, avec la liste ordonnée de ses chapitres | `(series_id, order_key)` | Persistant |
 | `scenes` | Scène d'un chapitre : titre, document CRDT, position fractionnaire | `(chapter_id, order_key)` | Persistant |
 | `document_index` | Index de routage : à quel projet appartient un document synchronisé | `(project_id)` | Persistant |
 | `comment_threads` | Fil de discussion ancré sur un document | `(project_id)` | Persistant |
@@ -330,10 +332,19 @@ synchronisation sont créées par Drift lui-même.
 | `preferences` | Objectif quotidien, série de jours d'écriture | — | Persistant |
 | `op_queue_rows` | Opérations CRDT non acquittées, ordre de Lamport (Drift, `limpid_sync`) | clé primaire `(doc_id, lamport, author_id)` | Purgée à l'acquittement |
 | `snapshot_rows` | Journal compacté des documents et curseur de l'API (Drift, `limpid_sync`) | `(document_id)` | Persistant |
+| `documents_fts` | Index plein texte FTS5 : le texte des blocs, avec la scene, le livre et le compte | FTS5 (`unicode61`, sans diacritiques) | Persistant |
+| `search_index_state` | Ce que l'index porte deja, par document : la date et la Lamport du dernier indexage | clé primaire `(account_id, document_id)` | Persistant |
 
-La recherche plein texte (O9) et la file des effets de bord hors-ligne
-(`outbox`) ne sont pas encore écrites : elles font partie du lot 1 et du lot
-4.
+La **recherche plein texte** est **locale** : elle lit l'index FTS5 de
+l'appareil, jamais le reseau — c'est la promesse du produit. L'index est
+une table virtuelle FTS5 (`documents_fts`), alimentee par la couche de
+donnees et **rapproche** de la source avant chaque recherche : un bloc
+modifie est retrouve avec son nouveau texte, un bloc supprime disparait.
+`search_index_state` dit, pour chaque document, ce que l'index porte
+ deja, afin qu'une recherche ne relise pas un document qui n'a pas bouge.
+
+La file des effets de bord hors-ligne (`outbox`) n'est pas encore ecrite :
+elle fait partie du lot 4.
 
 ### 4.3 Persistance de l'API : deux moteurs, un seul port
 
@@ -385,8 +396,11 @@ Les tables que le lot 7 a ajoutées à l'API, dans les deux dialectes :
 | `webhook_endpoints` | `id`, `user_id`, `url`, `events`, `secret`, `previous_secret`, `previous_secret_expires_at`, `is_active`, `created_at`, `updated_at` | Un point de rappel et son secret de signature |
 | `webhook_deliveries` | `id`, `endpoint_id`, `user_id`, `event`, `payload`, `status`, `http_status`, `error_message`, `attempts`, `created_at`, `completed_at` | Une livraison et son issue |
 | `kdp_publications` | 21 colonnes : projet, compte, titre, auteur, résumé, mots-cles, catégories, ISBN, langue, statut, mots, pages, clés des fichiers | Le dossier préparé pour Amazon |
+| `account_purges` | `user_id`, `requested_at`, `scheduled_for`, `purged_at`, `purged_by` | Le registre des purges : la preuve qu'une suppression a eu lieu, et le verrou d'idempotence |
 | `account_purge_deletions` | `user_id`, `target`, `deleted_at`, `deleted_count`, `attempts`, `last_error`, `updated_at` | La suppression externe d'un compte, cible par cible |
 | `account_purge_artifacts` | `user_id`, `prefix`, `deleted_at`, `deleted_count`, `created_at` | Les préfixes d'artefacts d'un compte, écrits avant l'effacement |
+| `stripe_events` | `event_id`, `event_type`, `processed_at` | Les événements Stripe déjà traités : la clé d'idempotence du rappel de paiement |
+| `kdp_deposits` | `id`, `publication_id`, `user_id`, `status`, `amazon_submission_id`, `issues`, `failure_reason`, `attempts`, `created_at`, `updated_at` | La trace d'un dépôt de dossier chez Amazon |
 
 Elles remplissent les tables `subscriptions` et `usage_counters` prevues au
 schema cible (§4.1) : les noms retenus sont plus courts, et les colonnes
@@ -397,6 +411,48 @@ le paiement.
 Les **secrets** ne sont jamais stockés en clair : le secret TOTP est en
 base32 et les codes de récupération ne sont gardés que par empreinte
 SHA-256. Une fuite de la base ne donne donc aucun code utilisable.
+
+### 4.5 La portée de la purge
+
+La purge efface **toutes** les données personnelles d'un compte, et la
+portée est **déclarée dans le code**, pas dans un commentaire :
+`db/personal_data_tables.dart` liste les tables effacées, celles dont un
+champ est vidé, et celles qui sont gardées avec la raison de les garder.
+
+Un test compare cette déclaration au schéma : une table personnelle
+ajoutée plus tard et non déclarée fait échouer la suite. C'est la réponse
+au trou que le lot 7 a laissé — la purge n'effaçait que les tables
+d'avant le lot 7, et le secret TOTP comme les secrets de signature des
+webhooks restaient en base après une suppression promise.
+
+Trois tables sont **gardées**, et la raison est écrite :
+
+| Table | Pourquoi |
+|---|---|
+| `audit_log` | Le journal d'audit est conservé un an (D-19). Il porte les actions, l'adresse et l'expérience du compte, **pas** le texte des livres. |
+| `account_purges` | Le registre qui prouve la purge et verrouille son idempotence. |
+| `stripe_events` | L'identifiant de l'événement traité : la clé d'idempotence du rappel de paiement. Aucune donnée personnelle. |
+
+### 4.6 Les tables livrées par le lot 8
+
+Le lot 8 a ajouté les tables que les lots 4 à 6 promettaient sans les
+porter. Elles existent dans les **deux** dialectes, et le vérificateur
+`.limpid/verifier_dialectes.py` les compare table par table :
+
+| Table | Rôle |
+|---|---|
+| `project_shares` | Un partage en lecture : le projet, le propriétaire, l'**empreinte** du jeton, l'expiration, la révocation. Le jeton en clair n'est jamais stocké. |
+| `book_sales` | La fiche de vente d'un livre : le prix, la devise, l'état, la part de l'auteur et celle de la plateforme. |
+| `entitlements` | Le droit de lecture d'un compte sur un livre : la source (vente, code promo, gratuité), le montant, et la **ventilation** des sommes entre l'auteur et la plateforme. |
+| `promo_codes` | Un code promo : sa remise, son nombre d'utilisations, sa période de validité. |
+| `series` | Une série : le premier niveau de la hiérarchie du livre (projet → série → tome → chapitre → scène). |
+| `volumes` | Un tome : le deuxième niveau, avec ses chapitres. |
+
+Deux **index uniques** ferment des fenêtres que le service seul ne ferme
+pas : `kdp_publications (project_id)` — une fiche Amazon KDP par projet —
+et `kdp_publications (isbn)` — un ISBN ne désigne qu'un ouvrage imprimé,
+même quand deux préparations concurrentes passent entre le contrôle et
+l'écriture.
 
 
 ## 5. Protocole de synchronisation
@@ -580,6 +636,52 @@ pour la preparation du dossier de depot Amazon. `PUT /v1/admin/plans/:userId`
 attribue une formule payee : elle est reservee a l'administrateur et porte la
 reference du paiement (D-37).
 
+Le **rappel de paiement** est la porte d'entree des formules payees :
+`POST /v1/stripe/webhook` verifie la signature Stripe (`t=…,v1=…`), refuse
+un corps hors tolerance d'horodatage, et n'applique l'effet qu'une fois par
+evenement — la table `stripe_events` porte la cle d'idempotence. Le client
+ne s'attribue jamais une formule payee : c'est le rappel qui l'attribue.
+
+Les **webhooks sortants** repartent de cinq points d'emission, et chacun
+d'eux a une table : `project.published` (la transition de publication),
+`export.completed` (l'artefact deposite), `plan.changed` (la formule
+changee, y compris par le rappel Stripe), `team.invitation_sent` et
+`quota.reached` (le refus d'une limite). La charge est **asynchrone** :
+elle part en `unawaited`, ne leve jamais et journalise son echec cote
+serveur. Une livraison morte ne transforme jamais l'export en erreur, et
+elle se rejoue a la main par `POST /v1/webhooks/deliveries/:id/replay`. La
+charge ne porte jamais le texte d'un manuscrit, ni un secret, ni la donnee
+d'un autre compte ; l'URL de rappel est validee (https, hote public), donc
+pas de SSRF vers un hote prive.
+
+Le **depot chez Amazon** est une seconde etape :
+`POST /v1/publishing/kdp/deposits` depose le dossier prepare,
+`GET /v1/publishing/kdp/deposits` en liste les depots du compte, et
+`GET /v1/publishing/kdp/deposits/:depositId` en rend la trace. Un refus
+d'Amazon n'est pas une erreur technique : il revient dans la trace, avec la
+forme du controle de soumission, pour que l'auteur puisse le corriger. Un
+serveur sans identifiants Amazon refuse le depot et le dit (503) : il ne
+pretend jamais que le livre est arrive.
+
+Le depot lui-meme est **borne en temps** : les 28 secondes de la requete
+(partagees entre le jeton et le depot) sont le budget de toute la chaine,
+et l'appel qui n'a plus de temps **ne part pas**. Un dossier parti dont
+Amazon n'a pas repondu passe en `unknown` : il n'est pas reprenable
+automatiquement, la route repond `409` avec `requires_reconciliation`, et
+c'est l'auteur qui tranche par
+`POST /v1/publishing/kdp/deposits/:id/reconciliation` — `submitted` ou
+`not_received`. Un compte bloque, un depot bride et un jeton refuse ont
+chacun leur raison : aucun de ces messages ne dit « relancez ».
+
+L'**export des donnees personnelles** ne rend plus les donnees : il rend
+un descripteur et une **URL signee** de quinze minutes. L'archive est un
+**ZIP** ecrit par le serveur, depose dans le stockage objet sous le prefixe
+du compte ; l'application la telecharge par cette URL, **sans** le jeton
+de session. La reponse dit ce que l'archive contient (`counts`) et ce
+qu'elle n'a pas pu embarquer (`assets_omitted`) : la troncature est
+annoncee, jamais cachee. La purge du compte efface l'archive avec le
+reste.
+
 ### 6.3 Formes de requête et de réponse
 
 `POST /v1/projects/:id/ops` envoie un lot d'opérations :
@@ -664,9 +766,10 @@ format de §5.1.
 
 | Type | Émis par | Sens |
 |---|---|---|
-| `hello` | client | Prise de contact, liste des documents suivis |
-| `join`, `leave` | client | Abonnement à un `doc_id` |
+| `hello` | serveur | Prise de contact, identité du client |
+| `join`, `leave` | client | Abonnement à une salle `(projet, document)` |
 | `op` | serveur ou client | Opération CRDT |
+| `cursor` | client | Position du curseur de l'auteur, `block_id` et `offset` |
 | `ack` | serveur | Acquittement d'une opération reçue |
 | `presence` | serveur | Curseurs distants, avatars (C2) |
 | `error` | serveur | Erreur applicative, `code` stable |
@@ -674,6 +777,11 @@ format de §5.1.
 
 Le relais ne modifie jamais le contenu d'une opération : il la transmet. La
 convergence reste la propriété du CRDT (D-04).
+
+La présence appartient au relais : il annonce les jonctions, les positions
+des curseurs et les départs, et il purge le pair qui cesse de battre (30 s
+sans réponse au `ping`). Le client n'annonce jamais son départ : il cesse de
+battre, et le relais le retire de la salle.
 
 
 ## 7. Topologie de déploiement
@@ -746,6 +854,7 @@ stockage.
 | Transport | TLS 1.3 en transit | Terminaison TLS chez Railway, HSTS et redirection HTTPS au CDN |
 | Auth | Argon2id, JWT court 15 min, rotation du rafraîchissement, révocation serveur | Supabase Auth, validation JWKS par l'API, révocation dans `sessions` |
 | Auth | 2FA TOTP | Obligatoire sur Pro et Studio, optionnelle ailleurs (T2) |
+| Second facteur | La preuve expire, et le serveur refuse l'appel | L'application ouvre une fenêtre de code et **repete** l'appel. Les lectures passent par la cle de navigation de la composition racine : un `FutureProvider` n'a pas de `BuildContext`, et une lecture refusee ne doit pas devenir une erreur d'ecran |
 | Autorisation | Rôles par ressource | `propriétaire`, `co-auteur`, `bêta-lecteur`, `lecteur`, `invité externe` (D-16) ; contrôle serveur systématique, jamais de confiance client |
 | Isolation | Isolation des données par propriétaire | Index `owner_id` sur les tables multi-utilisateur et filtre systématique en SQL paramétré |
 | Base | Chiffrement au repos | TLS vers Postgres, chiffrement serveur du fournisseur, SQLCipher local sur desktop et mobile |

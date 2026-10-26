@@ -227,6 +227,99 @@ C'est ce script qui a révélé le motif `Icon?` du `.gitignore` : la règle
 macOS meant attraper le dossier `icons/` du design system **et** celui des
 icônes de la PWA. Les deux étaient invisibles depuis le poste.
 
+Les **clés de traduction** ont le même genre de trou : une clé présente en
+français et absente en anglais ne casse rien à la compilation, elle
+disparaît à l'exécution, et l'interface affiche le message du gabarit. Le
+script compare les fichiers ARB d'un même paquet :
+
+```bash
+python tools/cles_arb.py
+```
+
+Il tourne dans la CI, à côté de la génération des localisations.
+
+La **règle de dépendance** de PROMPT §5 a le même sort : elle tient, mais
+rien ne la contrôlait — une importation de Flutter dans `limpid_core` n'aurait
+cassé que la compilation du serveur, loin de la faute. Le script la vérifie :
+
+```bash
+python tools/dependances.py
+```
+
+Il lit les `import` et les `export` de chaque paquet, ignore les
+commentaires, et sort en code 1 dès qu'un paquet sort de la règle — un
+paquet pur Dart ne peut pas importer `package:flutter/*`, et chaque
+paquet n'a le droit d'importer que les paquets que la règle lui ouvre
+(D-42).
+
+### 4.1.2 La mémoire du poste
+
+Le poste a **7,3 Go** de RAM et douze cœurs. Une suite `flutter test` lance
+un testeur par cœur : la mémoire sature, le testeur se fait tuer, et le
+symptôme est un test qui échoue sans raison. La limite à poser :
+
+```bash
+bash tools/avec_verrou.sh sh -c 'cd apps/limpid_app && flutter test --concurrency=4'
+```
+
+Un échec qui ressemble à un test cassé mais qui dit « out of memory » ou
+« The system is out of memory » n'est pas un défaut du test : c'est le
+poste. Relance avec une concurrence plus basse avant de corriger quoi que
+ce soit.
+
+Quand plusieurs agents travaillent en parallèle, le **verrou** de compilation
+(§1.1) est ce qui les sépare : une seule commande Dart à la fois dans le
+monorepo. Sans lui, trois suites de tests se lancent ensemble et le poste
+tombe.
+
+### 4.1.3 Travailler a plusieurs agents
+
+Le poste permet de faire travailler **six agents en meme temps**, pas plus :
+la formule de tokens du fournisseur coupe au-dela. La regle est donc
+**six agents actifs au maximum**, et on **relance** un agent coupe plutot
+que d'en lancer un nouveau — un agent relance recoit l'etat du travail et
+termine en une fraction du temps.
+
+Chaque agent travaille sur un **brief** ecrit dans `.limpid/briefs/`. Le
+brief dit :
+
+| La section | Ce qu'elle fixe |
+|---|---|
+| Le trou | Le critere du ROADMAP qui n'est pas tenu, avec la preuve (fichier, ligne) |
+| Ce que tu dois faire | Le comportement attendu, le contrat, les formes a respecter |
+| Les fichiers que tu possedes | La liste exacte : un agent qui touche un fichier d'un autre agent casse son travail |
+| Les reserves a l'integrateur | Les fichiers de **composition** : `api_router.dart`, `dependencies.dart`, `production_dependencies.dart`, `server.dart`, le baril, `app/router.dart`, `app/dependencies.dart`, `main.dart`, `domain/providers.dart`, `domain/fallbacks.dart`, `l10n/**` |
+| Les numeros de migration | Reserves par l'integrateur, un par agent, pour que les deux dialectes ne se marchent pas dessus |
+| Les tests | Ce qui doit etre **prouve**, pas ce qui doit etre code |
+| La machine | Le verrou de compilation, et la regle du premier qui parle en dernier |
+
+Trois regles qui evitent la plupart des conflits :
+
+1. **Les fichiers de composition ne sont touches par personne.** Un agent
+   qui a besoin d'y ecrire le dit dans son rapport, et l'integrateur
+   l'ecrit. C'est plus lent, mais c'est la seule facon de garder un arbre
+   qui compile pendant que six agents travaillent.
+2. **Un numero de migration par agent.** Les migrations se percutent
+   vite : deux agents qui ajoutent une table dans le meme fichier
+   s'ecrasent. Le verificateur `.limpid/verifier_dialectes.py` compare
+   les deux dialectes table par table, colonne par colonne.
+3. **Les chaines de traduction passent par l'integrateur.** Une cle
+   ajoutee dans un seul ARB **disparait a l'execution**, sans que la
+   compilation ne le dise : `tools/cles_arb.py` le verifie, et la CI le
+   lance.
+
+La verification de fin de vague est `.limpid/verifier_vague.sh` : les
+cles de traduction, les deux dialectes, les fichiers source absents de
+Git, puis la chaine complete (`tools/verify.sh`).
+
+Un **audit** des criteres vient apres, et il ne modifie rien : il lit le
+code et les tests, et classe chaque critere du `ROADMAP.md` en
+**verifie**, **partiel** ou **non verifie**. C'est ce qui permet de
+cocher une case sans se tromper, et c'est ce qui a revele que la
+recherche plein texte, la compaction et le relais temps reel n'existaient
+pas dans le depot alors que la documentation les annonçait. Le resultat
+est ecrit dans le chapitre 14 du `ROADMAP.md`.
+
 ### 4.2 Un seul paquet
 
 ```bash
