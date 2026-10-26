@@ -58,7 +58,7 @@ for dir in "${PACKAGES[@]}"; do
 
   if [ ! -d "$dir/.dart_tool" ]; then
     echo "• pub get"
-    (cd "$dir" && $TOOL pub get) >/dev/null 2>&1 \
+    bash tools/avec_verrou.sh sh -c "cd \"$dir\" && $TOOL pub get" >/dev/null 2>&1 \
       || echo "  ! pub get a échoué (réseau ?)"
   fi
 
@@ -66,12 +66,12 @@ for dir in "${PACKAGES[@]}"; do
   # machine neuve échoue sur `package:limpid_app/l10n/generated/...`.
   if [ "$TOOL" = "flutter" ] && [ -f "$dir/l10n.yaml" ]; then
     echo "• gen-l10n"
-    (cd "$dir" && flutter gen-l10n) >/dev/null 2>&1 \
+    bash tools/avec_verrou.sh sh -c "cd \"$dir\" && flutter gen-l10n" >/dev/null 2>&1 \
       || echo "  ! gen-l10n a échoué"
   fi
 
   echo "• format"
-  fmt_out=$(cd "$dir" && dart format --output=none --set-exit-if-changed . 2>&1)
+  fmt_out=$(bash tools/avec_verrou.sh sh -c "cd \"$dir\" && dart format --output=none --set-exit-if-changed ." 2>&1)
   fmt_code=$?
   if [ "$fmt_code" -ne 0 ]; then
     echo "$fmt_out" | grep -E "Changed|Could not" | head -10 | sed 's/^/  ! /'
@@ -81,7 +81,7 @@ for dir in "${PACKAGES[@]}"; do
   fi
 
   echo "• analyze"
-  out=$(cd "$dir" && $TOOL analyze --fatal-infos 2>&1)
+  out=$(bash tools/avec_verrou.sh sh -c "cd \"$dir\" && $TOOL analyze --fatal-infos" 2>&1)
   if echo "$out" | grep -qi "no issues found"; then
     echo "  ✓ 0 erreur, 0 avertissement"
   else
@@ -96,7 +96,7 @@ for dir in "${PACKAGES[@]}"; do
 
   echo "• test"
   if [ -d "$dir/test" ]; then
-    out=$(cd "$dir" && $TOOL test 2>&1)
+    out=$(bash tools/avec_verrou.sh sh -c "cd \"$dir\" && $TOOL test" 2>&1)
     echo "$out" | tail -3 | sed 's/^/  /'
     if echo "$out" | grep -qi "All tests passed"; then
       count=$(echo "$out" | grep -oE "\+[0-9]+" | tail -1 | tr -d '+')
