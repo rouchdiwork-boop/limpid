@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Crochet de commit : refuse un commit dont le code n'est pas formaté.
+#
+# Le job d'analyse de la CI échoue sur un fichier mal formaté, et l'échec
+# n'apparaît qu'après la poussée : le crochet le dit avant.
+#
+# Le crochet s'active une fois par poste :
+#
+#   git config core.hooksPath .githooks
+
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+if ! command -v dart >/dev/null 2>&1; then
+  echo "dart est absent du PATH : le contrôle de formatage est saute." >&2
+  exit 0
+fi
+
+changed=$(git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' || true)
+if [ -z "$changed" ]; then
+  exit 0
+fi
+
+unformatted=$(dart format --output=none --set-exit-if-changed $changed 2>&1)
+if [ $? -ne 0 ]; then
+  echo "" >&2
+  echo "Ces fichiers ne sont pas au format Dart :" >&2
+  echo "$unformatted" | grep -E "Changed" >&2
+  echo "" >&2
+  echo "  dart format $changed" >&2
+  exit 1
+fi
+
+exit 0

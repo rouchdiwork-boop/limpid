@@ -194,6 +194,21 @@ qui enchaînent pour chaque paquet présent :
 Les paquets absents du dépôt sont ignorés proprement : le monorepo reste
 vérifiable pendant la construction des applications.
 
+### 4.1.0 Le crochet de commit
+
+Un fichier mal formaté ne casse pas le poste : il casse la **CI**, une fois
+poussé. Le crochet `.githooks/pre-commit` le dit avant, en deux secondes.
+
+Il s'active une fois par poste :
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Il ne contrôle que le **formatage** des fichiers `.dart` du commit : c'est le
+contrôle le plus rapide et le plus souvent en cause. L'analyse statique et
+les tests restent dans la chaîne de vérification.
+
 ### 4.1.1 Les fichiers source absents de Git
 
 Un fichier source non versionné ne se voit pas : le poste compile, les tests
