@@ -17,6 +17,7 @@ const List<String> _allowedHeaders = <String>[
   'content-type',
   'idempotency-key',
   'x-request-id',
+  'x-limpid-2fa',
 ];
 
 /// Builds the middleware answering the cross origin requests.

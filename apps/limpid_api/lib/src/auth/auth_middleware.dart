@@ -3,8 +3,10 @@ import 'package:shelf/shelf.dart';
 import '../errors/app_exception.dart';
 import 'auth_context.dart';
 import 'jwt_verifier.dart';
+import 'two_factor_guard.dart';
 
 export 'auth_context.dart';
+export 'two_factor_guard.dart';
 
 /// The key under which the [AuthContext] is stored in the request context.
 const String authContextKey = 'limpid.auth';
@@ -44,21 +46,29 @@ AuthContext requireAuthContext(Request request) {
 Middleware requireAuth(JwtVerifier verifier) {
   return (Handler innerHandler) {
     return (Request request) async {
-      final String? token = bearerToken(request);
-      if (token == null) {
-        throw const UnauthorizedException(
-          message:
-              'Une authentification est requise pour accéder à cette '
-              'ressource.',
-          details: <String, Object?>{'reason': 'missing_token'},
-        );
-      }
-      final AuthContext context = await verifier.verify(token);
+      final AuthContext context = await _authenticate(request, verifier);
       return innerHandler(
         request.change(context: <String, Object>{authContextKey: context}),
       );
     };
   };
+}
+
+/// Reads the token of [request] and returns the caller it identifies.
+///
+/// Throws an [UnauthorizedException] when the request carries no usable
+/// token.
+Future<AuthContext> _authenticate(Request request, JwtVerifier verifier) async {
+  final String? token = bearerToken(request);
+  if (token == null) {
+    throw const UnauthorizedException(
+      message:
+          'Une authentification est requise pour accéder à cette '
+          'ressource.',
+      details: <String, Object?>{'reason': 'missing_token'},
+    );
+  }
+  return verifier.verify(token);
 }
 
 /// The routes that answer without a token.
@@ -71,6 +81,14 @@ const Set<String> publicPaths = <String>{'/health', '/ready', '/v1/sync'};
 /// prefix and not by an exact path.
 const List<String> publicPathPrefixes = <String>['/v1/public/'];
 
+/// The prefixes of the routes that answer without a proof of the second
+/// factor.
+///
+/// The routes of the double authentication are the ones that let the caller
+/// activate it and prove it : they must stay reachable when the account
+/// cannot use the rest of the API.
+const List<String> defaultTwoFactorExemptPrefixes = <String>['/v1/me/2fa'];
+
 /// Builds the middleware authenticating the calls of the protected routes.
 ///
 /// The routes of [exemptPaths] and of [exemptPrefixes] answer without a
@@ -78,10 +96,19 @@ const List<String> publicPathPrefixes = <String>['/v1/public/'];
 /// is read by readers who have no account, and the real time relay carries
 /// its token in the query string, because a browser cannot set headers on a
 /// WebSocket handshake.
+///
+/// When [twoFactorGuard] is given, the second factor is checked right
+/// after the token: an account whose plan requires the double
+/// authentication and which has not activated it is refused with a
+/// `ForbiddenException`, and an account which has activated it must carry
+/// the proof of the second factor in the `X-Limpid-2FA` header. The routes
+/// of [twoFactorExemptPrefixes] are exempt from that second check.
 Middleware authenticationMiddleware({
   required JwtVerifier verifier,
   Set<String> exemptPaths = publicPaths,
   List<String> exemptPrefixes = publicPathPrefixes,
+  TwoFactorGuard? twoFactorGuard,
+  List<String> twoFactorExemptPrefixes = defaultTwoFactorExemptPrefixes,
 }) {
   return (Handler innerHandler) {
     return (Request request) async {
@@ -90,7 +117,16 @@ Middleware authenticationMiddleware({
           exemptPrefixes.any((String prefix) => path.startsWith(prefix))) {
         return innerHandler(request);
       }
-      return requireAuth(verifier)(innerHandler)(request);
+      final AuthContext context = await _authenticate(request, verifier);
+      if (twoFactorGuard != null &&
+          !twoFactorExemptPrefixes.any(
+            (String prefix) => path.startsWith(prefix),
+          )) {
+        await twoFactorGuard.verifySecondFactor(context, request);
+      }
+      return innerHandler(
+        request.change(context: <String, Object>{authContextKey: context}),
+      );
     };
   };
 }

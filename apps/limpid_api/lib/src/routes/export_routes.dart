@@ -13,6 +13,8 @@ import '../http/json_body.dart';
 import '../middleware/rate_limiter.dart';
 import '../services/access_control.dart';
 import '../services/book_builder.dart';
+import '../services/plan_catalog.dart';
+import '../services/quota_service.dart';
 import '../sync/tree_builder.dart';
 
 /// The formats accepted by the export route.
@@ -27,11 +29,17 @@ const Map<String, ExportFormat> exportFormats = <String, ExportFormat>{
 };
 
 /// Registers the routes of the export.
+///
+/// [quota] porte le garde-fou des quotas : le quota d'exports est vérifié
+/// avant la génération du fichier, et le compteur n'est incrémenté qu'une
+/// fois, après le succès de l'export. Le point de composition câble le
+/// service ; sans lui, la route n'applique aucun plafond.
 void registerExportRoutes(
   Router router,
   AppDependencies dependencies,
-  AppConfig config,
-) {
+  AppConfig config, {
+  QuotaService? quota,
+}) {
   router.post('/v1/export/<format>', (Request request, String format) async {
     final AuthContext auth = requireAuthContext(request);
     final ExportFormat exportFormat = _parseFormat(format);
@@ -46,6 +54,22 @@ void registerExportRoutes(
       projectId,
       auth,
     );
+
+    // Le garde-fou passe avant la génération : un compte qui a épuisé son
+    // quota d'exports ne déclenche jamais la fabrication du livre.
+    if (quota != null) {
+      await quota.ensureCounter(
+        userId: auth.userId,
+        feature: QuotaFeature.exports,
+      );
+      if (exportFormat == ExportFormat.pdfPrintReady) {
+        await quota.ensureCapability(
+          userId: auth.userId,
+          capability: PlanCapability.printReadyExports,
+        );
+      }
+    }
+
     final List<SyncOpRecord> operations = await dependencies.sync.all(
       projectId: projectId,
     );
@@ -60,6 +84,15 @@ void registerExportRoutes(
       bytes: result.bytes,
       contentType: result.mimeType,
     );
+
+    // L'export a réussi : le compteur est incrémenté une fois, et une
+    // seule.
+    if (quota != null) {
+      await quota.recordConsumption(
+        userId: auth.userId,
+        feature: QuotaFeature.exports,
+      );
+    }
 
     await dependencies.audit.record(
       AuditEntry(

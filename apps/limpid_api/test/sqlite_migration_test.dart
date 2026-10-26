@@ -31,6 +31,10 @@ void main() {
         '0004_audit_log.sql',
         '0005_comment_threads.sql',
         '0006_account_purges.sql',
+        '0007_plans.sql',
+        '0008_two_factor.sql',
+        '0009_teams.sql',
+        '0010_feature_flags.sql',
       ]);
     });
 
@@ -51,6 +55,14 @@ void main() {
           'comment_threads',
           'comments',
           'account_purges',
+          'account_plans',
+          'quota_usage',
+          'two_factor',
+          'two_factor_recovery_codes',
+          'teams',
+          'team_members',
+          'team_invitations',
+          'feature_flags',
           'schema_migrations',
         ]),
       );
@@ -109,6 +121,60 @@ void main() {
         'purged_at',
         'purged_by',
       ]);
+      expect(await _columns(database, 'account_plans'), <String>[
+        'user_id',
+        'plan',
+        'billing_period',
+        'trial_ends_at',
+        'period_started_at',
+        'period_ends_at',
+      ]);
+      expect(await _columns(database, 'quota_usage'), <String>[
+        'user_id',
+        'feature',
+        'period_key',
+        'quantity',
+      ]);
+      expect(await _columns(database, 'two_factor'), <String>[
+        'user_id',
+        'secret',
+        'is_enabled',
+        'created_at',
+        'enabled_at',
+      ]);
+      expect(await _columns(database, 'two_factor_recovery_codes'), <String>[
+        'user_id',
+        'code_hash',
+        'used_at',
+      ]);
+      expect(await _columns(database, 'teams'), <String>[
+        'id',
+        'name',
+        'owner_id',
+        'created_at',
+        'updated_at',
+      ]);
+      expect(await _columns(database, 'team_members'), <String>[
+        'team_id',
+        'user_id',
+        'role',
+        'created_at',
+      ]);
+      expect(await _columns(database, 'team_invitations'), <String>[
+        'id',
+        'team_id',
+        'user_id',
+        'role',
+        'invited_by',
+        'created_at',
+      ]);
+      expect(await _columns(database, 'feature_flags'), <String>[
+        'flag_key',
+        'is_enabled',
+        'description',
+        'updated_at',
+        'updated_by',
+      ]);
     });
 
     test('crée les index du schéma de référence', () async {
@@ -139,6 +205,19 @@ void main() {
       expect(
         await _indexes(database, 'account_purges'),
         contains('account_purges_purged_at_idx'),
+      );
+      expect(
+        await _indexes(database, 'quota_usage'),
+        contains('quota_usage_period_idx'),
+      );
+      expect(await _indexes(database, 'teams'), contains('teams_owner_idx'));
+      expect(
+        await _indexes(database, 'team_members'),
+        contains('team_members_user_idx'),
+      );
+      expect(
+        await _indexes(database, 'team_invitations'),
+        contains('team_invitations_team_idx'),
       );
     });
 
@@ -175,7 +254,7 @@ void main() {
       final List<String> first = await runner.run();
       final List<String> second = await runner.run();
 
-      expect(first, hasLength(6));
+      expect(first, hasLength(10));
       expect(second, isEmpty);
     });
 

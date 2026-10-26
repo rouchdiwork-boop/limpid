@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:limpid_api/limpid_api.dart';
+import 'package:limpid_core/limpid_core.dart';
 import 'package:test/test.dart';
 
 import 'helpers/test_server.dart';
@@ -19,6 +21,24 @@ void main() {
   tearDown(() async {
     await server.stop();
   });
+
+  /// Donne au compte [userId] la formule [plan].
+  ///
+  /// La recherche dans le manuscrit n'est ouverte qu'aux formules qui la
+  /// comprennent (D-15) : le test qui l'exerce doit donc donner une formule
+  /// à son compte.
+  Future<void> givePlan(String userId, SubscriptionPlan plan) async {
+    final InMemoryQuotaDatabase quotas =
+        server.dependencies.quotas! as InMemoryQuotaDatabase;
+    await quotas.assignPlan(
+      AccountPlan(
+        userId: userId,
+        plan: plan,
+        period: BillingPeriod.monthly,
+        periodStartedAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
 
   group('routes IA', () {
     test('stream les jetons et l\'événement done', () async {
@@ -68,14 +88,29 @@ void main() {
     });
 
     test('interroge le manuscrit', () async {
+      await givePlan('user-1', SubscriptionPlan.pro);
+      // La formule Pro exige la double authentification (D-19).
+      final String proof = await server.enableTwoFactor('user-1');
+
+      final http.Response response = await server.post(
+        '/v1/ai/query',
+        headers: <String, String>{...auth, 'x-limpid-2fa': proof},
+        body: <String, Object?>{'question': 'Qui est le capitaine ?'},
+      );
+
+      expect(response.statusCode, 200);
+      expect(response.body, contains('event: done'));
+    });
+
+    test('refuse la recherche hors formule qui l’ouvre', () async {
       final http.Response response = await server.post(
         '/v1/ai/query',
         headers: auth,
         body: <String, Object?>{'question': 'Qui est le capitaine ?'},
       );
 
-      expect(response.statusCode, 200);
-      expect(response.body, contains('event: done'));
+      expect(response.statusCode, 402);
+      expect(response.body, contains('plan_limit_reached'));
     });
   });
 

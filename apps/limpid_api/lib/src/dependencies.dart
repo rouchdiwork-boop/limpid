@@ -2,10 +2,14 @@ import 'dart:typed_data';
 
 import 'auth/jwt_verifier.dart';
 import 'db/account_purge_store.dart';
+import 'db/admin_database.dart';
 import 'db/audit_log.dart';
 import 'db/comment_store.dart';
 import 'db/project_store.dart';
+import 'db/quota_database.dart';
 import 'db/sync_store.dart';
+import 'db/team_database.dart';
+import 'db/two_factor_database.dart';
 import 'errors/app_exception.dart';
 import 'logging/logger.dart';
 import 'redis/key_value_store.dart';
@@ -51,6 +55,10 @@ final class AppDependencies {
     required this.databaseProbe,
     required this.syncHub,
     required this.shutdown,
+    this.quotas,
+    this.twoFactor,
+    this.teams,
+    this.admin,
   });
 
   /// The projects of the callers.
@@ -94,6 +102,33 @@ final class AppDependencies {
 
   /// The callback releasing the resources held by the dependencies.
   final Future<void> Function() shutdown;
+
+  /// The plans and the quota counters of the accounts, when the feature is
+  /// configured.
+  ///
+  /// The port is optional: a server without it serves the routes of the
+  /// other features, and the routes of the quotas simply do not exist.
+  final QuotaDatabase? quotas;
+
+  /// The second factor of the accounts, when the feature is configured.
+  final TwoFactorDatabase? twoFactor;
+
+  /// The teams of the accounts, when the feature is configured.
+  final TeamDatabase? teams;
+
+  /// The back-office of the service, when the feature is configured.
+  final AdminDatabase? admin;
+
+  /// The plan of [userId], `null` when the account has none.
+  ///
+  /// The plan of an account without one is the free plan: the quota
+  /// service applies it, not the base. The lookup is the single place
+  /// where the services that need a plan — the teams, the second factor —
+  /// read it, so they never depend on the quotas port.
+  Future<String?> planOf(String userId) async {
+    final AccountPlan? plan = await quotas?.planOf(userId);
+    return plan?.plan.name;
+  }
 
   /// The service guarding the calls with a side effect.
   IdempotencyService get idempotency => IdempotencyService(store: keyValue);

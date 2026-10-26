@@ -235,10 +235,14 @@ final class QuotaExceededException extends AppException {
 /// The operation requires a higher plan.
 final class PlanLimitException extends AppException {
   /// Creates a plan-limit error.
+  ///
+  /// [details] names the feature at fault: the quota guard describes the
+  /// limit it reached and the consumption it compared it to.
   const PlanLimitException({
     super.message =
         "Cette fonctionnalité n'est pas incluse dans votre formule. "
         'Passez à la formule supérieure pour y accéder.',
+    super.details = const <String, Object?>{},
   }) : super(code: ErrorCodes.planLimitReached, statusCode: 402);
 }
 

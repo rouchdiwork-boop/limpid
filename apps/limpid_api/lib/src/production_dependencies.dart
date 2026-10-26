@@ -4,21 +4,32 @@ import 'auth/jwks.dart';
 import 'auth/jwt_verifier.dart';
 import 'config/app_config.dart';
 import 'db/account_purge_store.dart';
+import 'db/admin_database.dart';
 import 'db/audit_log.dart';
 import 'db/comment_store.dart';
 import 'db/database.dart';
 import 'db/migration_runner.dart';
+import 'db/postgres_admin_database.dart';
 import 'db/postgres_audit_log.dart';
 import 'db/postgres_project_store.dart';
 import 'db/postgres_sync_store.dart';
+import 'db/postgres_team_database.dart';
+import 'db/postgres_two_factor_database.dart';
 import 'db/project_store.dart';
+import 'db/quota_database.dart';
 import 'db/sql_account_purge_store.dart';
+import 'db/sql_quota_database.dart';
+import 'db/sqlite_admin_database.dart';
 import 'db/sqlite_audit_log.dart';
 import 'db/sqlite_database.dart';
 import 'db/sqlite_migration_runner.dart';
 import 'db/sqlite_project_store.dart';
 import 'db/sqlite_sync_store.dart';
+import 'db/sqlite_team_database.dart';
+import 'db/sqlite_two_factor_database.dart';
 import 'db/sync_store.dart';
+import 'db/team_database.dart';
+import 'db/two_factor_database.dart';
 import 'dependencies.dart';
 import 'logging/logger.dart';
 import 'redis/key_value_store.dart';
@@ -107,6 +118,10 @@ Future<AppDependencies> buildProductionDependencies(
     audit: stores.audit,
     comments: stores.comments,
     purge: stores.purge,
+    quotas: stores.quotas,
+    twoFactor: stores.twoFactor,
+    teams: stores.teams,
+    admin: stores.admin,
     ai: _buildAiGateway(config),
     payments: _buildPaymentGateway(config),
     storage: _buildObjectStorage(config),
@@ -131,6 +146,10 @@ final class _Stores {
     required this.audit,
     required this.comments,
     required this.purge,
+    required this.quotas,
+    required this.twoFactor,
+    required this.teams,
+    required this.admin,
     required this.probe,
     required this.close,
   });
@@ -140,8 +159,23 @@ final class _Stores {
   final AuditLog audit;
   final CommentStore comments;
   final AccountPurgeStore purge;
+  final QuotaDatabase quotas;
+  final TwoFactorDatabase twoFactor;
+  final TeamDatabase teams;
+  final AdminDatabase admin;
   final HealthProbe probe;
   final Future<void> Function() close;
+}
+
+/// La lecture de la formule d'un compte, pour les services qui l'exigent.
+///
+/// Les équipes et la double authentification ne dépendent pas de la base des
+/// formules : la composition leur fournit une fonction de lecture.
+PlanLookup _planLookupOf(QuotaDatabase quotas) {
+  return (String userId) async {
+    final AccountPlan? plan = await quotas.planOf(userId);
+    return plan?.plan.name;
+  };
 }
 
 Future<_Stores> _postgresStores(
@@ -170,12 +204,18 @@ Future<_Stores> _postgresStores(
     }
   }
 
+  final QuotaDatabase quotas = PostgresQuotaDatabase(resolvedPool);
+
   return _Stores(
     projects: PostgresProjectStore(resolvedPool),
     sync: PostgresSyncStore(resolvedPool),
     audit: PostgresAuditLog(resolvedPool),
     comments: SqlCommentStore(PostgresCommentDatabase(resolvedPool)),
     purge: SqlAccountPurgeStore(PostgresAccountPurgeDatabase(resolvedPool)),
+    quotas: quotas,
+    twoFactor: PostgresTwoFactorDatabase(resolvedPool),
+    teams: PostgresTeamDatabase(resolvedPool, planLookup: _planLookupOf(quotas)),
+    admin: PostgresAdminDatabase(resolvedPool),
     probe: _PoolHealthProbe(resolvedPool),
     close: () => resolvedPool.close(),
   );
@@ -201,12 +241,18 @@ Future<_Stores> _sqliteStores(
     }
   }
 
+  final QuotaDatabase quotas = SqliteQuotaDatabase(resolved);
+
   return _Stores(
     projects: SqliteProjectStore(resolved),
     sync: SqliteSyncStore(resolved),
     audit: SqliteAuditLog(resolved),
     comments: SqlCommentStore(SqliteCommentDatabase(resolved)),
     purge: SqlAccountPurgeStore(SqliteAccountPurgeDatabase(resolved)),
+    quotas: quotas,
+    twoFactor: SqliteTwoFactorDatabase(resolved),
+    teams: SqliteTeamDatabase(resolved, planLookup: _planLookupOf(quotas)),
+    admin: SqliteAdminDatabase(resolved),
     probe: _SqliteHealthProbe(resolved),
     close: resolved.close,
   );

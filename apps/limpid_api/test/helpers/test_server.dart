@@ -158,6 +158,43 @@ final class TestServer {
     );
   }
 
+  /// Active the second factor of [userId] and returns the proof to carry in
+  /// the `x-limpid-2fa` header.
+  ///
+  /// The Pro and Studio plans require the double authentication (D-19): a
+  /// test that gives such a plan to its account must also enable the second
+  /// factor, otherwise the API refuses every call — which is the point.
+  Future<String> enableTwoFactor(String userId) async {
+    final Map<String, String> headers = <String, String>{
+      'authorization': 'Bearer ${tokenFor(userId)}',
+    };
+    final http.Response enrolled = await post(
+      '/v1/me/2fa/enroll',
+      headers: headers,
+      body: <String, Object?>{},
+    );
+    final String secret = _dataOf(enrolled)['secret']! as String;
+    final String code = totpCode(secret, DateTime.now().toUtc());
+    await post(
+      '/v1/me/2fa/confirm',
+      headers: headers,
+      body: <String, Object?>{'code': code},
+    );
+    final http.Response verified = await post(
+      '/v1/me/2fa/verify',
+      headers: headers,
+      body: <String, Object?>{'code': code},
+    );
+    return _dataOf(verified)['proof']! as String;
+  }
+
+  /// The `data` envelope of a response.
+  static Map<String, dynamic> _dataOf(http.Response response) {
+    final Map<String, dynamic> payload =
+        jsonDecode(response.body) as Map<String, dynamic>;
+    return payload['data'] as Map<String, dynamic>;
+  }
+
   /// Performs a GET request.
   Future<http.Response> get(
     String path, {
@@ -248,12 +285,22 @@ Future<TestServer> startTestServer({
   final Logger logger = Logger(level: LogLevel.warning, sink: logLines.add);
 
   final InMemoryAuditLog audit = InMemoryAuditLog();
+  final InMemoryQuotaDatabase quotas = InMemoryQuotaDatabase();
   final AppDependencies dependencies = AppDependencies(
     projects: InMemoryProjectStore(),
     sync: InMemorySyncStore(),
     audit: audit,
     comments: InMemoryCommentStore(),
     purge: InMemoryAccountPurgeStore(entries: audit.entries),
+    quotas: quotas,
+    twoFactor: InMemoryTwoFactorDatabase(),
+    teams: InMemoryTeamDatabase(
+      planLookup: (String userId) async {
+        final AccountPlan? plan = await quotas.planOf(userId);
+        return plan?.plan.name;
+      },
+    ),
+    admin: InMemoryAdminDatabase(),
     ai: StubAiGateway(),
     payments: StubPaymentGateway(),
     storage: InMemoryObjectStorage(),

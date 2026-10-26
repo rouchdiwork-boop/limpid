@@ -5,6 +5,7 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 
 import 'auth/auth_middleware.dart';
 import 'config/app_config.dart';
+import 'db/two_factor_database.dart';
 import 'dependencies.dart';
 import 'logging/logger.dart';
 import 'middleware/cors.dart';
@@ -15,6 +16,7 @@ import 'middleware/request_logging.dart';
 import 'middleware/timeout.dart';
 import 'production_dependencies.dart';
 import 'routes/api_router.dart';
+import 'services/two_factor_service.dart';
 
 /// Builds the HTTP handler of the API.
 ///
@@ -36,6 +38,16 @@ Handler buildHandler(AppDependencies dependencies, AppConfig config) {
     capacity: config.apiRateLimitCapacity,
     refillPerSecond: config.apiRateLimitRefillPerSecond,
   );
+  // Le second facteur est vérifié juste après le jeton : un compte d'une
+  // formule qui l'exige ne peut pas se servir de l'API sans l'avoir
+  // activé, et un compte qui l'a activé doit présenter sa preuve.
+  final TwoFactorDatabase? twoFactorDatabase = dependencies.twoFactor;
+  final TwoFactorGuard? twoFactorGuard = twoFactorDatabase == null
+      ? null
+      : TwoFactorService(
+          database: twoFactorDatabase,
+          planOf: dependencies.planOf,
+        );
 
   return const Pipeline()
       .addMiddleware(requestIdMiddleware())
@@ -50,7 +62,10 @@ Handler buildHandler(AppDependencies dependencies, AppConfig config) {
       .addMiddleware(corsMiddleware(allowedOrigins: config.allowedOrigins))
       .addMiddleware(timeoutMiddleware(timeout: config.requestTimeout))
       .addMiddleware(
-        authenticationMiddleware(verifier: dependencies.jwtVerifier),
+        authenticationMiddleware(
+          verifier: dependencies.jwtVerifier,
+          twoFactorGuard: twoFactorGuard,
+        ),
       )
       .addMiddleware(
         rateLimitMiddleware(

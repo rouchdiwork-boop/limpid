@@ -9,6 +9,8 @@ import '../errors/app_exception.dart';
 import '../http/json_body.dart';
 import '../services/access_control.dart';
 import '../services/ai_gateway.dart';
+import '../services/plan_catalog.dart';
+import '../services/quota_service.dart';
 import '../sync/tree_builder.dart';
 import 'sse.dart';
 
@@ -16,11 +18,18 @@ import 'sse.dart';
 const int maxPromptLength = 100000;
 
 /// Registers the routes of the AI.
+///
+/// [quota] porte le garde-fou des quotas : le quota de réécritures est
+/// vérifié avant l'appel au modèle, et le compteur n'est incrémenté que
+/// lorsque la réponse aboutit. La recherche dans le manuscrit est réservée
+/// aux formules qui l'ouvrent. Le point de composition câble le service ;
+/// sans lui, la route n'applique aucun plafond.
 void registerAiRoutes(
   Router router,
   AppDependencies dependencies,
-  AppConfig config,
-) {
+  AppConfig config, {
+  QuotaService? quota,
+}) {
   router.post('/v1/ai/generate', (Request request) async {
     final AuthContext auth = requireAuthContext(request);
     final JsonBody body = await JsonBody.fromRequest(
@@ -64,6 +73,15 @@ void registerAiRoutes(
       );
     }
 
+    // Le garde-fou passe avant l'appel au modèle : une réécriture refusée
+    // ne coûte rien au fournisseur.
+    if (quota != null) {
+      await quota.ensureCounter(
+        userId: auth.userId,
+        feature: QuotaFeature.aiRewrites,
+      );
+    }
+
     final AiInlineRequest aiRequest = AiInlineRequest(
       userId: auth.userId,
       action: action,
@@ -76,7 +94,11 @@ void registerAiRoutes(
     );
 
     return sseResponse(
-      dependencies.ai.inline(aiRequest),
+      _counted(
+        dependencies.ai.inline(aiRequest),
+        quota: quota,
+        userId: auth.userId,
+      ),
       logger: dependencies.logger,
     );
   });
@@ -106,6 +128,15 @@ void registerAiRoutes(
       sources.addAll(_sourcesOf(operations));
     }
 
+    // La recherche dans le manuscrit n'est ouverte qu'aux formules qui la
+    // comprennent.
+    if (quota != null) {
+      await quota.ensureCapability(
+        userId: auth.userId,
+        capability: PlanCapability.rag,
+      );
+    }
+
     final AiQueryRequest aiRequest = AiQueryRequest(
       userId: auth.userId,
       question: question,
@@ -118,6 +149,27 @@ void registerAiRoutes(
       dependencies.ai.query(aiRequest),
       logger: dependencies.logger,
     );
+  });
+}
+
+/// Le flux d'une réponse, qui compte la réécriture quand elle aboutit.
+///
+/// Le compteur est incrémenté une seule fois, à la fin de la réponse : une
+/// réécriture qui n'aboutit pas ne consomme rien.
+Stream<AiEvent> _counted(
+  Stream<AiEvent> events, {
+  required QuotaService? quota,
+  required String userId,
+}) {
+  if (quota == null) return events;
+  return events.asyncMap((AiEvent event) async {
+    if (event is AiDoneEvent) {
+      await quota.recordConsumption(
+        userId: userId,
+        feature: QuotaFeature.aiRewrites,
+      );
+    }
+    return event;
   });
 }
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
+import 'package:limpid_core/limpid_core.dart';
 
 import '../errors/app_exception.dart';
 
@@ -73,8 +74,49 @@ abstract interface class PaymentGateway {
   Future<CheckoutSession?> retrieveSession(String sessionId);
 }
 
+/// The plans that can be bought.
+///
+/// `PlanDefinition.all` holds the monthly plans ; the yearly cycle exists
+/// for Studio alone (D-15).
+final List<PlanDefinition> billablePlans = <PlanDefinition>[
+  ...PlanDefinition.all,
+  PlanDefinition.studioYearly,
+];
+
 /// The prices of the plans, in cents.
-const Map<String, int> planPrices = <String, int>{'studio': 1900, 'pro': 900};
+///
+/// The prices come from the domain partagé (D-15) : l'API ne garde pas une
+/// seconde copie de la liste, qui divergerait de celle du client. La clé est
+/// le nom de la formule ; la période annuelle de Studio porte son suffixe.
+final Map<String, int> planPrices = <String, int>{
+  for (final PlanDefinition definition in billablePlans)
+    _planKey(definition): definition.priceInCents,
+};
+
+/// The key of a plan in [planPrices].
+///
+/// The name of the plan, suffixed by the period when it is not the monthly
+/// one : `studio` and `studio_yearly`.
+String _planKey(PlanDefinition definition) {
+  final String name = definition.plan.name;
+  return definition.period == BillingPeriod.yearly ? '${name}_yearly' : name;
+}
+
+/// The price of the plan named [plan], in cents.
+///
+/// Throws a [ValidationException] when the plan is unknown : facturer le
+/// prix d'une autre formule à un compte qui en a demandé une autre serait
+/// une erreur de prix.
+int planPriceInCents(String plan) {
+  final int? price = planPrices[plan.toLowerCase()];
+  if (price == null) {
+    throw ValidationException(
+      field: 'plan',
+      message: "Cette formule n'existe pas : $plan.",
+    );
+  }
+  return price;
+}
 
 /// A [PaymentGateway] talking to the Stripe API over HTTP.
 ///
@@ -103,7 +145,7 @@ final class StripePaymentGateway implements PaymentGateway {
 
   @override
   Future<CheckoutSession> createSession(CheckoutRequest request) async {
-    final int amount = planPrices[request.plan] ?? planPrices['studio']!;
+    final int amount = planPriceInCents(request.plan);
     final Map<String, String> body = <String, String>{
       'mode': 'payment',
       'success_url': request.successUrl,
