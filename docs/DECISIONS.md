@@ -863,3 +863,55 @@ dépôt.
   montée de version, pas un contournement.
 - L'audit porte sur les paquets publiés sur pub.dev : une dépendance tirée
   d'un dépôt git ou d'un chemin local n'existe pas dans le registre.
+
+---
+
+## D-36 — Les quatre services du lot 7 sont des ports optionnels
+
+**Date** : 2026-10-26
+
+**Décision.** Les formules et les quotas, la double authentification, les
+équipes et le back-office sont quatre **ports** de l'API, présents dans
+`AppDependencies` mais **facultatifs**. Le routeur n'enregistre les routes
+correspondantes que si le port est câblé ; un serveur qui ne les câble pas ne
+les sert pas, plutôt que de les servir en erreur.
+
+La formule d'un compte se lit par **une seule** fonction, `PlanLookup`
+(déclarée dans `db/plan_lookup.dart`) : les équipes et la double
+authentification la reçoivent par injection et ne dépendent ni de la base des
+formules ni du service de quota. Un compte sans formule est un compte
+gratuit.
+
+Les prix viennent du **domaine partagé** (`limpid_core`), pas de l'API :
+`PlanDefinition.priceInCents` est l'unique source. Une formule inconnue est
+**refusée** — la facturer au prix d'une autre serait une erreur de prix.
+
+La preuve du second facteur voyage dans l'en-tête `X-Limpid-2FA`, et non
+dans une claim du jeton : l'API n'émet pas les jetons, elle les vérifie. Le
+contrôle est dans le middleware d'authentification, juste après la
+vérification du jeton, et les routes `/v1/me/2fa` en sont exemptées : un
+compte bloqué doit pouvoir s'inscrire.
+
+**Pourquoi.** Les quatre services sont apparus en même temps, sur le même
+paquet, avec quatre implémentations de persistance chacun. Un port facultatif
+évite deux lisibles : soit on câblait tout et tout serveur de test devait
+inventer quatre doubles, soit on ne câblait rien et le lot 7 n'existait pas.
+La fonction de lecture unique évite le même piège pour la formule, qui est
+partagée par trois services.
+
+Le prix, lui, était déjà défini deux fois — dans le domaine et dans l'API —
+et les deux copies ne disaient pas la même chose. Une source unique règle le
+problème ; refuser une formule inconnue règle l'autre.
+
+**Conséquences.**
+- `AppDependencies` porte quatre ports facultatifs ; `production_dependencies`
+  les construit pour PostgreSQL et SQLite, la suite de tests par des doubles
+  en mémoire.
+- Le middleware d'authentification reçoit un `TwoFactorGuard` facultatif :
+  sans lui, aucune formule n'est exigée.
+- Une formule Pro ou Studio **exige** la 2FA active : un test qui donne
+  une telle formule à son compte doit aussi activer la double
+  authentification. C'est le comportement voulu, pas un obstacle de test.
+- Le back-office est une application distincte, servie sur un domaine
+  distinct (maquette 18) : l'API n'expose que ses routes, sans écran.
+

@@ -147,6 +147,10 @@ démarrage et sert `/health`.
 | Synchronisation | Codé : `packages/limpid_sync`, client CRDT et transport, branché dans l'application ; le livre est déclaré au serveur avant le pushing de ses opérations |
 | Vitrine | Codée : page publique d'un livre publié, servie sans jeton, avec repli sur le manuscrit local ; page de l'auteur ; l'action « Publier » dans l'écran du projet |
 | RGPD | Codé : export des données personnelles, suppression du compte, purge locale et worker de purge serveur |
+| Formules et quotas | Codés : les quatre formules de D-15, leurs plafonds, les compteurs par période, le garde-fou `402 plan_limit_reached` qui nomme la fonctionnalité fautive |
+| Sécurité du compte | Codée : double authentification TOTP (RFC 6238), codes de récupération à usage unique, exigée sur les formules Pro et Studio |
+| Équipes | Codées : rôles de D-16, sièges de la formule Studio, refus d'une invitation au-delà |
+| Back-office | Codé : liste des comptes avec leur formule et leur usage, indicateurs de fonctionnalité activables sans redéploiement |
 | API | Codée : `shelf`, portages PostgreSQL **et** SQLite, audit, pagination par curseur — démarre sans configuration |
 | Application | Codée : éditeur réel, session persistante, base SQLite locale, 10 écrans sur données réelles |
 | Base de développement | SQLite par défaut, PostgreSQL sur demande (D-29) — aucun service à installer |

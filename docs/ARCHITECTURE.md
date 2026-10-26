@@ -367,6 +367,31 @@ La garantie qui compte : **les scénarios de dépôt sont exécutés contre les
 deux implémentations**. Un test qui ne passe que sur l'un des deux moteurs est
 un bug, pas une différence de dialecte.
 
+### 4.4 Tables livrées du lot 7
+
+Les tables que le lot 7 a ajoutées à l'API, dans les deux dialectes :
+
+| Table | Colonnes | Rôle |
+|---|---|---|
+| `account_plans` | `user_id`, `plan`, `billing_period`, `trial_ends_at`, `period_started_at`, `period_ends_at` | La formule d'un compte et sa période |
+| `quota_usage` | `user_id`, `feature`, `period_key`, `quantity` | La consommation, par fonctionnalité et par période |
+| `two_factor` | `user_id`, `secret`, `is_enabled`, `created_at`, `enabled_at` | Le secret TOTP d'un compte |
+| `two_factor_recovery_codes` | `user_id`, `code_hash`, `used_at` | Les codes de récupération, **par empreinte** |
+| `teams` | `id`, `name`, `owner_id`, `created_at`, `updated_at` | Une équipe |
+| `team_members` | `team_id`, `user_id`, `role`, `created_at` | Un membre et son rôle d'équipe |
+| `team_invitations` | `id`, `team_id`, `user_id`, `role`, `invited_by`, `created_at` | Une invitation en attente |
+| `feature_flags` | `flag_key`, `is_enabled`, `description`, `updated_at`, `updated_by` | Un indicateur de fonctionnalité |
+
+Elles remplissent les tables `subscriptions` et `usage_counters` prevues au
+schema cible (§4.1) : les noms retenus sont plus courts, et les colonnes
+répondent à ce que l'implémentation fait vraiment — la date de fin d'essai,
+par exemple, n'a de sens que parce qu'un abonnement n'est confirmé qu'après
+le paiement.
+
+Les **secrets** ne sont jamais stockés en clair : le secret TOTP est en
+base32 et les codes de récupération ne sont gardés que par empreinte
+SHA-256. Une fuite de la base ne donne donc aucun code utilisable.
+
 
 ## 5. Protocole de synchronisation
 
@@ -524,6 +549,21 @@ aléatoire) est la preuve bloquante de cette convergence.
 | Administration | `POST /v1/admin/users`, `PATCH /v1/admin/flags` | Back-office, indicateurs, webhooks sortants | 7 |
 | Données | `GET /v1/me/export`, `DELETE /v1/me` | Export RGPD et suppression du compte | 7 |
 | Temps réel | `WS /v1/sync`, `WS /v1/notifications` | Relais d'opérations et notifications | 2, 5 |
+
+Les routes du lot 7 sont livrées sous les noms que porte l'implémentation :
+`GET /v1/me/plan`, `GET /v1/me/quota`, `GET /v1/plans` pour les formules et
+les quotas ; `GET, POST /v1/teams`, `GET /v1/teams/:teamId/members`,
+`POST /v1/teams/:teamId/invitations`,
+`PATCH, DELETE /v1/teams/:teamId/members/:userId`, `DELETE /v1/teams/:teamId`
+pour les equipes ; `GET /v1/me/2fa`, `POST /v1/me/2fa/enroll`,
+`POST /v1/me/2fa/confirm`, `POST /v1/me/2fa/verify`, `DELETE /v1/me/2fa`
+pour la double authentification ; `GET /v1/admin/users`,
+`GET /v1/admin/users/:userId`, `GET /v1/admin/feature-flags`,
+`PUT /v1/admin/feature-flags/:key` pour le back-office.
+
+Les quatre familles sont **facultatives** : un serveur qui ne cable pas le
+port correspondant ne sert pas ses routes, plutot que de les servir en
+erreur (D-36).
 
 ### 6.3 Formes de requête et de réponse
 

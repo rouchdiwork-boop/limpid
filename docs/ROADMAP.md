@@ -45,7 +45,7 @@
 
 ## 2. Vue d'ensemble des lots
 
-| Lot | Contenu | Fonctions v1 livrées | Charge | Dépend de | État au 2026-10-25 |
+| Lot | Contenu | Fonctions v1 livrées | Charge | Dépend de | État au 2026-10-26 |
 |---|---|---|---|---|---|
 | 0 | Monorepo, CI, design system, authentification | T1, T3 | 37 points | — | **Codé** — monorepo de 8 paquets, CI, design system de 48 widgets, session locale et Supabase |
 | 1 | Structure narrative, éditeur par blocs, sauvegarde locale | O1 à O10, O12, E1 à E7, E10, E15, E16, P1 à P7 | 85 points | Lot 0 | **Codé** — éditeur de scène branché, base SQLite locale, plan et compteurs réels |
@@ -54,7 +54,7 @@
 | 4 | IA : inline, plan, personnages, RAG, cohérence | A1 à A8, A13 | 56 points | Lots 2, 3 | **Partiel** — passerelle et action inline branchées, le plan et la cohérence restent |
 | 5 | Exports EPUB, PDF, DOCX, couverture IA | E12, E13, E14, A11, B4 | 47 points | Lots 1, 4 | **Partiel** — les six formats sont générés, la couverture SVG est générée puis attachée aux exports ; le code-barres (B4) attend l'ISBN, le PDF n'embarque pas encore la couverture |
 | 6 | Vitrine publique, Stripe, KDP | B1, B2, B3, B5, B6, B7, B8, B12 | 52 points | Lots 1, 5 | **Partiel** — le paiement est branché, la vitrine publique est servie (route publique sans jeton, page du livre, page de lecture et page de l'auteur) et l'auteur publie son livre depuis l'écran du projet (D-33) ; la distribution KDP reste |
-| 7 | Plans, quotas, administration, 2FA, RGPD | T2, T7, T8, T9, T10, T11 | 50 points | Lots 4, 6 | **Partiel** — l'export des données personnelles, la suppression du compte, la purge locale et le worker de purge serveur sont livrés ; les quotas, l'administration et la 2FA restent |
+| 7 | Plans, quotas, administration, 2FA, RGPD | T2, T7, T8, T9, T10, T11 | 50 points | Lots 4, 6 | **Partiel** — l'export des données personnelles, la suppression du compte, la purge locale et le worker de purge serveur sont livrés ; les formules et les quotas (D-15), la double authentification TOTP, les rôles d'équipe et les sièges, et le back-office sont livrés et câblés ; l'API publique, les webhooks sortants et la suppression du compte chez Supabase Auth restent |
 | — | **Total v1** | **68 fonctions** | **423 points** | — | |
 
 Note de comptage : FEATURE_MATRIX annonce 67 fonctions v1, mais le décompte
