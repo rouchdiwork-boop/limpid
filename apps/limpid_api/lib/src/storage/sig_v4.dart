@@ -61,7 +61,7 @@ abstract final class SigV4 {
 
     final String canonicalRequest = <String>[
       method.toUpperCase(),
-      canonicalUri(uri.path),
+      canonicalUriOf(uri),
       canonicalQuery(uri.query),
       canonicalHeaders,
       signedHeaders,
@@ -132,7 +132,7 @@ abstract final class SigV4 {
 
     final String canonicalRequest = <String>[
       'GET',
-      canonicalUri(uri.path),
+      canonicalUriOf(uri),
       canonicalQueryString,
       'host:${uri.authority}\n',
       'host',
@@ -203,12 +203,16 @@ abstract final class SigV4 {
   }
 
   /// Computes the canonical URI of a request path.
-  static String canonicalUri(String path) {
-    if (path.isEmpty) return '/';
-    return path
-        .split('/')
-        .map((String segment) => _encode(segment, encodeSlash: false))
-        .join('/');
+  /// Le chemin canonique d'une requete.
+  ///
+  /// `Uri.path` rend le chemin **encode** : l'encoder encore encoderait deux
+  /// fois les caracteres reserves, et la signature ne correspondrait pas au
+  /// document signe. On encode donc les segments **decodes**, une seule fois.
+  static String canonicalUriOf(Uri uri) {
+    final List<String> segments = uri.pathSegments;
+    if (segments.isEmpty) return '/';
+    if (segments.length == 1 && segments.first.isEmpty) return '/';
+    return '/${segments.map((String segment) => _encode(segment, encodeSlash: false)).join('/')}';
   }
 
   /// Computes the canonical query string of a request.

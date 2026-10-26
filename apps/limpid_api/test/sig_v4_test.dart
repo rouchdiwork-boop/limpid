@@ -5,6 +5,22 @@ import 'package:limpid_api/limpid_api.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('chemin canonique', () {
+    test('encode les segments une seule fois', () {
+      // Le chemin de `Uri.path` est deja encode : l'encoder encore
+      // encoderait deux fois les caracteres reserves, et la signature ne
+      // correspondrait plus au document signe.
+      final Uri uri = Uri.parse(
+        'https://stockage.test/une%20cle/caf%C3%A9.txt',
+      );
+      expect(SigV4.canonicalUriOf(uri), '/une%20cle/caf%C3%A9.txt');
+    });
+
+    test('rend la racine quand le chemin est vide', () {
+      expect(SigV4.canonicalUriOf(Uri.parse('https://stockage.test/')), '/');
+    });
+  });
+
   group('signature SigV4', () {
     test('reproduit le vecteur de référence d\'AWS', () {
       // Vecteur « Example: GET Object » de la documentation Amazon S3 sur la
