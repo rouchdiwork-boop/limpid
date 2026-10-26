@@ -207,7 +207,6 @@ sequenceDiagram
     autonumber
     participant Ui as "Interface"
     participant Api as "API"
-    participant Redis as "Redis"
     participant Worker as "Worker export"
     participant Core as "limpid_export"
     participant R2 as "Cloudflare R2"
@@ -215,17 +214,23 @@ sequenceDiagram
 
     Ui->>Api: POST /v1/export/epub - options - cle d idempotence
     Api->>Api: Controle du quota et des entitlements
-    Api->>Redis: Empilement du job
-    Api-->>Ui: 202 Accepted - job_id
-    Worker->>Redis: Reservation du job
+    Api->>Db: exports - travail en attente
+    Api-->>Ui: 202 Accepted - id du travail
+    Worker->>Db: Prise du travail en attente
     Worker->>Db: Lecture de l arbre du projet
     Worker->>Core: Generation EPUB 3
     Worker->>R2: Depot de l artefact
-    Worker->>Db: exports - statut pret
-    Worker-->>Ui: Notification WebSocket
+    Worker->>Db: exports - pret - expiration
+    Ui->>Api: GET /v1/exports/:id
+    Api-->>Ui: etat - URL signee - expiration
     Ui->>Api: GET /v1/exports/:id/download
     Api-->>Ui: URL signee R2 - expiration 15 min
 ```
+
+La file est **la table `exports`** : il n'y a pas de file distribuee dans
+Redis, et un serveur arrete ne produit rien. Un serveur qui redemarre
+reprend les travaux restes en attente — ils sont dans la base, et le
+premier tour de la boucle les trouve.
 
 
 ## 4. Modèle de données
@@ -290,7 +295,7 @@ Colonnes clés par table :
 | `timeline_events` | `id`, `project_id`, `scene_id`, `title`, `occurs_at`, `story_order`, `description` | `occurs_at` textuel ou ISO |
 | `book_metadata` | `id`, `project_id`, `isbn`, `bisac`, `language`, `rights_holder`, `contributors`, `description`, `published_at` | `isbn` unique par projet |
 | `covers` | `id`, `project_id`, `kind`, `r2_key`, `width`, `height`, `prompt` | `r2_key` jamais public |
-| `exports` | `id`, `project_id`, `format`, `status`, `r2_key`, `size_bytes`, `options`, `error_code`, `requested_at`, `completed_at` | `status` : en cours, pret, echec |
+| `exports` | `id`, `user_id`, `project_id`, `format`, `cover`, `status`, `artifact_key`, `error`, `error_code`, `created_at`, `started_at`, `finished_at`, `expires_at` | `status` : en attente, en cours, pret, echec |
 | `subscriptions` | `id`, `user_id`, `plan`, `status`, `stripe_customer_id`, `stripe_subscription_id`, `seats`, `current_period_end`, `cancel_at_period_end` | une ligne active par utilisateur |
 | `usage_counters` | `id`, `user_id`, `feature`, `period_start`, `period_end`, `units`, `limit_units` | unique sur utilisateur, fonctionnalité, période |
 | `audit_log` | `id`, `user_id`, `action`, `target_type`, `target_id`, `metadata`, `ip`, `created_at` | en écriture seule |

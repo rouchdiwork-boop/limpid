@@ -560,8 +560,13 @@ donc le compteur de mots de plusieurs semaines est imputé au dernier jour
 Le test dédié (2.5) est **fermé** : `packages/limpid_sync/test/conflict/
 move_and_text_test.dart` prouve qu'un déplacement concurrent et une
 réécriture du même texte survivent tous les deux, et que les deux clients
-aboutissent au même état quel que soit l'ordre de réception. Les deux
-autres écarts sont encore ouverts.
+aboutissent au même état quel que soit l'ordre de réception.
+
+La série de jours d'écriture (1.9) est **fermée** elle aussi : les
+séances sont mesurées dans l'éditeur — la différence de mots entre le
+document d'avant et celui d'après — et non lues dans la date de
+modification d'une scène. Les mots de plusieurs semaines ne sont plus
+imputés au dernier jour. Le `409 schema_version_unsupported` reste ouvert.
 
 Les écarts 9 et 10 sont **fermés eux aussi** : l'ancre de commentaire suit
 le texte réécrit — la plage est recalculée sur le contenu effectif, à
@@ -630,5 +635,11 @@ existait, il ne faisait pas ce que l'auteur attendait.
 - l'**invitation d'un compte existant** avait disparu de l'écran quand
   l'invitation par adresse est arrivée. Les deux cohabitent, comme le
   demande le cahier des charges : l'invitation d'un compte s'applique
-  immédiatement, celle par adresse attend une réponse.
+  immédiatement, celle par adresse attend une réponse ;
+- le **manuscrit s'affichait vide** : l'application ne passait pas le
+  texte de la scène à l'éditeur, qui partait donc d'un document vierge.
+  Le CRDT portait le texte, le compteur de mots le suivait, et l'auteur ne
+  voyait rien. La bande du manuscrit tient désormais le contrôleur de
+  l'éditeur, et un test vérifie que le texte est **rendu** — le porter ne
+  suffit pas.
 
