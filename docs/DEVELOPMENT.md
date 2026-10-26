@@ -45,6 +45,29 @@ version employée est celle verrouillée par le dépôt.
 
 ---
 
+### 1.1 Verrou de compilation
+
+Le poste de développement n'a que **7,3 Go de RAM**. Une compilation Dart en
+occupe 450 à 900 Mo : deux à la fois font tomber la machine, et aucun
+processus ne peut plus démarrer. Les commandes qui compilent passent donc par
+un verrou :
+
+```bash
+bash tools/avec_verrou.sh dart analyze --fatal-infos
+bash tools/avec_verrou.sh sh -c 'cd apps/limpid_api && dart test'
+```
+
+Le verrou est un répertoire — `mkdir` est atomique sur Windows, c'est le seul
+mutex fiable ici. Le script le prend, le relâche **même si la commande
+échoue**, et détecte un verrou **périmé** : un répertoire vide de plus de
+cinq minutes sans aucun processus Dart est libéré. Un processus tué laisse
+sinon le verrou pris, et toute la machine attend ensuite indéfiniment.
+
+Ce verrou sert aussi quand plusieurs agents travaillent en parallèle : chacun
+compile à son tour, jamais deux en même temps.
+
+---
+
 ## 2. Installation
 
 ### 2.1 Avec melos (recommandé)
