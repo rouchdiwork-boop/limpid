@@ -381,6 +381,12 @@ Les tables que le lot 7 a ajoutées à l'API, dans les deux dialectes :
 | `team_members` | `team_id`, `user_id`, `role`, `created_at` | Un membre et son rôle d'équipe |
 | `team_invitations` | `id`, `team_id`, `user_id`, `role`, `invited_by`, `created_at` | Une invitation en attente |
 | `feature_flags` | `flag_key`, `is_enabled`, `description`, `updated_at`, `updated_by` | Un indicateur de fonctionnalité |
+| `api_keys` | `id`, `user_id`, `name`, `key_hash`, `scopes`, `is_active`, `created_at`, `rotated_at`, `revoked_at`, `last_used_at` | Une cle d'API, jamais en clair |
+| `webhook_endpoints` | `id`, `user_id`, `url`, `events`, `secret`, `previous_secret`, `previous_secret_expires_at`, `is_active`, `created_at`, `updated_at` | Un point de rappel et son secret de signature |
+| `webhook_deliveries` | `id`, `endpoint_id`, `user_id`, `event`, `payload`, `status`, `http_status`, `error_message`, `attempts`, `created_at`, `completed_at` | Une livraison et son issue |
+| `kdp_publications` | 21 colonnes : projet, compte, titre, auteur, résumé, mots-cles, catégories, ISBN, langue, statut, mots, pages, clés des fichiers | Le dossier préparé pour Amazon |
+| `account_purge_deletions` | `user_id`, `target`, `deleted_at`, `deleted_count`, `attempts`, `last_error`, `updated_at` | La suppression externe d'un compte, cible par cible |
+| `account_purge_artifacts` | `user_id`, `prefix`, `deleted_at`, `deleted_count`, `created_at` | Les préfixes d'artefacts d'un compte, écrits avant l'effacement |
 
 Elles remplissent les tables `subscriptions` et `usage_counters` prevues au
 schema cible (§4.1) : les noms retenus sont plus courts, et les colonnes
@@ -564,6 +570,15 @@ pour la double authentification ; `GET /v1/admin/users`,
 Les quatre familles sont **facultatives** : un serveur qui ne cable pas le
 port correspondant ne sert pas ses routes, plutot que de les servir en
 erreur (D-36).
+
+Trois familles de plus suivent la meme regle : `GET /v1/api/me`,
+`GET /v1/api/events` et les cles d'API sous `/v1/api-keys` (l'API publique
+s'authentifie par sa cle, pas par le jeton de session : le prefixe
+`/v1/api/` est exempt du jeton), `/v1/webhooks/endpoints` et
+`/v1/webhooks/deliveries` pour les rappels, et `POST /v1/publishing/kdp`
+pour la preparation du dossier de depot Amazon. `PUT /v1/admin/plans/:userId`
+attribue une formule payee : elle est reservee a l'administrateur et porte la
+reference du paiement (D-37).
 
 ### 6.3 Formes de requête et de réponse
 

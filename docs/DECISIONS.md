@@ -915,3 +915,62 @@ problème ; refuser une formule inconnue règle l'autre.
 - Le back-office est une application distincte, servie sur un domaine
   distinct (maquette 18) : l'API n'expose que ses routes, sans écran.
 
+---
+
+## D-37 — Une formule payée vient d'un paiement, jamais d'une demande
+
+**Date** : 2026-10-26
+
+**Décision.** Trois règles, nées de la revue de code du lot 7.
+
+1. **Une formule payée s'attribue avec une preuve de paiement.**
+   `QuotaService.changePlan` refuse une formule payée sans référence de
+   paiement. Le compte lui-même ne l'attribue pas : la voie légitime est
+   `PUT /v1/admin/plans/:userId`, réservée à l'administrateur, qui porte la
+   référence. C'est là que le webhook Stripe s'insérera. L'essai gratuit
+   reste le chemin promotionnel : il ne demande pas de paiement.
+
+2. **L'essai gratuit est unique par compte.** La colonne
+   `trial_consumed_at` mémorise la consommation. Un compte qui a eu son
+   essai ne peut pas en demander un second, même après être repassé sur la
+   formule gratuite.
+
+3. **Le second facteur se prouve partout, y compris dans le relais temps
+   réel.** Le relais `/v1/sync` s'authentifie lui-même et échappait au
+   contrôle. Il applique désormais le même garde que les routes HTTP, et la
+   preuve voyage dans la chaîne de requête : un navigateur ne peut pas
+   poser d'en-tête sur la poignée de main d'un WebSocket.
+
+Deux jauges de D-15 sont vérifiées avant l'écriture : le nombre de projets
+et le nombre de mots. La vérification d'un code TOTP a son propre seau, plus
+serré que celui de l'API : un code ne compte que six chiffres.
+
+**Pourquoi.** La route `POST /v1/me/plan` écrivait la formule demandée dans
+la base sans vérifier ni paiement, ni droit acquis, ni rôle. Un compte
+gratuit pouvait s'attribuer la formule Studio et la conserver. La route
+écrivait même une entrée d'audit, qui donnait à l'opération une apparence
+légitime — le genre de défaut qu'il faut corriger avant la mise en
+production, pas après.
+
+Le risque était d'autant plus réel que le chemin vers une formule payée
+n'existait pas autrement : le webhook Stripe entrant n'est pas écrit, et la
+seule porte d'entrée était celle du client. Le client était donc la seule
+source de vérité — ce que la feuille de route interdit déjà : « les
+webhooks reconstruct l'état, jamais le client ».
+
+**Conséquences.**
+- La colonne `trial_consumed_at` s'ajoute à `account_plans` (migration
+  `0007`, jamais déployée).
+- `PUT /v1/admin/plans/:userId` est la voie d'attribution d'une formule
+  payée ; elle s'appuie sur la claim `role` du jeton vérifié.
+- Le garde du second facteur est construit par les dépendances, pas par le
+  serveur : le relais temps réel et les routes HTTP appliquent le même
+  contrôle.
+- La preuve du second facteur est lue dans l'en-tête `X-Limpid-2FA` **ou**
+  dans le paramètre de requête `proof`.
+- Le nombre de mots n'est recalculé que si le plafond de la formule est
+  atteignable : reconstruire les documents d'un compte coûte plus cher que
+  la limite ne vaut.
+- La liste des migrations n'est plus écrite en dur dans le test : elle est
+  lue depuis le répertoire, et ajouter une migration ne casse plus le test.
+
