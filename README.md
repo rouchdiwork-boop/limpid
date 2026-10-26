@@ -83,6 +83,7 @@ flutter run -d windows                             # Lancement local desktop
 flutter build web --release                        # Build PWA
 python apps/limpid_app/tool/setup_web_assets.py    # Fichiers WASM de Drift pour le web
 bash tools/verify.sh                              # Analyse + tests de tous les paquets
+dart tools/osv_audit.dart                         # Vulnérabilités connues des dépendances
 node mockups/tools/check-html.js                  # Balisage des maquettes
 node mockups/tools/check-colors.js                # Couleurs en dur des maquettes
 ```
@@ -125,7 +126,7 @@ démarrage et sert `/health`.
 | Document | Contenu |
 |---|---|
 | [`docs/PROMPT.md`](docs/PROMPT.md) | Cahier des charges et prompt de construction |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Journal de décisions, D-01 à D-33 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Journal de décisions, D-01 à D-35 |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Architecture, synchronisation, API, déploiement |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Les 8 lots de la v1, risques, hors périmètre |
 | [`docs/FEATURE_MATRIX.md`](docs/FEATURE_MATRIX.md) | Les fonctions v1, leur origine et leur couverture |

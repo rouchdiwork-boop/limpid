@@ -1,0 +1,88 @@
+name: Security
+
+# D-19 (sécurité) : l'analyse de sécurité du monorepo, en continu sur chaque
+# branche et sur les pull requests, en plus de la chaîne de vérification de
+# ci.yml.
+#
+# GitHub ne prend plus Dart en charge dans CodeQL : l'extraiteur n'existe pas
+# et l'action d'initialisation échoue sur une langue inconnue. La chaîne de
+# sécurité repose donc sur deux contrôles qui, eux, fonctionnent :
+#
+#   * l'audit des dépendances Dart, qui interroge le registre OSV des
+#     vulnérabilités connues à partir des fichiers `pubspec.lock` résolus ;
+#   * l'analyse CodeQL du seul langage du dépôt que GitHub sait encore
+#     analyser, le JavaScript de l'outillage des maquettes.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # Analyse hebdomadaire, le lundi à 03:17 UTC.
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Audit des dépendances Dart ───────────────────────────────────────────
+  #
+  # Le script lit les fichiers `pubspec.lock` résolus et interroge l'API OSV
+  # (https://osv.dev). Il sort en code 1 dès qu'une dépendance est connue
+  # pour une vulnérabilité : la CI échoue, et la correction est une montée
+  # de version.
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.12.2"
+
+      - name: Resolve the dependencies of the tooling
+        run: dart pub get
+
+      - name: Audit the Dart dependencies
+        run: dart tools/osv_audit.dart
+
+  # ─── Analyse CodeQL ───────────────────────────────────────────────────────
+  #
+  # Dart n'est pas encore un langage pris en charge par CodeQL en version
+  # générale (demande amont : https://github.com/orgs/community/discussions/175533).
+  # L'analyse porte donc sur le JavaScript de l'outillage des maquettes, le
+  # seul code du dépôt que l'extrareur sait lire.
+  codeql:
+    name: CodeQL (javascript-typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      # Nécessaires au rapport de l'analyse de sécurité.
+      security-events: write
+      packages: read
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Perform the CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"

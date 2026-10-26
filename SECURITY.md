@@ -73,9 +73,14 @@ Les dépendances sont déclarées avec leur justification dans la pull request
 
 - **Analyse statique** sur chaque push et chaque pull request
   (`.github/workflows/ci.yml`).
-- **CodeQL** pour l'analyse de sécurité en continu
-  (`.github/workflows/codeql.yml`). Dart n'étant pas encore un langage pris en
-  charge par CodeQL, ce job est câblé mais non bloquant.
+- **Audit des dépendances** contre le registre OSV des vulnérabilités
+  connues, à chaque push et chaque pull request
+  (`.github/workflows/security.yml`). Le script est dans le dépôt
+  (`tools/osv_audit.dart`) : il se lance aussi en local.
+- **CodeQL** pour l'analyse de sécurité en continu, sur le JavaScript de
+  l'outillage des maquettes (`.github/workflows/security.yml`). Dart n'est pas
+  un langage pris en charge par CodeQL : c'est l'audit OSV qui couvre les
+  dépendances Dart (D-35).
 - **Permissions minimales** : la CI n'a que `contents: read`.
 - **Aucune branche de développement** n'est protégée par un secret : les
   secrets de déploiement ne sont accessibles qu'aux flux de `main` et de tag.

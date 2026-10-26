@@ -216,11 +216,25 @@ analyze → test → build web → build desktop → build Android → déploiem
 | `discover` | Toujours | Liste les paquets présents dans le dépôt |
 | `analyze` | Toujours | `pub get`, `analyze --fatal-infos`, `format --set-exit-if-changed` |
 | `test` | Toujours | `dart test` ou `flutter test` selon le paquet, avec délai d'expiration |
+| `db-migrations` | Toujours | Applique les migrations PostgreSQL et SQLite, puis compare les deux schémas |
+| `mockups` | Toujours | Vérifie le balisage HTML et les couleurs des maquettes |
 | `build-web` | `push` | `flutter build web --release` |
 | `preview-web` | `pull_request` | Preview web de la pull request |
 | `build-desktop` | Tag `v*` | Build desktop |
 | `build-android` | Tag `v*` | Build Android |
 | `deploy-api` | `push` sur `main` | Déploiement Railway |
+
+Une seconde chaîne, `.github/workflows/security.yml`, porte la sécurité
+continue (D-35) : `dependency-audit` interroge le registre OSV avec les
+`pubspec.lock` résolus, et `codeql` analyse le JavaScript de l'outillage des
+maquettes. L'audit se lance seul, hors CI :
+
+```bash
+dart tools/osv_audit.dart
+```
+
+Il sort en code 1 dès qu'une dépendance est connue pour une vulnérabilité :
+la correction est une montée de version, pas un contournement.
 
 Les jobs de build et de déploiement **vérifient l'existence de l'application
 avant de s'exécuter** : tant que `apps/limpid_app` et `apps/limpid_api`

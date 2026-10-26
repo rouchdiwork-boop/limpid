@@ -387,6 +387,7 @@ Exigences non négociables :
 | Audit | `audit_log` sur actions sensibles (export, partage, suppression, changement de plan) |
 | Export utilisateur | ZIP complet (manuscrits + assets + settings) — obligation RGPD |
 | Suppression | Soft delete 30 jours + purge définitive + exclusion des index IA |
+| Analyse continue | Audit OSV des dépendances Dart + CodeQL sur l'outillage JavaScript — voir D-35 |
 
 ---
 
@@ -821,3 +822,44 @@ qu'il peut.
   serveur crée toujours un livre `is_public = false`, et le titre n'est pas
   dans le CRDT — le renvoyer permettrait au dernier appareil synchronisé
   d'écraser silencieusement les autres.
+
+---
+
+## D-35 — Chaîne de sécurité continue : audit OSV des dépendances Dart
+
+**Date** : 2026-10-26
+
+**Décision.** La chaîne de sécurité continue du monorepo repose sur deux
+contrôles :
+
+- **Audit des dépendances Dart** — `tools/osv_audit.dart` lit les fichiers
+  `pubspec.lock` résolus et interroge le registre OSV des vulnérabilités
+  connues (https://osv.dev). Le job `dependency-audit` de
+  `.github/workflows/security.yml` échoue dès qu'une dépendance est connue
+  pour une vulnérabilité.
+- **Analyse CodeQL** — limitée au JavaScript de l'outillage des maquettes
+  (`mockups/tools/`), le seul langage du dépôt que GitHub sait encore
+  analyser.
+
+**Pourquoi.** GitHub a retiré Dart des langages pris en charge par CodeQL :
+l'action d'initialisation échoue sur une langue inconnue (« Did not recognize
+the following languages: dart ») et le check de l'analyse reste rouge sur
+chaque commit. Garder ce job en l'état revient à afficher un échec permanent
+sur le dépôt ; le supprimer sans rien mettre à la place laisse les
+dépendances Dart sans surveillance.
+
+L'audit OSV comble ce manque : le registre des vulnérabilités est
+indépendant du langage, il se consulte par paquet et par version. Le script
+est écrit en Dart pur, sans dépendance, pour qu'il s'exécute dans la CI sans
+résolution préalable — et pour qu'il reste lisible par ceux qui relisent le
+dépôt.
+
+**Conséquences.**
+- Le fichier `.github/workflows/codeql.yml` est remplacé par
+  `.github/workflows/security.yml`.
+- `dart tools/osv_audit.dart` est exécutable seul, hors CI : c'est le même
+  chemin de code que la vérification locale.
+- Une dépendance vulnérable fait échouer la CI ; la correction est une
+  montée de version, pas un contournement.
+- L'audit porte sur les paquets publiés sur pub.dev : une dépendance tirée
+  d'un dépôt git ou d'un chemin local n'existe pas dans le registre.
