@@ -21,5 +21,18 @@ enum CoverVariant {
   full,
 
   /// The spine only.
-  spine,
+  spine;
+
+  /// The variant named [name], `null` when the name is unknown.
+  ///
+  /// The name is the technical name of the variant (`front`, `back`,
+  /// `full`, `spine`), case and spaces ignored: a route that lets the
+  /// caller choose reads the choice with this method.
+  static CoverVariant? tryParse(String name) {
+    final String normalized = name.trim().toLowerCase();
+    for (final CoverVariant variant in CoverVariant.values) {
+      if (variant.name == normalized) return variant;
+    }
+    return null;
+  }
 }

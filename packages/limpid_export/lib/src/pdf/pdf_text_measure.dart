@@ -53,32 +53,47 @@ class PdfTextMeasure {
     return width;
   }
 
-  /// Remplace les caracteres non rendus par une police de substitution.
+  /// Remplace les caracteres que la police ne sait pas rendre.
   ///
-  /// Les polices de substitution (Times, Helvetica, Courier) couvrent le
-  /// jeu Latin-1 : les caracteres typographiques sont translitteres, les
-  /// autres sont remplaces par un point d'interrogation.
+  /// Les polices embarquees rendent l'apostrophe typographique et le tiret
+  /// cadratin : elles ne sont donc plus translitteres. Seul un caractere
+  /// absent du repertoire de la police est remplace par un point
+  /// d'interrogation, plutot que de disparaitre du rendu.
+  ///
+  /// Les polices de substitution (Times, Helvetica, Courier) couvrent le jeu
+  /// Latin-1 : les caracteres typographiques y sont translitteres.
   String sanitize(String text, PdfFontVariant font) {
     if (!font.isFallback) {
-      return text;
+      return _replaceUnsupported(text, font);
     }
+    return _replaceUnsupported(text, font, transliterations: _transliterations);
+  }
+
+  String _replaceUnsupported(
+    String text,
+    PdfFontVariant font, {
+    Map<int, String> transliterations = const <int, String>{},
+  }) {
     final buffer = StringBuffer();
     for (final rune in text.runes) {
-      final transliterated = _transliterations[rune];
+      final transliterated = transliterations[rune];
       if (transliterated != null) {
         buffer.write(transliterated);
         continue;
       }
-      if (rune < 0x20 || rune > 0xFF || !font.supports(rune)) {
+      if (rune < 0x20 || !font.supports(rune)) {
         buffer.write('?');
-      } else {
-        buffer.writeCharCode(rune);
+        continue;
       }
+      buffer.writeCharCode(rune);
     }
     return buffer.toString();
   }
 
   /// Translitterations des caracteres typographiques hors Latin-1.
+  ///
+  /// Elles ne servent que pour les polices de substitution : les faces
+  /// embarquees rendent ces caracteres tels quels.
   static const Map<int, String> _transliterations = <int, String>{
     0x2018: "'",
     0x2019: "'",

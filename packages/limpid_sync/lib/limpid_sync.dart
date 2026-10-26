@@ -23,6 +23,7 @@
 /// ```
 library;
 
+export 'src/compaction.dart';
 export 'src/conflict.dart';
 export 'src/conflict_detector.dart';
 export 'src/db/drift_op_queue_store.dart';

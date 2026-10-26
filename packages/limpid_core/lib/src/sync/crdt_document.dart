@@ -24,6 +24,25 @@ final class CrdtDocument {
     const <String>{},
   );
 
+  /// Creates a document from a compacted state.
+  ///
+  /// The factory rebuilds a document that holds exactly the state it was
+  /// given: the blocks, their forest of versions, their tombstones and their
+  /// marks, the metadata and the memory of the operations already applied.
+  /// It is the way back from the compacted snapshot of `limpid_sync`: the
+  /// document is restored without replaying the journal it replaces.
+  factory CrdtDocument.fromStates({
+    required DocumentId id,
+    required Map<BlockId, BlockState> blocks,
+    required Map<String, MetaEntry> meta,
+    required Set<String> applied,
+  }) => CrdtDocument._(
+    id,
+    Map<BlockId, BlockState>.unmodifiable(blocks),
+    Map<String, MetaEntry>.unmodifiable(meta),
+    Set<String>.unmodifiable(applied),
+  );
+
   /// The identifier of the document.
   final DocumentId id;
 
@@ -51,6 +70,30 @@ final class CrdtDocument {
   Map<String, String> get meta => Map<String, String>.unmodifiable(
     _meta.map((key, entry) => MapEntry(key, entry.value)),
   );
+
+  /// The metadata entries of the document, with the write that produced them.
+  ///
+  /// The effective metadata ([meta]) loses the identity of the write that
+  /// won: the last-writer-wins rule needs it to know whether an older write
+  /// may still replace the value. The compacted snapshot therefore keeps the
+  /// entries, not only their values.
+  Map<String, MetaEntry> get metaEntries => _meta;
+
+  /// The states of the blocks of the document, keyed by their identifier.
+  ///
+  /// The map is the internal state of the CRDT: it holds the forest of the
+  /// versions of every block, its tombstone, its marks and its counter of
+  /// operations. It is read-only, and it is exposed so that the compacted
+  /// snapshot and the history of the versions can capture the state without
+  /// replaying the operations.
+  Map<BlockId, BlockState> get blockStates => _blocks;
+
+  /// The keys of the operations already applied to the document.
+  ///
+  /// The set is the memory of the deduplication: an operation already
+  /// applied is never applied twice. The compacted snapshot keeps it, so that
+  /// an operation delivered again after a restart is still ignored.
+  Set<String> get appliedKeys => _applied;
 
   /// The effective blocks of the document, in tree order.
   ///

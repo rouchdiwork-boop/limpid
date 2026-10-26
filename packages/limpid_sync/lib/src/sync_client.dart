@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:limpid_core/limpid_core.dart' hide SyncTransport;
+import 'package:limpid_sync/src/compaction.dart';
 import 'package:limpid_sync/src/conflict.dart';
 import 'package:limpid_sync/src/conflict_detector.dart';
 import 'package:limpid_sync/src/errors.dart';
@@ -77,6 +78,7 @@ final class SyncClient {
     OpQueue? queue,
     this.connectivity,
     this.conflictDetector = const ConflictDetector(),
+    this.compactor = const JournalCompactor(),
     DateTime Function()? now,
     this.pullLimit = defaultPullLimit,
     this.failOnConflict = false,
@@ -107,6 +109,13 @@ final class SyncClient {
   /// versions.
   final ConflictDetector conflictDetector;
 
+  /// The compactor of the journal of the document.
+  ///
+  /// The compactor replaces the journal by the state of the document when
+  /// the journal grows past its threshold. It never removes an operation the
+  /// server has not accepted.
+  final JournalCompactor compactor;
+
   /// The maximum number of operations requested by a single pull.
   final int pullLimit;
 
@@ -124,6 +133,7 @@ final class SyncClient {
 
   CrdtDocument _document;
   List<SyncOp> _journal = const <SyncOp>[];
+  CrdtState? _compactedState;
   Set<String> _appliedKeys = <String>{};
   List<SyncOp> _localOperations = const <SyncOp>[];
   int _since = 0;
@@ -281,9 +291,11 @@ final class SyncClient {
     if (snapshot != null) {
       _document = snapshot.restore();
       _journal = List<SyncOp>.unmodifiable(snapshot.operations);
-      _appliedKeys = snapshot.operations
-          .map((operation) => operation.operationKey)
-          .toSet();
+      _compactedState = snapshot.state;
+      // The memory of the applied operations spans the compacted state and
+      // the journal: an operation the state already holds is never applied
+      // twice, even when the server delivers it again.
+      _appliedKeys = snapshot.knownOperationKeys.toSet();
       _since = snapshot.since;
       _maxLamport = snapshot.maxLamport;
     }
@@ -493,15 +505,37 @@ final class SyncClient {
   }
 
   /// Writes the local snapshot.
+  ///
+  /// The journal is compacted on the way: when it grew past the threshold of
+  /// the compactor, the operations the server accepted are replaced by the
+  /// state they produced. The operations that wait for the server stay in the
+  /// journal.
   Future<void> _persist() async {
-    await snapshotStore.write(
+    final CompactionReport report = compactor.compact(
       DocumentSnapshot(
         documentId: documentId,
         since: _since,
         maxLamport: _maxLamport,
         operations: _journal,
+        state: _compactedState,
       ),
+      unsyncedKeys: await _unsyncedKeys(),
     );
+    _journal = report.snapshot.operations;
+    _compactedState = report.snapshot.state;
+    await snapshotStore.write(report.snapshot);
+  }
+
+  /// The keys of the operations the server has not accepted yet.
+  ///
+  /// The compaction must never remove them: they are the operations the
+  /// client still owes to the server.
+  Future<Set<String>> _unsyncedKeys() async {
+    final List<QueuedOp> pending = await queue.pending();
+    return <String>{
+      for (final QueuedOp entry in pending)
+        if (entry.documentId == documentId.value) entry.operationKey,
+    };
   }
 
   /// Rejects the operations of another document.

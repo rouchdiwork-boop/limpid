@@ -97,6 +97,9 @@ abstract final class LimpidIcons {
   /// The account icon, used by the "Compte" destination.
   static const IconData user = Icons.person_outline;
 
+  /// The shield of a security setting.
+  static const IconData shield = Icons.shield_outlined;
+
   /// The settings icon.
   static const IconData settings = Icons.settings_outlined;
 
@@ -176,4 +179,10 @@ abstract final class LimpidIcons {
 
   /// The upload icon.
   static const IconData upload = Icons.upload_outlined;
+
+  /// The icon of a group of people.
+  static const IconData users = Icons.groups_outlined;
+
+  /// The copy icon.
+  static const IconData copy = Icons.copy_outlined;
 }

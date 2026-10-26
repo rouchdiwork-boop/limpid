@@ -56,6 +56,7 @@ dev_dependencies:
 #   - packages/limpid_design_system
 #   - packages/limpid_ai
 #   - packages/limpid_export
+#   - packages/limpid_import
 #   - packages/limpid_sync
 #   - packages/limpid_quill
 #   - apps/limpid_api

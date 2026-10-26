@@ -14,11 +14,31 @@ import 'cover_variant.dart';
 /// over to the writer: the formats that embed a cover (EPUB, ODT) carry the
 /// image, the formats that reference a cover (HTML) point at it.
 ///
+/// The exporter exposes the two covers a book needs: the front cover, the
+/// face of the book, and the full wrap, the printable mockup that carries
+/// the spine and the back cover. The front cover is the default; the caller
+/// that produces a printable mockup asks for the full wrap.
+///
 /// ```dart
 /// final exporter = CoveredExporter(export: const LimpidExporter().export);
 /// final result = await exporter(ExportFormat.epub3, book, options);
 /// ```
 class CoveredExporter {
+  /// Creates an exporter that carries the front cover.
+  const CoveredExporter.front({
+    required this.export,
+    this.generator = const CoverGenerator(),
+  }) : variant = CoverVariant.front;
+
+  /// Creates an exporter that carries the full wrap.
+  ///
+  /// The wrap is the printable mockup: the fore-edge, the back cover, the
+  /// spine and the front cover side by side.
+  const CoveredExporter.full({
+    required this.export,
+    this.generator = const CoverGenerator(),
+  }) : variant = CoverVariant.full;
+
   /// Creates an exporter.
   const CoveredExporter({
     required this.export,

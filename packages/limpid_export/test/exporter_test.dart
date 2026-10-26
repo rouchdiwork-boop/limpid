@@ -31,6 +31,9 @@ void main() {
     });
 
     test('les avertissements ne bloquent pas l export', () async {
+      // Sans police embarquee, le moteur signale la substitution : l'export
+      // doit quand meme aboutir.
+      final exporter = LimpidExporter(fontRegistry: FontRegistry());
       final result = await exporter.export(
         ExportFormat.pdfReflowable,
         sampleBook(),

@@ -22,6 +22,9 @@ class PdfFontVariant {
   final PdfFont metric;
 
   /// Vrai si la police est une substitution livree avec le moteur PDF.
+  ///
+  /// Une substitution ne sait rendre que le jeu Latin-1 : elle impose donc
+  /// la translitteration des caracteres typographiques.
   final bool isFallback;
 
   /// Vrai si la police peut rendre le caractere [rune].
@@ -43,6 +46,8 @@ class PdfFontSet {
     required this.italic,
     required this.boldItalic,
     required this.familyName,
+    required this.requestedFamily,
+    this.missingVariants = const <FontVariant>[],
   });
 
   /// Variante normale.
@@ -59,6 +64,12 @@ class PdfFontSet {
 
   /// Nom de la famille effectivement utilisee.
   final String familyName;
+
+  /// Nom de la famille demandee par l'export.
+  final String requestedFamily;
+
+  /// Variantes de la famille qui n'ont pas pu etre chargees.
+  final List<FontVariant> missingVariants;
 
   /// Selectionne la variante correspondant a un style.
   PdfFontVariant select({required bool isBold, required bool isItalic}) {
@@ -81,6 +92,25 @@ class PdfFontSet {
       italic.isFallback ||
       boldItalic.isFallback;
 
+  /// Les avertissements a emettre sur les polices utilisees.
+  ///
+  /// Une police manquante ne fait jamais tomber l'export : le moteur
+  /// embarque la famille disponible, ou retombe sur une police de base, et
+  /// le dit.
+  List<String> warnings() {
+    if (missingVariants.isEmpty) {
+      return const <String>[];
+    }
+    if (regular.isFallback) {
+      return <String>[fallbackWarning(requestedFamily, familyName)];
+    }
+    return <String>[
+      'Police "$requestedFamily" incomplete : faces manquantes '
+          '(${_variantLabels(missingVariants)}), la variante normale est '
+          'utilisee a la place.',
+    ];
+  }
+
   /// Resout les polices d'une famille demandee.
   ///
   /// Si la famille n'est pas embarquee, les polices livrees avec le moteur
@@ -101,6 +131,8 @@ class PdfFontSet {
     final substitution = LimpidFonts.substitutions[family] ?? 'Times';
     return PdfFontSet(
       familyName: substitution,
+      requestedFamily: family,
+      missingVariants: FontVariant.values,
       regular: _fallbackVariant(substitution, 'regular', document),
       bold: _fallbackVariant(substitution, 'bold', document),
       italic: _fallbackVariant(substitution, 'italic', document),
@@ -172,6 +204,8 @@ class PdfFontSet {
 
     return PdfFontSet(
       familyName: resolved.effectiveFamily,
+      requestedFamily: resolved.requestedFamily,
+      missingVariants: resolved.missingVariants,
       regular: build(FontVariant.regular),
       bold: build(FontVariant.bold),
       italic: build(FontVariant.italic),
@@ -189,5 +223,24 @@ class PdfFontSet {
   ) {
     return 'Police "$requestedFamily" indisponible : '
         'substitution par "$effectiveFamily".';
+  }
+
+  /// Les variantes listees dans un avertissement, en clair.
+  static String _variantLabels(List<FontVariant> variants) {
+    return variants.map(_variantLabel).join(', ');
+  }
+
+  /// Le nom lisible d'une variante de police.
+  static String _variantLabel(FontVariant variant) {
+    switch (variant) {
+      case FontVariant.regular:
+        return 'normale';
+      case FontVariant.bold:
+        return 'grasse';
+      case FontVariant.italic:
+        return 'italique';
+      case FontVariant.boldItalic:
+        return 'grasse italique';
+    }
   }
 }

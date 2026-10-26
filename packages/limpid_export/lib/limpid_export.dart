@@ -25,6 +25,8 @@ import 'src/model/export_result.dart';
 import 'src/odt/odt_writer.dart';
 import 'src/pdf/pdf_writer.dart';
 
+export 'src/barcode/ean13.dart';
+export 'src/barcode/isbn13.dart';
 export 'src/cover/cover_color.dart';
 export 'src/cover/cover_exporter.dart';
 export 'src/cover/cover_generator.dart';
@@ -43,6 +45,7 @@ export 'src/epub/epub3_writer.dart';
 export 'src/epub/epub_package.dart';
 export 'src/fonts/embedded_font.dart';
 export 'src/fonts/font_registry.dart';
+export 'src/fonts/package_font_loader.dart';
 export 'src/html/html_sales_page.dart';
 export 'src/html/html_styles.dart';
 export 'src/html/html_writer.dart';
@@ -58,6 +61,7 @@ export 'src/model/export_metadata.dart';
 export 'src/model/export_options.dart';
 export 'src/model/export_result.dart';
 export 'src/odt/odt_writer.dart';
+export 'src/pdf/pdf_barcode.dart';
 export 'src/pdf/pdf_document.dart';
 export 'src/pdf/pdf_writer.dart';
 
@@ -75,8 +79,9 @@ class LimpidExporter {
   /// Cree un exportateur.
   ///
   /// [fontRegistry] permet d'injecter les polices embarquees de
-  /// l'application ; sans registre, les generateurs PDF utilisent leurs
-  /// polices de substitution.
+  /// l'application (par exemple via `rootBundle.load`) ; sans registre, le
+  /// generateur PDF lit les faces livrees avec le paquet `limpid_export`, et
+  /// retombe sur ses polices de substitution si elles sont absentes.
   const LimpidExporter({this.fontRegistry});
 
   /// Registre des polices embarquees.

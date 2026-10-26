@@ -7,6 +7,7 @@ import '../fonts/font_registry.dart';
 import '../model/export_book.dart';
 import '../model/export_options.dart';
 import '../util/file_name.dart';
+import 'pdf_cover_fonts.dart';
 import 'pdf_fonts.dart';
 import 'pdf_geometry.dart';
 import 'pdf_page_content.dart';
@@ -23,8 +24,9 @@ class PdfWriter {
   /// Cree un generateur PDF.
   ///
   /// [fontRegistry] fournit les polices embarquees ; sans registre, le
-  /// moteur utilise ses polices de substitution. [onWarning] collecte les
-  /// avertissements non bloquants.
+  /// moteur lit les faces livrees avec le paquet `limpid_export`, et
+  /// retombe sur ses polices de substitution si elles sont absentes.
+  /// [onWarning] collecte les avertissements non bloquants.
   const PdfWriter({this.fontRegistry, this.onWarning});
 
   /// Registre des polices embarquees.
@@ -38,12 +40,10 @@ class PdfWriter {
 
   /// Serialise le livre et renvoie les octets du PDF.
   Future<Uint8List> write(ExportBook book, ExportOptions options) async {
-    final registry = fontRegistry ?? FontRegistry();
+    final registry = fontRegistry ?? FontRegistry.packageAssets();
     final fonts = await PdfFontSet.resolve(registry, options.fontFamily);
-    if (fonts.hasFallback) {
-      onWarning?.call(
-        PdfFontSet.fallbackWarning(options.fontFamily, fonts.familyName),
-      );
+    for (final warning in fonts.warnings()) {
+      onWarning?.call(warning);
     }
 
     final geometry = PdfPageGeometry.fromOptions(options);
@@ -55,9 +55,11 @@ class PdfWriter {
       measure: measure,
       fonts: fonts,
       options: options,
+      onWarning: onWarning,
     );
 
     final pagination = paginator.paginate(book);
+    final coverFonts = await PdfCoverFonts.resolve(registry);
     final document = pw.Document(
       title: book.title,
       author: book.authors.isEmpty ? null : book.authors.join(', '),
@@ -68,7 +70,15 @@ class PdfWriter {
 
     for (final page in pagination.pages) {
       document.addPage(
-        _buildPage(page, book, pagination, geometry, fonts, options),
+        _buildPage(
+          page,
+          book,
+          pagination,
+          geometry,
+          fonts,
+          coverFonts,
+          options,
+        ),
       );
     }
 
@@ -124,10 +134,32 @@ class PdfWriter {
     PdfPaginationResult pagination,
     PdfPageGeometry geometry,
     PdfFontSet fonts,
+    PdfCoverFonts coverFonts,
     ExportOptions options,
   ) {
     final children = <pw.Widget>[];
     final bodyFont = fonts.regular;
+
+    final cover = page.cover;
+    if (cover != null) {
+      final widget = cover.cover.build(
+        fonts: coverFonts,
+        onWarning: onWarning ?? _ignoreWarning,
+      );
+      if (widget != null) {
+        children.add(
+          pw.Positioned(
+            left: cover.left,
+            top: cover.top,
+            child: pw.SizedBox(
+              width: cover.width,
+              height: cover.height,
+              child: widget,
+            ),
+          ),
+        );
+      }
+    }
 
     if (options.includeRunningHeader && page.chapterIndex >= 0) {
       final header = page.isEven
@@ -201,12 +233,26 @@ class PdfWriter {
       );
     }
 
+    final barcode = page.barcode;
+    if (barcode != null) {
+      children.add(
+        pw.Positioned(
+          left: barcode.left,
+          top: barcode.top,
+          child: barcode.barcode.build(),
+        ),
+      );
+    }
+
     return pw.Page(
       pageFormat: PdfPageFormat(page.pageWidth, page.pageHeight),
       margin: pw.EdgeInsets.zero,
       build: (context) => pw.Stack(children: children),
     );
   }
+
+  /// Absorbe un avertissement quand aucun collecteur n'est fourni.
+  static void _ignoreWarning(String message) {}
 
   pw.Widget? _buildImage(PdfImageRun image) {
     try {

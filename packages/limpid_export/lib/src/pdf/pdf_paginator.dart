@@ -4,11 +4,13 @@ import '../model/export_chapter.dart';
 import '../model/export_image.dart';
 import '../model/export_options.dart';
 import '../util/image_size.dart';
+import 'pdf_cover_page.dart';
 import 'pdf_fonts.dart';
 import 'pdf_geometry.dart';
 import 'pdf_page_content.dart';
 import 'pdf_page_draft.dart';
 import 'pdf_text_measure.dart';
+import 'pdf_title_page.dart';
 import 'pdf_toc.dart';
 import 'pdf_typography.dart';
 
@@ -25,6 +27,7 @@ class PdfPaginator {
     required this.measure,
     required this.fonts,
     required this.options,
+    this.onWarning,
   });
 
   /// Geometrie des pages.
@@ -42,6 +45,9 @@ class PdfPaginator {
   /// Options d'export.
   final ExportOptions options;
 
+  /// Collecteur d'avertissements non bloquants.
+  final void Function(String message)? onWarning;
+
   /// Paginationne le livre.
   PdfPaginationResult paginate(ExportBook book) {
     final state = PdfPaginationState(geometry);
@@ -54,13 +60,37 @@ class PdfPaginator {
       _addChapter(state, chapter, index);
     }
 
-    final frontMatter = options.includeTitlePage ? 1 : 0;
+    final cover = PdfCoverPage(
+      geometry: geometry,
+      options: options,
+      onWarning: onWarning,
+    ).build(book);
+    if (options.pdfMode == ExportPdfMode.printReady &&
+        !options.includeTitlePage) {
+      onWarning?.call(
+        'Pas de page de garde : le code-barres n est imprime que sur la '
+        'couverture, quand le livre en porte une.',
+      );
+    }
+    final frontMatter =
+        (cover == null ? 0 : 1) + (options.includeTitlePage ? 1 : 0);
     final tocPages = _paginateToc(book, chapterStarts, frontMatter);
 
     final offset = frontMatter + tocPages.length;
     final pages = <PdfPageContent>[];
+    if (cover != null) {
+      pages.add(cover);
+    }
     if (options.includeTitlePage) {
-      pages.add(_titlePage(book));
+      pages.add(
+        PdfTitlePage(
+          geometry: geometry,
+          measure: measure,
+          fonts: fonts,
+          options: options,
+          onWarning: onWarning,
+        ).build(book),
+      );
     }
     pages.addAll(tocPages);
     pages.addAll(
@@ -78,92 +108,6 @@ class PdfPaginator {
       chapterTitles: <String>[
         for (final chapter in book.chapters) chapter.title,
       ],
-    );
-  }
-
-  PdfPageContent _titlePage(ExportBook book) {
-    const isEven = false;
-    final contentWidth = geometry.contentWidth(isEven);
-    final contentLeft = geometry.contentLeft(isEven);
-    final center = contentLeft + contentWidth / 2;
-    final titleSize = options.fontSize * 2.1;
-    final subtitleSize = options.fontSize * 1.25;
-    final authorSize = options.fontSize * 1.05;
-
-    final texts = <PdfTextRun>[];
-    var y = geometry.contentTop() + geometry.contentHeight() * 0.28;
-
-    final titleFont = fonts.select(isBold: true, isItalic: false);
-    for (final line in measure.wrap(
-      book.title,
-      titleFont,
-      titleSize,
-      contentWidth * 0.86,
-    )) {
-      final lineWidth = measure.widthOf(line.text, titleFont, titleSize);
-      texts.add(
-        PdfTextRun(
-          text: measure.sanitize(line.text, titleFont),
-          left: center - lineWidth / 2,
-          top: y,
-          fontSize: titleSize,
-          font: titleFont,
-        ),
-      );
-      y += titleSize * 1.25;
-    }
-
-    final subtitle = book.subtitle;
-    if (subtitle != null && subtitle.isNotEmpty) {
-      y += subtitleSize * 1.4;
-      final subtitleFont = fonts.select(isBold: false, isItalic: true);
-      for (final line in measure.wrap(
-        subtitle,
-        subtitleFont,
-        subtitleSize,
-        contentWidth * 0.8,
-      )) {
-        final lineWidth = measure.widthOf(
-          line.text,
-          subtitleFont,
-          subtitleSize,
-        );
-        texts.add(
-          PdfTextRun(
-            text: measure.sanitize(line.text, subtitleFont),
-            left: center - lineWidth / 2,
-            top: y,
-            fontSize: subtitleSize,
-            font: subtitleFont,
-          ),
-        );
-        y += subtitleSize * 1.35;
-      }
-    }
-
-    if (book.authors.isNotEmpty) {
-      y += authorSize * 2;
-      final authorFont = fonts.select(isBold: false, isItalic: false);
-      final authors = book.authors.join(', ');
-      final lineWidth = measure.widthOf(authors, authorFont, authorSize);
-      texts.add(
-        PdfTextRun(
-          text: measure.sanitize(authors, authorFont),
-          left: center - lineWidth / 2,
-          top: y,
-          fontSize: authorSize,
-          font: authorFont,
-        ),
-      );
-    }
-
-    return PdfPageContent(
-      pageWidth: geometry.pageWidth,
-      pageHeight: geometry.pageHeight,
-      isEven: isEven,
-      pageNumber: 1,
-      texts: texts,
-      images: const <PdfImageRun>[],
     );
   }
 

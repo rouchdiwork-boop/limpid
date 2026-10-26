@@ -1,0 +1,22 @@
+name: limpid_import
+description: >-
+  Moteur d'import de manuscrits de Limpid. Lecteurs natifs Dart pour DOCX,
+  ODT, EPUB, RTF, Markdown et TXT : ils rendent une hierarchie de chapitres,
+  de scenes et de blocs, hors-ligne et sans service externe.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  # Lecture des paquets ZIP (DOCX, ODT, EPUB). Le paquet est deja present
+  # dans l'arbre du monorepo : `limpid_export` s'en sert pour ecrire.
+  archive: ^4.5.2
+  # Lecture des documents XML (OOXML, ODF, XHTML, OPF). Idem : le paquet
+  # est deja present dans l'arbre.
+  xml: ^7.0.1
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.31.0

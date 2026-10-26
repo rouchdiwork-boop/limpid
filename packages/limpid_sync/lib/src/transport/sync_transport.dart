@@ -192,3 +192,25 @@ final class TransportFailure extends TransportEvent {
   @override
   String toString() => 'TransportFailure($docId, $error)';
 }
+
+/// A peer was seen on the real-time channel.
+///
+/// The presence is the state of the **others**: a peer enters the document,
+/// moves its cursor, and leaves it. The relay owns the states — a client
+/// never announces that it left, it simply stops beating.
+final class TransportPresenceReceived extends TransportEvent {
+  /// Creates a presence event.
+  const TransportPresenceReceived(this.docId, this.peer, {this.sentAt});
+
+  @override
+  final String docId;
+
+  /// The peer the relay announced.
+  final PresencePeer peer;
+
+  @override
+  final DateTime? sentAt;
+
+  @override
+  String toString() => 'TransportPresenceReceived($docId, $peer)';
+}

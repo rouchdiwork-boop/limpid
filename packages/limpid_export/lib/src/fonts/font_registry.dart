@@ -1,11 +1,12 @@
 import 'dart:typed_data';
 
 import 'embedded_font.dart';
+import 'package_font_loader.dart';
 
 /// Charge un asset binaire (typiquement une police).
 ///
 /// L'application Flutter fournit cette fonction via `rootBundle.load` ; le
-/// package d'export, being pur Dart, n'a aucun acces direct aux assets.
+/// serveur utilise le chargeur du paquet, qui lit les faces sur le disque.
 typedef FontAssetLoader = Future<Uint8List?> Function(String assetPath);
 
 /// Famille de police resolue, avec ses variantes disponibles.
@@ -18,6 +19,7 @@ class ResolvedFontFamily {
     this.bold,
     this.italic,
     this.boldItalic,
+    this.missingVariants = const <FontVariant>[],
   });
 
   /// Famille demandee par l'appelant.
@@ -37,6 +39,9 @@ class ResolvedFontFamily {
 
   /// Octets de la variante grasse italique.
   final Uint8List? boldItalic;
+
+  /// Variantes qui n'ont pas pu etre chargees.
+  final List<FontVariant> missingVariants;
 
   /// Vrai si aucune police embarquee n'a pu etre chargee.
   bool get isFallback => regular == null;
@@ -67,6 +72,14 @@ class FontRegistry {
   /// n'est disponible et les generateurs utilisent leur police de
   /// substitution.
   FontRegistry({this.loader});
+
+  /// Cree un registre qui lit les faces livrees avec le paquet.
+  ///
+  /// C'est le chemin du serveur : l'API n'a pas de bundle Flutter, elle lit
+  /// les fichiers de `packages/limpid_export/assets/fonts/`.
+  factory FontRegistry.packageAssets() {
+    return FontRegistry(loader: readPackageFontAsset);
+  }
 
   /// Chargeur d'assets fourni par l'application.
   final FontAssetLoader? loader;
@@ -100,26 +113,15 @@ class FontRegistry {
 
   /// Resout une famille de police.
   ///
-  /// Si la famille demandee n'est pas embarquee, la premiere famille du
-  /// catalogue disponible est utilisee ; a defaut, la famille est signalee
-  /// comme substituee.
+  /// Seule la famille demandee est tentee : si elle n'est pas embarquee, le
+  /// moteur utilise sa police de substitution (Times, Helvetica, Courier) et
+  /// signale l'anomalie. Aucune autre famille du catalogue ne prend sa
+  /// place : le lecteur ne doit pas decouvrir un changement de typographie
+  /// au milieu de son livre.
   Future<ResolvedFontFamily> resolve(String family) async {
-    final candidates = <String>[
-      family,
-      ...LimpidFonts.families.where((name) => name != family),
-    ];
-    for (final candidate in candidates) {
-      final resolved = await _resolveExact(candidate);
-      if (!resolved.isFallback) {
-        return ResolvedFontFamily(
-          requestedFamily: family,
-          effectiveFamily: candidate,
-          regular: resolved.regular,
-          bold: resolved.bold,
-          italic: resolved.italic,
-          boldItalic: resolved.boldItalic,
-        );
-      }
+    final resolved = await _resolveExact(family);
+    if (!resolved.isFallback) {
+      return resolved;
     }
     return ResolvedFontFamily(
       requestedFamily: family,
@@ -136,6 +138,14 @@ class FontRegistry {
     final boldItalic = await load(
       LimpidFonts.assetFor(family, FontVariant.boldItalic),
     );
+
+    final missing = <FontVariant>[
+      if (regular == null) FontVariant.regular,
+      if (bold == null) FontVariant.bold,
+      if (italic == null) FontVariant.italic,
+      if (boldItalic == null) FontVariant.boldItalic,
+    ];
+
     return ResolvedFontFamily(
       requestedFamily: family,
       effectiveFamily: family,
@@ -143,6 +153,7 @@ class FontRegistry {
       bold: bold,
       italic: italic,
       boldItalic: boldItalic,
+      missingVariants: List<FontVariant>.unmodifiable(missing),
     );
   }
 }

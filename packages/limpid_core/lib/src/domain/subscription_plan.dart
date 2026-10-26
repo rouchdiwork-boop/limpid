@@ -25,6 +25,9 @@ enum SubscriptionPlan {
 /// The quotas attached to a plan.
 final class PlanQuota {
   /// Creates a quota description.
+  ///
+  /// [monthlyAiTokens] defaults to zero: a quota description built before
+  /// the tokens were sold does not cap them.
   const PlanQuota({
     required this.maxProjects,
     required this.maxWords,
@@ -33,6 +36,7 @@ final class PlanQuota {
     required this.maxSeats,
     required this.dailyAiRewrites,
     required this.monthlyAiCovers,
+    this.monthlyAiTokens = 0,
   });
 
   /// Maximum number of projects.
@@ -56,6 +60,12 @@ final class PlanQuota {
   /// Number of AI covers allowed per month.
   final int monthlyAiCovers;
 
+  /// Maximum number of AI tokens allowed per month.
+  ///
+  /// Zero means the plan does not cap the tokens: it does not sell a token
+  /// allowance, and its AI usage stays bounded by the other counters.
+  final int monthlyAiTokens;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -66,7 +76,8 @@ final class PlanQuota {
           other.maxStorageBytes == maxStorageBytes &&
           other.maxSeats == maxSeats &&
           other.dailyAiRewrites == dailyAiRewrites &&
-          other.monthlyAiCovers == monthlyAiCovers);
+          other.monthlyAiCovers == monthlyAiCovers &&
+          other.monthlyAiTokens == monthlyAiTokens);
 
   @override
   int get hashCode => Object.hash(
@@ -78,6 +89,7 @@ final class PlanQuota {
     maxSeats,
     dailyAiRewrites,
     monthlyAiCovers,
+    monthlyAiTokens,
   );
 }
 
@@ -139,6 +151,10 @@ final class PlanDefinition {
       isUnlimitedProjects || projectCount <= quota.maxProjects;
 
   /// The free plan definition.
+  ///
+  /// The pricing page announces no token allowance for the free tier: the
+  /// plan does not sell tokens, so it does not cap them. Its AI stays
+  /// bounded by the two rewrites a day and by the per-request guard.
   static const PlanDefinition free = PlanDefinition(
     plan: SubscriptionPlan.free,
     displayName: 'Gratuit',
@@ -155,6 +171,8 @@ final class PlanDefinition {
   );
 
   /// The writer plan definition.
+  ///
+  /// The pricing page sells "standard AI, 500 k tokens per month".
   static const PlanDefinition writer = PlanDefinition(
     plan: SubscriptionPlan.writer,
     displayName: 'Écrivain',
@@ -167,11 +185,14 @@ final class PlanDefinition {
       maxSeats: 1,
       dailyAiRewrites: 100,
       monthlyAiCovers: 5,
+      monthlyAiTokens: 500000,
     ),
     isUnlimitedExports: true,
   );
 
   /// The pro plan definition.
+  ///
+  /// The pricing page sells "premium AI, 2 M tokens per month".
   static const PlanDefinition pro = PlanDefinition(
     plan: SubscriptionPlan.pro,
     displayName: 'Pro',
@@ -184,6 +205,7 @@ final class PlanDefinition {
       maxSeats: 1,
       dailyAiRewrites: 1000,
       monthlyAiCovers: 50,
+      monthlyAiTokens: 2000000,
     ),
     isUnlimitedProjects: true,
     isUnlimitedExports: true,
@@ -192,6 +214,9 @@ final class PlanDefinition {
   );
 
   /// The studio plan definition.
+  ///
+  /// The pricing page sells "everything the Pro plan has": the token
+  /// allowance of the Studio plan is the one of the Pro plan.
   static const PlanDefinition studio = PlanDefinition(
     plan: SubscriptionPlan.studio,
     displayName: 'Studio',
@@ -204,6 +229,7 @@ final class PlanDefinition {
       maxSeats: 5,
       dailyAiRewrites: 1000,
       monthlyAiCovers: 50,
+      monthlyAiTokens: 2000000,
     ),
     isUnlimitedProjects: true,
     isUnlimitedExports: true,
@@ -214,6 +240,9 @@ final class PlanDefinition {
   );
 
   /// The studio plan billed yearly.
+  ///
+  /// The tokens are counted by month whatever the billing cycle is: the
+  /// yearly plan keeps the monthly allowance of the Studio plan.
   static const PlanDefinition studioYearly = PlanDefinition(
     plan: SubscriptionPlan.studio,
     displayName: 'Studio (annuel)',
@@ -227,6 +256,7 @@ final class PlanDefinition {
       maxSeats: 5,
       dailyAiRewrites: 1000,
       monthlyAiCovers: 50,
+      monthlyAiTokens: 2000000,
     ),
     isUnlimitedProjects: true,
     isUnlimitedExports: true,

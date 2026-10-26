@@ -168,9 +168,22 @@ final class UlidGenerator {
     );
   }
 
+  /// Le nombre de valeurs d'un tirage de 32 bits.
+  ///
+  /// La borne est ecrite **en hexadecimal**, et non `1 << 32` : sur le
+  /// web, le compilateur Dart2JS replie la constante `1 << 32` a zero, et
+  /// le tirage devient `nextInt(0)`, qui leve une `RangeError`. Le tirage
+  /// echoue alors **au moment de creer un identifiant** — c'est-a-dire au
+  /// moment de creer un projet, une scene, un chapitre — et l'erreur
+  /// traversant les `on Exception`, l'interface ne montre rien.
+  ///
+  /// La valeur 0x1_0000_0000 est la meme que 2^32 : le tirage produit un
+  /// entier dans [0, 2^32), soit 32 bits.
+  static const int _full32 = 0x100000000;
+
   BigInt _drawRandom() {
-    final high = _random.nextInt(1 << 32);
-    final mid = _random.nextInt(1 << 32);
+    final high = _random.nextInt(_full32);
+    final mid = _random.nextInt(_full32);
     final low = _random.nextInt(1 << 16);
     return (BigInt.from(high) << 48) |
         (BigInt.from(mid) << 16) |

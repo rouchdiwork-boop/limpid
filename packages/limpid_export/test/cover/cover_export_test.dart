@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:limpid_export/limpid_export.dart';
 import 'package:test/test.dart';
+import 'package:xml/xml.dart';
 
 import '../fixtures/sample_book.dart';
 import '../support/zip_helpers.dart';
@@ -26,6 +27,65 @@ void main() {
 
       final cover = utf8.decode(entries['OEBPS/images/cover.svg']!);
       expect(cover, contains('Le Petit Livre'));
+    });
+
+    test('la couverture de face est le defaut', () async {
+      final exporter = CoveredExporter(export: const LimpidExporter().export);
+      final result = await exporter(
+        ExportFormat.epub3,
+        coverBook(),
+        const ExportOptions(),
+      );
+
+      final entries = readZipEntries(result.bytes);
+      final XmlDocument document = XmlDocument.parse(
+        utf8.decode(entries['OEBPS/images/cover.svg']!),
+      );
+
+      // La couverture de face ne porte qu'une face : son gabarit est
+      // celui d'une face de livre.
+      expect(
+        document.rootElement.getAttribute('width'),
+        CoverSvgFormat.number(const CoverGeometry().faceWidth),
+      );
+    });
+
+    test('la maquette complete porte le dos et la tranche', () async {
+      final exporter = CoveredExporter.full(
+        export: const LimpidExporter().export,
+      );
+      final result = await exporter(
+        ExportFormat.epub3,
+        coverBook(),
+        const ExportOptions(),
+      );
+
+      final entries = readZipEntries(result.bytes);
+      final String svg = utf8.decode(entries['OEBPS/images/cover.svg']!);
+      final XmlDocument document = XmlDocument.parse(svg);
+
+      // La maquette est plus large que la face : le dos et la tranche y
+      // trouvent leur place.
+      expect(
+        document.rootElement.getAttribute('width'),
+        CoverSvgFormat.number(
+          const CoverGeometry().layoutOf(CoverVariant.full).width,
+        ),
+      );
+      expect(
+        int.parse(document.rootElement.getAttribute('width')!),
+        greaterThan(const CoverGeometry().faceWidth),
+      );
+
+      // Le dos porte le titre tourne, le dos de couverture porte le
+      // resume et l'editeur.
+      expect(svg, contains('rotate(-90'));
+      final String texts = document
+          .findAllElements('text')
+          .map((XmlElement element) => element.innerText)
+          .join(' ');
+      expect(texts, contains('Le Petit Livre'));
+      expect(texts, contains('Editions Limpid'));
     });
 
     test('l export ODT embarque la couverture generee', () async {

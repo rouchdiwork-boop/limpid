@@ -73,6 +73,40 @@ void main() {
     expect(changes.single.single.kind, 'updateContent');
   });
 
+  testWidgets('une scène vide écrit son premier bloc', (tester) async {
+    // La scène ne porte encore aucun bloc : la premiere frappe doit
+    // **insérer** un bloc. Une mise a jour viserait un bloc que le
+    // document CRDT ne connait pas, et le texte disparaitrait.
+    final QuillController controller = _emptyController();
+    final List<List<SyncOp>> changes = <List<SyncOp>>[];
+
+    await tester.pumpWidget(
+      limpidTestApp(
+        child: LimpidSceneEditor(
+          sceneId: _scene,
+          authorId: _author,
+          controller: controller,
+          initialBlocks: const <SceneBlock>[],
+          onChanged: changes.add,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    controller.replaceText(
+      0,
+      0,
+      'Bonjour',
+      const TextSelection.collapsed(offset: 7),
+    );
+    await tester.pump();
+
+    expect(changes, hasLength(1));
+    expect(changes.single, hasLength(1));
+    expect(changes.single.single, isA<InsertBlockOp>());
+    expect(changes.single.single.kind, 'insertBlock');
+  });
+
   testWidgets('la scène monte dans les quatre thèmes', (tester) async {
     for (final LimpidThemeVariant variant in LimpidThemeVariant.values) {
       await tester.pumpWidget(

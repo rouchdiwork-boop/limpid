@@ -32,6 +32,7 @@ pubspec.lock
 !packages/limpid_design_system/pubspec.lock
 !packages/limpid_ai/pubspec.lock
 !packages/limpid_export/pubspec.lock
+!packages/limpid_import/pubspec.lock
 !packages/limpid_sync/pubspec.lock
 !packages/limpid_quill/pubspec.lock
 

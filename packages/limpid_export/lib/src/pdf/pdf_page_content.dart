@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'pdf_barcode.dart';
+import 'pdf_cover.dart';
 import 'pdf_fonts.dart';
 
 /// Bloc de texte positionne sur une page.
@@ -64,6 +66,52 @@ class PdfImageRun {
   final double height;
 }
 
+/// Couverture positionnee sur une page PDF.
+class PdfCoverRun {
+  /// Cree une couverture positionnee.
+  const PdfCoverRun({
+    required this.cover,
+    required this.left,
+    required this.top,
+    required this.width,
+    required this.height,
+  });
+
+  /// La couverture a dessiner.
+  final PdfCover cover;
+
+  /// Abscisse de departure, en points.
+  final double left;
+
+  /// Ordonnee de depart, en points.
+  final double top;
+
+  /// Largeur affichee, en points.
+  final double width;
+
+  /// Hauteur affichee, en points.
+  final double height;
+}
+
+/// Code-barres positionne sur une page PDF.
+class PdfBarcodeRun {
+  /// Cree un code-barres positionne.
+  const PdfBarcodeRun({
+    required this.barcode,
+    required this.left,
+    required this.top,
+  });
+
+  /// Le code-barres a dessiner.
+  final PdfBarcode barcode;
+
+  /// Abscisse de departure, en points.
+  final double left;
+
+  /// Ordonnee de depart, en points.
+  final double top;
+}
+
 /// Contenu d'une page PDF, pre-positionne.
 class PdfPageContent {
   /// Cree un contenu de page.
@@ -76,6 +124,8 @@ class PdfPageContent {
     required this.images,
     this.headerText,
     this.chapterIndex = -1,
+    this.cover,
+    this.barcode,
   });
 
   /// Largeur de la page, en points.
@@ -102,6 +152,12 @@ class PdfPageContent {
   /// Index du chapitre courant (-1 pour les pages liminaires).
   final int chapterIndex;
 
+  /// La couverture de la page, quand elle en porte une.
+  final PdfCoverRun? cover;
+
+  /// Le code-barres de la page, quand elle en porte un.
+  final PdfBarcodeRun? barcode;
+
   /// Copie immuable avec un nouveau numero de page.
   PdfPageContent withPageNumber(int number) {
     return PdfPageContent(
@@ -113,6 +169,8 @@ class PdfPageContent {
       images: images,
       headerText: headerText,
       chapterIndex: chapterIndex,
+      cover: cover,
+      barcode: barcode,
     );
   }
 }

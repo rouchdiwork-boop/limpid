@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart' show Delta, Operation;
@@ -7,9 +8,11 @@ import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 
 import 'adapters/delta_block_adapter.dart';
+import 'adapters/editor_remote_ops.dart';
 import 'adapters/editor_sync_ops.dart';
 import 'adapters/scene_block.dart';
 import 'comment_anchors.dart';
+import 'drag_handles.dart';
 import 'editor_span_builder.dart';
 import 'editor_theme.dart';
 import 'slash_menu.dart';
@@ -56,9 +59,12 @@ class LimpidSceneEditor extends StatefulWidget {
     this.lamport = 0,
     this.commentAnchors = const <LimpidCommentAnchor>[],
     this.onSelectCommentRange,
+    this.onCursorMoved,
+    this.remoteOperations = const <SyncOp>[],
     this.onAiCommand,
     this.onInsertImage,
     this.slashMenuController,
+    this.dragHandleLabel,
   });
 
   /// The identifier of the scene being edited.
@@ -81,6 +87,9 @@ class LimpidSceneEditor extends StatefulWidget {
   /// whose identifiers are derived from the document identifier and the
   /// line index; supplying the blocks of the CRDT keeps the identifiers and
   /// the fractional indices of the application.
+  ///
+  /// An **empty** list means that the scene holds no block yet: the editor
+  /// then writes the first one when the author types.
   final List<SceneBlock>? initialBlocks;
 
   /// Whether the scene cannot be edited.
@@ -113,6 +122,21 @@ class LimpidSceneEditor extends StatefulWidget {
   /// Called when the author selects the range of a comment.
   final ValueChanged<LimpidCommentAnchor>? onSelectCommentRange;
 
+  /// Called when the caret of the author moved.
+  ///
+  /// The offset is the position of the caret in the document of the editor:
+  /// the caller maps it to the block it stands in. The presence of the relay
+  /// uses it to announce where the author writes.
+  final ValueChanged<int>? onCursorMoved;
+
+  /// The operations another author produced.
+  ///
+  /// The editor applies them to its document: the text of the other author
+  /// appears without the author losing the caret. They never leave the
+  /// editor as local operations — they come from the relay, and they must
+  /// not travel back to the server.
+  final List<SyncOp> remoteOperations;
+
   /// Called when the author picks an AI command in the slash menu.
   final ValueChanged<LimpidSlashMenuItem>? onAiCommand;
 
@@ -121,6 +145,11 @@ class LimpidSceneEditor extends StatefulWidget {
 
   /// The controller of the slash menu; one is created when it is `null`.
   final LimpidSlashMenuController? slashMenuController;
+
+  /// The label announced by the screen readers on the drag handles.
+  ///
+  /// When it is `null`, the handle keeps the label of the design system.
+  final String? dragHandleLabel;
 
   @override
   State<LimpidSceneEditor> createState() => _LimpidSceneEditorState();
@@ -143,6 +172,7 @@ class _LimpidSceneEditorState extends State<LimpidSceneEditor> {
   int _lamport = 0;
   int? _activeLineStart;
   int? _activeLineEnd;
+  final Set<String> _appliedRemoteKeys = <String>{};
 
   DocumentId get _documentId =>
       widget.documentId ?? DocumentId(widget.sceneId.value);
@@ -168,6 +198,7 @@ class _LimpidSceneEditorState extends State<LimpidSceneEditor> {
     _controller.readOnly = _isReadOnly;
     _state = _buildState();
     _subscription = _controller.changes.listen(_onDocumentChanged);
+    _controller.addListener(_onCursorMoved);
     _updateActiveLine();
   }
 
@@ -176,15 +207,20 @@ class _LimpidSceneEditorState extends State<LimpidSceneEditor> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       _subscription?.cancel();
+      _controller.removeListener(_onCursorMoved);
       _ownsController = widget.controller == null;
       _controller = _controllerOrCreate();
       _controller.readOnly = _isReadOnly;
       _state = _buildState();
       _subscription = _controller.changes.listen(_onDocumentChanged);
+      _controller.addListener(_onCursorMoved);
       _updateActiveLine();
     }
     if (oldWidget.slashMenuController != widget.slashMenuController) {
       _slashController.onSelected = null;
+    }
+    if (!listEquals(oldWidget.remoteOperations, widget.remoteOperations)) {
+      _applyRemoteOperations(widget.remoteOperations);
     }
     _controller.readOnly = _isReadOnly;
   }
@@ -192,6 +228,7 @@ class _LimpidSceneEditorState extends State<LimpidSceneEditor> {
   @override
   void dispose() {
     _subscription?.cancel();
+    _controller.removeListener(_onCursorMoved);
     _slashController.removeListener(_onSlashMenuChanged);
     _slashController.onSelected = null;
     if (_ownsController) {
@@ -239,7 +276,17 @@ class _LimpidSceneEditorState extends State<LimpidSceneEditor> {
 
   SceneEditorState _buildState() {
     final List<SceneBlock>? provided = widget.initialBlocks;
-    if (provided != null && provided.isNotEmpty) {
+    if (provided != null) {
+      if (provided.isEmpty) {
+        // La scene est vide : l'editeur ne fabrique **aucun** bloc. Le
+        // paragraphe vide de `flutter_quill` n'est qu'un remplacement
+        // graphique — un bloc que le document CRDT ne connait pas ne peut
+        // pas etre ecrit, et la premiere frappe du scripteur disparaitrait.
+        return SceneEditorState(
+          document: _controller.document.toDelta(),
+          blocks: const <SceneBlock>[],
+        );
+      }
       return SceneEditorState(
         document: sceneBlocksToDelta(provided),
         blocks: List<SceneBlock>.unmodifiable(provided),
@@ -277,6 +324,60 @@ class _LimpidSceneEditorState extends State<LimpidSceneEditor> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  /// Announces the new position of the caret of the author.
+  ///
+  /// The editor listens to the controller: the caret moves without any
+  /// change of the document, and the presence of the relay has to know it.
+  void _onCursorMoved() {
+    if (!mounted) return;
+    widget.onCursorMoved?.call(_controller.selection.extentOffset);
+  }
+
+  /// Applies the operations another author produced.
+  ///
+  /// The document of the editor is rebuilt from the blocks the operations
+  /// produced, and the caret of the author is put back where it was: the
+  /// text of the other author appears without interrupting the writing.
+  ///
+  /// The operations never leave the editor as local operations: they come
+  /// from the relay, and the server already knows them.
+  ///
+  /// The editor applies the operation as it arrives: a block the two
+  /// authors edited at the same time keeps the version that came last. The
+  /// CRDT arbitrates the divergence when the document is rebuilt from the
+  /// journal.
+  void _applyRemoteOperations(List<SyncOp> operations) {
+    if (operations.isEmpty) return;
+    final List<SyncOp> fresh = operations
+        .where(
+          (SyncOp operation) =>
+              !_appliedRemoteKeys.contains(operation.operationKey),
+        )
+        .toList(growable: false);
+    if (fresh.isEmpty) return;
+    for (final SyncOp operation in fresh) {
+      _appliedRemoteKeys.add(operation.operationKey);
+    }
+
+    SceneEditorState next = _state;
+    for (final SyncOp operation in fresh) {
+      next = applyRemoteOp(state: next, op: operation);
+    }
+    _state = next;
+
+    final TextSelection selection = _controller.selection;
+    _controller.document = Document.fromDelta(next.document);
+    final int length = _controller.document.length;
+    final int offset = length <= 0
+        ? 0
+        : selection.extentOffset.clamp(0, length - 1);
+    _controller.updateSelection(
+      TextSelection.collapsed(offset: offset),
+      ChangeSource.local,
+    );
+    if (mounted) setState(() {});
   }
 
   void _updateActiveLine() {
@@ -382,26 +483,34 @@ class _LimpidSceneEditorState extends State<LimpidSceneEditor> {
           Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: theme.measureWidth),
-              child: QuillEditor(
-                key: _editorKey,
-                controller: _controller,
-                focusNode: _focusNode,
-                scrollController: _scrollController,
-                config: QuillEditorConfig(
-                  customStyles: theme.defaultStyles,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: tokens.spacing.space16,
-                    vertical: tokens.spacing.space32,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (!_isReadOnly) _dragHandles(),
+                  Expanded(
+                    child: QuillEditor(
+                      key: _editorKey,
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      scrollController: _scrollController,
+                      config: QuillEditorConfig(
+                        customStyles: theme.defaultStyles,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: tokens.spacing.space16,
+                          vertical: tokens.spacing.space32,
+                        ),
+                        placeholder: widget.placeholder,
+                        textSpanBuilder: spans.build,
+                        // The key handler of `flutter_quill` is the documented
+                        // hook for the keys pressed while the editor is focused;
+                        // it is the only one that runs before the shortcuts of
+                        // the editor, which would otherwise swallow the escape.
+                        // ignore: experimental_member_use
+                        onKeyPressed: _onKeyPressed,
+                      ),
+                    ),
                   ),
-                  placeholder: widget.placeholder,
-                  textSpanBuilder: spans.build,
-                  // The key handler of `flutter_quill` is the documented
-                  // hook for the keys pressed while the editor is focused;
-                  // it is the only one that runs before the shortcuts of
-                  // the editor, which would otherwise swallow the escape.
-                  // ignore: experimental_member_use
-                  onKeyPressed: _onKeyPressed,
-                ),
+                ],
               ),
             ),
           ),
@@ -414,5 +523,39 @@ class _LimpidSceneEditorState extends State<LimpidSceneEditor> {
         ],
       ),
     );
+  }
+
+  /// The column of the handles that reorder the blocks of the scene.
+  ///
+  /// The handle is the one of `drag_handles.dart` : le deplacement qu'il
+  /// produit ne porte que le nouvel index fractionnaire, le texte des blocs
+  /// ne bouge jamais.
+  Widget _dragHandles() {
+    return LimpidDragHandles(
+      blocks: <LimpidDraggableBlock>[
+        for (final SceneBlock block in _state.blocks)
+          LimpidDraggableBlock.fromSceneBlock(block),
+      ],
+      documentId: _documentId,
+      authorId: widget.authorId,
+      lamport: _lamport + 1,
+      onMove: _onBlockMoved,
+      handleBuilder: widget.dragHandleLabel == null
+          ? null
+          : (BuildContext context, LimpidDraggableBlock block) =>
+                LimpidDragHandle(
+                  semanticLabel: widget.dragHandleLabel!,
+                  onDragStart: null,
+                ),
+    );
+  }
+
+  /// Announces the move of a block.
+  ///
+  /// L'operation est celle du CRDT : elle ne porte que la nouvelle place du
+  /// bloc, et elle part par le meme chemin que les autres ecritures.
+  void _onBlockMoved(MoveBlockOp operation) {
+    _lamport = operation.lamport;
+    widget.onChanged?.call(<SyncOp>[operation]);
   }
 }

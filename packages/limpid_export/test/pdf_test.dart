@@ -131,12 +131,15 @@ void main() {
     test(
       'la substitution de police est signalee dans les avertissements',
       () async {
-        final exporter = LimpidExporter();
+        // Un registre sans police force la substitution : elle doit etre
+        // signalee, sans faire echouer l'export.
+        final exporter = LimpidExporter(fontRegistry: FontRegistry());
         final result = await exporter.export(
           ExportFormat.pdfReflowable,
           sampleBook(),
           const ExportOptions(),
         );
+        expect(result.bytes, isNotEmpty);
         expect(
           result.warnings.any((warning) => warning.contains('indisponible')),
           isTrue,

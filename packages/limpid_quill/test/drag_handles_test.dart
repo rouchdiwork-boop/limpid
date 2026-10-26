@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:limpid_core/limpid_core.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
 import 'package:limpid_quill/limpid_quill.dart';
 
@@ -95,6 +96,38 @@ void main() {
         ),
         throwsArgumentError,
       );
+    });
+
+    test('le déplacement ne bouge pas le texte : il ne porte que l\'index', () {
+      final CrdtDocument document = CrdtDocument.empty(_document).apply(
+        InsertBlockOp(
+          doc: _document,
+          lamport: 1,
+          author: _author,
+          blockId: const BlockId('a'),
+          parent: null,
+          order: OrderKey('5'),
+          type: BlockType.paragraph,
+          content: TextContent('Il pleuvait sur la falaise.'),
+        ),
+      );
+
+      final MoveBlockOp move = computeBlockMove(
+        doc: _document,
+        author: _author,
+        lamport: 2,
+        blocks: _blocks(),
+        blockId: const BlockId('c'),
+        targetIndex: 0,
+      );
+
+      final CrdtDocument moved = document.apply(move);
+
+      expect(
+        moved.blocks.single.content.plainText,
+        'Il pleuvait sur la falaise.',
+      );
+      expect(moved.blocks.single.content, isA<TextContent>());
     });
   });
 
