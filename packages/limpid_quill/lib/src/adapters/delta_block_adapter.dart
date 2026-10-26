@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_quill/flutter_quill.dart' show Attribute, BlockEmbed;
+import 'package:flutter/services.dart' show TextSelection;
+import 'package:flutter_quill/flutter_quill.dart'
+    show Attribute, BlockEmbed, ChangeSource, Document, QuillController;
 import 'package:flutter_quill/quill_delta.dart' show Delta, Operation;
 import 'package:limpid_core/limpid_core.dart';
 
@@ -224,6 +226,138 @@ int deltaCharacterLength(Delta delta) {
     total += op.length ?? 0;
   }
   return total;
+}
+
+/// The passage of the manuscript the author selected.
+///
+/// The offsets are those of the document of the editor: the blocks of the
+/// scene are laid out one after the other, each of them followed by its
+/// newline.
+@immutable
+class LimpidEditorSelection {
+  /// Creates a selection.
+  const LimpidEditorSelection({required this.start, required this.end});
+
+  /// The offset of the first character of the passage.
+  final int start;
+
+  /// The offset just after the last character of the passage.
+  final int end;
+
+  /// Whether the passage holds nothing.
+  bool get isEmpty => end <= start;
+
+  /// The number of characters of the passage.
+  int get length => end - start;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LimpidEditorSelection &&
+          other.start == start &&
+          other.end == end);
+
+  @override
+  int get hashCode => Object.hash(start, end);
+
+  @override
+  String toString() => 'LimpidEditorSelection($start, $end)';
+}
+
+/// The controller of the manuscript editor.
+///
+/// The editor of a scene takes the controller of `flutter_quill`; the
+/// application owns it, so it reads the passage the author selected without
+/// ever naming the editor it comes from.
+///
+/// The controller holds the text of the scene: the editor takes the state of
+/// the document **once**, when it is built, and the application hands it over
+/// already written.
+final class LimpidManuscriptController {
+  LimpidManuscriptController._(this._controller, this._onChange);
+
+  /// Creates the controller of a scene, with the text of its [blocks].
+  ///
+  /// [onChange] is called every time the selection of the author moves.
+  factory LimpidManuscriptController.ofBlocks(
+    List<SceneBlock> blocks, {
+    required void Function(LimpidEditorSelection selection) onChange,
+  }) {
+    final QuillController controller = QuillController(
+      document: Document.fromDelta(_documentOf(blocks)),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+    final LimpidManuscriptController manuscript = LimpidManuscriptController._(
+      controller,
+      onChange,
+    );
+    controller.addListener(manuscript._onControllerChanged);
+    return manuscript;
+  }
+
+  final QuillController _controller;
+  final void Function(LimpidEditorSelection selection) _onChange;
+  LimpidEditorSelection _selection = const LimpidEditorSelection(
+    start: 0,
+    end: 0,
+  );
+
+  /// The controller given to the editor of the scene.
+  QuillController get quill => _controller;
+
+  /// The passage the author selected.
+  LimpidEditorSelection get selection => _selection;
+
+  /// Replaces the text of the manuscript with the text of [blocks].
+  ///
+  /// The selection is dropped: it pointed at a text that is no longer there.
+  void load(List<SceneBlock> blocks) {
+    _controller.document = Document.fromDelta(_documentOf(blocks));
+    _selection = const LimpidEditorSelection(start: 0, end: 0);
+  }
+
+  /// Releases the controller of the editor.
+  void dispose() => _controller.dispose();
+
+  /// Reads the selection of the author and announces it.
+  void _onControllerChanged() {
+    final TextSelection selection = _controller.selection;
+    final int start = selection.start < 0 ? 0 : selection.start;
+    final int end = selection.end < 0 ? 0 : selection.end;
+    final LimpidEditorSelection current = LimpidEditorSelection(
+      start: start,
+      end: end,
+    );
+    if (current == _selection) {
+      return;
+    }
+    _selection = current;
+    _onChange(current);
+  }
+}
+
+/// The document of the editor for the blocks [blocks].
+///
+/// A scene that holds no block still shows a line: the editor expects a
+/// document, and the first keystroke creates the first block.
+Delta _documentOf(List<SceneBlock> blocks) {
+  final Delta delta = sceneBlocksToDelta(blocks);
+  if (delta.isEmpty) {
+    return Delta()..insert('\n');
+  }
+  return delta;
+}
+
+/// Selects the passage `start`..`end` of the editor [controller].
+///
+/// The passage is expressed in the coordinates of the document of the
+/// editor: the blocks of the scene are laid out one after the other, each of
+/// them followed by its newline.
+void selectPassage(QuillController controller, int start, int end) {
+  controller.updateSelection(
+    TextSelection(baseOffset: start, extentOffset: end),
+    ChangeSource.local,
+  );
 }
 
 Map<String, dynamic>? _inlineAttributes(Map<String, dynamic>? attributes) {
