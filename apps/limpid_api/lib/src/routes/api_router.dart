@@ -3,9 +3,11 @@ import 'package:shelf_router/shelf_router.dart';
 
 import '../config/app_config.dart';
 import '../db/admin_database.dart';
+import '../db/kdp_database.dart';
 import '../db/quota_database.dart';
 import '../db/team_database.dart';
 import '../db/two_factor_database.dart';
+import '../db/webhook_database.dart';
 import '../dependencies.dart';
 import '../errors/app_exception.dart';
 import '../http/api_response.dart';
@@ -17,6 +19,7 @@ import 'checkout_routes.dart';
 import 'comment_routes.dart';
 import 'export_routes.dart';
 import 'health_routes.dart';
+import 'kdp_routes.dart';
 import 'project_routes.dart';
 import 'publication_routes.dart';
 import 'quota_routes.dart';
@@ -24,6 +27,7 @@ import 'sync_routes.dart';
 import 'sync_socket_routes.dart';
 import 'team_routes.dart';
 import 'two_factor_routes.dart';
+import 'webhook_routes.dart';
 
 /// Builds the router of the API.
 ///
@@ -83,6 +87,21 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
   final AdminDatabase? admin = dependencies.admin;
   if (admin != null) {
     registerAdminRoutes(router, admin, config, quota: quota);
+  }
+  final WebhookDatabase? webhooks = dependencies.webhooks;
+  if (webhooks != null) {
+    registerWebhookRoutes(
+      router,
+      webhooks,
+      config,
+      planOf: dependencies.planOf,
+      audit: dependencies.audit,
+      dispatcher: dependencies.webhookDispatcher,
+    );
+  }
+  final KdpDatabase? kdp = dependencies.kdp;
+  if (kdp != null) {
+    registerKdpRoutes(router, kdp, config);
   }
 
   return router;

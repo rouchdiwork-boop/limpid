@@ -40,6 +40,7 @@ export 'src/cover/cover_typography.dart';
 export 'src/cover/cover_variant.dart';
 export 'src/docx/docx_writer.dart';
 export 'src/epub/epub3_writer.dart';
+export 'src/epub/epub_package.dart';
 export 'src/fonts/embedded_font.dart';
 export 'src/fonts/font_registry.dart';
 export 'src/html/html_sales_page.dart';
@@ -57,6 +58,7 @@ export 'src/model/export_metadata.dart';
 export 'src/model/export_options.dart';
 export 'src/model/export_result.dart';
 export 'src/odt/odt_writer.dart';
+export 'src/pdf/pdf_document.dart';
 export 'src/pdf/pdf_writer.dart';
 
 /// Point d'entree du moteur d'export.

@@ -8,13 +8,16 @@ import 'db/admin_database.dart';
 import 'db/audit_log.dart';
 import 'db/comment_store.dart';
 import 'db/database.dart';
+import 'db/kdp_database.dart';
 import 'db/migration_runner.dart';
 import 'db/postgres_admin_database.dart';
 import 'db/postgres_audit_log.dart';
+import 'db/postgres_kdp_database.dart';
 import 'db/postgres_project_store.dart';
 import 'db/postgres_sync_store.dart';
 import 'db/postgres_team_database.dart';
 import 'db/postgres_two_factor_database.dart';
+import 'db/postgres_webhook_database.dart';
 import 'db/project_store.dart';
 import 'db/quota_database.dart';
 import 'db/sql_account_purge_store.dart';
@@ -22,14 +25,17 @@ import 'db/sql_quota_database.dart';
 import 'db/sqlite_admin_database.dart';
 import 'db/sqlite_audit_log.dart';
 import 'db/sqlite_database.dart';
+import 'db/sqlite_kdp_database.dart';
 import 'db/sqlite_migration_runner.dart';
 import 'db/sqlite_project_store.dart';
 import 'db/sqlite_sync_store.dart';
 import 'db/sqlite_team_database.dart';
 import 'db/sqlite_two_factor_database.dart';
+import 'db/sqlite_webhook_database.dart';
 import 'db/sync_store.dart';
 import 'db/team_database.dart';
 import 'db/two_factor_database.dart';
+import 'db/webhook_database.dart';
 import 'dependencies.dart';
 import 'logging/logger.dart';
 import 'redis/key_value_store.dart';
@@ -40,6 +46,7 @@ import 'services/ai_gateway.dart';
 import 'services/limpid_ai_gateway.dart';
 import 'services/payment_gateway.dart';
 import 'services/sync_hub.dart';
+import 'services/webhook_dispatcher.dart';
 import 'storage/object_storage.dart';
 
 /// The directory holding the SQL migrations of Postgres.
@@ -122,6 +129,9 @@ Future<AppDependencies> buildProductionDependencies(
     twoFactor: stores.twoFactor,
     teams: stores.teams,
     admin: stores.admin,
+    webhooks: stores.webhooks,
+    kdp: stores.kdp,
+    webhookDispatcher: WebhookDispatcher(database: stores.webhooks),
     ai: _buildAiGateway(config),
     payments: _buildPaymentGateway(config),
     storage: _buildObjectStorage(config),
@@ -150,6 +160,8 @@ final class _Stores {
     required this.twoFactor,
     required this.teams,
     required this.admin,
+    required this.webhooks,
+    required this.kdp,
     required this.probe,
     required this.close,
   });
@@ -163,6 +175,8 @@ final class _Stores {
   final TwoFactorDatabase twoFactor;
   final TeamDatabase teams;
   final AdminDatabase admin;
+  final WebhookDatabase webhooks;
+  final KdpDatabase kdp;
   final HealthProbe probe;
   final Future<void> Function() close;
 }
@@ -219,6 +233,12 @@ Future<_Stores> _postgresStores(
       planLookup: _planLookupOf(quotas),
     ),
     admin: PostgresAdminDatabase(resolvedPool),
+    webhooks: PostgresWebhookDatabase(resolvedPool),
+    kdp: PostgresKdpDatabase(
+      resolvedPool,
+      planLookup: _planLookupOf(quotas),
+      artefacts: _buildObjectStorage(config),
+    ),
     probe: _PoolHealthProbe(resolvedPool),
     close: () => resolvedPool.close(),
   );
@@ -256,6 +276,12 @@ Future<_Stores> _sqliteStores(
     twoFactor: SqliteTwoFactorDatabase(resolved),
     teams: SqliteTeamDatabase(resolved, planLookup: _planLookupOf(quotas)),
     admin: SqliteAdminDatabase(resolved),
+    webhooks: SqliteWebhookDatabase(resolved),
+    kdp: SqliteKdpDatabase(
+      resolved,
+      planLookup: _planLookupOf(quotas),
+      artefacts: _buildObjectStorage(config),
+    ),
     probe: _SqliteHealthProbe(resolved),
     close: resolved.close,
   );

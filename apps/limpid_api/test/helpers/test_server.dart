@@ -317,9 +317,11 @@ Future<TestServer> startTestServer({
 
   final InMemoryAuditLog audit = InMemoryAuditLog();
   final InMemoryQuotaDatabase quotas = InMemoryQuotaDatabase();
+  final InMemoryProjectStore projects = InMemoryProjectStore();
+  final InMemorySyncStore sync = InMemorySyncStore();
   final AppDependencies dependencies = AppDependencies(
-    projects: InMemoryProjectStore(),
-    sync: InMemorySyncStore(),
+    projects: projects,
+    sync: sync,
     audit: audit,
     comments: InMemoryCommentStore(),
     purge: InMemoryAccountPurgeStore(entries: audit.entries),
@@ -332,6 +334,15 @@ Future<TestServer> startTestServer({
       },
     ),
     admin: InMemoryAdminDatabase(),
+    webhooks: InMemoryWebhookDatabase(),
+    kdp: InMemoryKdpDatabase(
+      planLookup: (String userId) async {
+        final AccountPlan? plan = await quotas.planOf(userId);
+        return plan?.plan.name;
+      },
+      projects: projects,
+      sync: sync,
+    ),
     ai: StubAiGateway(),
     payments: StubPaymentGateway(),
     storage: InMemoryObjectStorage(),

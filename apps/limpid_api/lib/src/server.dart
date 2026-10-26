@@ -59,6 +59,9 @@ Handler buildHandler(AppDependencies dependencies, AppConfig config) {
         authenticationMiddleware(
           verifier: dependencies.jwtVerifier,
           twoFactorGuard: twoFactorGuard,
+          // L'API publique s'authentifie par sa cle d'API, pas par le
+          // jeton de session : elle ne doit donc pas exiger de jeton.
+          exemptPrefixes: <String>[...publicPathPrefixes, '/v1/api/'],
         ),
       )
       .addMiddleware(

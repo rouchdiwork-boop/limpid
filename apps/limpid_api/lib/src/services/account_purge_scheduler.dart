@@ -82,6 +82,13 @@ final class AccountPurgeScheduler {
         'skipped': report.skipped.length,
         'failures': report.failures.length,
       });
+      if (report.hasFailures) {
+        // Une purge incomplete n'est pas une purge : le compte reste marque
+        // comme a purger, et la passe suivante reessaie.
+        logger.warning('account.purge.incomplete', <String, Object?>{
+          'failures': report.failures.length,
+        });
+      }
     } on Exception catch (error) {
       logger.warning('account.purge.error', <String, Object?>{
         'error': error.toString(),

@@ -6,11 +6,13 @@ import 'db/account_purge_store.dart';
 import 'db/admin_database.dart';
 import 'db/audit_log.dart';
 import 'db/comment_store.dart';
+import 'db/kdp_database.dart';
 import 'db/project_store.dart';
 import 'db/quota_database.dart';
 import 'db/sync_store.dart';
 import 'db/team_database.dart';
 import 'db/two_factor_database.dart';
+import 'db/webhook_database.dart';
 import 'errors/app_exception.dart';
 import 'logging/logger.dart';
 import 'redis/key_value_store.dart';
@@ -19,6 +21,7 @@ import 'services/idempotency_service.dart';
 import 'services/payment_gateway.dart';
 import 'services/sync_hub.dart';
 import 'services/two_factor_service.dart';
+import 'services/webhook_dispatcher.dart';
 import 'storage/object_storage.dart';
 
 /// A probe telling whether a dependency answers.
@@ -61,6 +64,9 @@ final class AppDependencies {
     this.twoFactor,
     this.teams,
     this.admin,
+    this.webhooks,
+    this.kdp,
+    this.webhookDispatcher,
   });
 
   /// The projects of the callers.
@@ -120,6 +126,20 @@ final class AppDependencies {
 
   /// The back-office of the service, when the feature is configured.
   final AdminDatabase? admin;
+
+  /// The API keys and the webhooks of the accounts, when the feature is
+  /// configured.
+  final WebhookDatabase? webhooks;
+
+  /// The Amazon KDP publications, when the feature is configured.
+  final KdpDatabase? kdp;
+
+  /// The dispatcher of the outgoing webhooks.
+  ///
+  /// It is shared: the modules that publish an event — a publication, an
+  /// export, a plan change — use the same dispatcher, so a delivery is
+  /// written in one place.
+  final WebhookDispatcher? webhookDispatcher;
 
   /// The plan of [userId], `null` when the account has none.
   ///

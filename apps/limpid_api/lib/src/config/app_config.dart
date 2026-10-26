@@ -151,6 +151,8 @@ final class AppConfig {
     required this.supabaseUrl,
     required this.supabaseJwksUrl,
     required this.supabaseAnonKey,
+    this.supabaseServiceRoleKey = devPlaceholderSecret,
+    this.hasAuthAdmin = false,
     required this.redisUrl,
     required this.r2AccountId,
     required this.r2AccessKeyId,
@@ -248,6 +250,9 @@ final class AppConfig {
     final String? r2Bucket = strict
         ? _required(environment, 'R2_BUCKET')
         : _optional(environment, 'R2_BUCKET');
+    final String? supabaseServiceRoleKey = strict
+        ? _required(environment, 'SUPABASE_SERVICE_ROLE_KEY')
+        : _optional(environment, 'SUPABASE_SERVICE_ROLE_KEY');
 
     return AppConfig(
       profile: profile,
@@ -262,6 +267,8 @@ final class AppConfig {
         'SUPABASE_ANON_KEY',
         strict: strict,
       ),
+      supabaseServiceRoleKey: supabaseServiceRoleKey ?? devPlaceholderSecret,
+      hasAuthAdmin: supabaseServiceRoleKey != null,
       redisUrl: redisUrl,
       r2AccountId: r2AccountId,
       r2AccessKeyId: r2AccessKeyId ?? devPlaceholderSecret,
@@ -333,6 +340,19 @@ final class AppConfig {
 
   /// The anonymous Supabase key, never used to sign anything.
   final String supabaseAnonKey;
+
+  /// The key of the Supabase service role, used by the administration API.
+  ///
+  /// La clé du rôle de service donne l'accès complet au projet : elle est
+  /// lue dans l'environnement, jamais écrite en clair, et elle ne sert
+  /// qu'à effacer un compte de Supabase Auth.
+  final String supabaseServiceRoleKey;
+
+  /// Whether the administration API of Supabase is configured.
+  ///
+  /// Un poste de développement n'a pas de projet Supabase : la purge n'a
+  /// alors aucun compte à effacer de là-bas.
+  final bool hasAuthAdmin;
 
   /// The Redis connection string, `null` when Redis is not configured.
   final String? redisUrl;
