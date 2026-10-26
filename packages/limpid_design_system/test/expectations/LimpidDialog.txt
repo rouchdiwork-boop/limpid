@@ -1,0 +1,115 @@
+# LimpidDialog
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidDialog
+  Padding padding=24,24,24,24
+    ConstrainedBox minWidth=280
+      Material radius=14 shape=RoundedRectangleBorder
+        CustomPaint
+          ConstrainedBox maxWidth=520
+            Padding padding=24,24,24,24
+              Column direction=vertical
+                Text text="Supprimer le chapitre"
+                  RichText fontSize=22 fontWeight=FontWeight.w600 textColor=#ff16130f
+                SizedBox maxHeight=16 minHeight=16
+                Flexible
+                  Text text="Cette action est definitive."
+                    RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+                SizedBox maxHeight=24 minHeight=24
+                Row direction=horizontal
+                  LimpidButton
+                    Semantics semanticsLabel=Annuler
+                      ConstrainedBox minHeight=40
+                        Material radius=6 shape=RoundedRectangleBorder
+                          CustomPaint
+                            Padding padding=16,0,16,0
+                              Row direction=horizontal
+                                Flexible
+                                  Text text="Annuler"
+                                    RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff857c72
+
+@@ sepia
+LimpidDialog
+  Padding padding=24,24,24,24
+    ConstrainedBox minWidth=280
+      Material radius=14 shape=RoundedRectangleBorder
+        CustomPaint
+          ConstrainedBox maxWidth=520
+            Padding padding=24,24,24,24
+              Column direction=vertical
+                Text text="Supprimer le chapitre"
+                  RichText fontSize=22 fontWeight=FontWeight.w600 textColor=#ff33281a
+                SizedBox maxHeight=16 minHeight=16
+                Flexible
+                  Text text="Cette action est definitive."
+                    RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+                SizedBox maxHeight=24 minHeight=24
+                Row direction=horizontal
+                  LimpidButton
+                    Semantics semanticsLabel=Annuler
+                      ConstrainedBox minHeight=40
+                        Material radius=6 shape=RoundedRectangleBorder
+                          CustomPaint
+                            Padding padding=16,0,16,0
+                              Row direction=horizontal
+                                Flexible
+                                  Text text="Annuler"
+                                    RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff8c7c64
+
+@@ night
+LimpidDialog
+  Padding padding=24,24,24,24
+    ConstrainedBox minWidth=280
+      Material radius=14 shape=RoundedRectangleBorder
+        CustomPaint
+          ConstrainedBox maxWidth=520
+            Padding padding=24,24,24,24
+              Column direction=vertical
+                Text text="Supprimer le chapitre"
+                  RichText fontSize=22 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                SizedBox maxHeight=16 minHeight=16
+                Flexible
+                  Text text="Cette action est definitive."
+                    RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                SizedBox maxHeight=24 minHeight=24
+                Row direction=horizontal
+                  LimpidButton
+                    Semantics semanticsLabel=Annuler
+                      ConstrainedBox minHeight=40
+                        Material radius=6 shape=RoundedRectangleBorder
+                          CustomPaint
+                            Padding padding=16,0,16,0
+                              Row direction=horizontal
+                                Flexible
+                                  Text text="Annuler"
+                                    RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff7a7268
+
+@@ contrast
+LimpidDialog
+  Padding padding=24,24,24,24
+    ConstrainedBox minWidth=280
+      Material radius=14 shape=RoundedRectangleBorder
+        CustomPaint
+          ConstrainedBox maxWidth=520
+            Padding padding=24,24,24,24
+              Column direction=vertical
+                Text text="Supprimer le chapitre"
+                  RichText fontSize=22 fontWeight=FontWeight.w600 textColor=#ffffffff
+                SizedBox maxHeight=16 minHeight=16
+                Flexible
+                  Text text="Cette action est definitive."
+                    RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=24 minHeight=24
+                Row direction=horizontal
+                  LimpidButton
+                    Semantics semanticsLabel=Annuler
+                      ConstrainedBox minHeight=40
+                        Material radius=6 shape=RoundedRectangleBorder
+                          CustomPaint
+                            Padding padding=16,0,16,0
+                              Row direction=horizontal
+                                Flexible
+                                  Text text="Annuler"
+                                    RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffe6e6e6
+

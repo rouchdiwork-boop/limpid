@@ -1,0 +1,31 @@
+# LimpidSpinner
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidSpinner
+  SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+    CircularProgressIndicator
+      ConstrainedBox minHeight=36 minWidth=36
+        CustomPaint
+
+@@ sepia
+LimpidSpinner
+  SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+    CircularProgressIndicator
+      ConstrainedBox minHeight=36 minWidth=36
+        CustomPaint
+
+@@ night
+LimpidSpinner
+  SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+    CircularProgressIndicator
+      ConstrainedBox minHeight=36 minWidth=36
+        CustomPaint
+
+@@ contrast
+LimpidSpinner
+  SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+    CircularProgressIndicator
+      ConstrainedBox minHeight=36 minWidth=36
+        CustomPaint
+

@@ -1,0 +1,51 @@
+# LimpidSlider
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidSlider
+  Semantics semanticsLabel=Progression
+    Column direction=vertical
+      Padding padding=0,0,0,4
+        Row direction=horizontal
+          Text text="Progression"
+            RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+          Text text="40 %"
+            RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+      SizedBox maxHeight=0 maxWidth=0
+
+@@ sepia
+LimpidSlider
+  Semantics semanticsLabel=Progression
+    Column direction=vertical
+      Padding padding=0,0,0,4
+        Row direction=horizontal
+          Text text="Progression"
+            RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+          Text text="40 %"
+            RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+      SizedBox maxHeight=0 maxWidth=0
+
+@@ night
+LimpidSlider
+  Semantics semanticsLabel=Progression
+    Column direction=vertical
+      Padding padding=0,0,0,4
+        Row direction=horizontal
+          Text text="Progression"
+            RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+          Text text="40 %"
+            RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+      SizedBox maxHeight=0 maxWidth=0
+
+@@ contrast
+LimpidSlider
+  Semantics semanticsLabel=Progression
+    Column direction=vertical
+      Padding padding=0,0,0,4
+        Row direction=horizontal
+          Text text="Progression"
+            RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+          Text text="40 %"
+            RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+      SizedBox maxHeight=0 maxWidth=0
+

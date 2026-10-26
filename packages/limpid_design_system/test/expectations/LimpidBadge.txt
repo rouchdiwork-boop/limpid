@@ -1,0 +1,59 @@
+# LimpidBadge
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidBadge
+  Semantics semanticsLabel="En cours"
+    DecoratedBox background=#ffe8edea border="1 #593e6b4f" radius=999
+      Padding padding=9,5,9,5
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+              RichText fontSize=14 textColor=#ff3e6b4f
+          SizedBox maxWidth=6 minWidth=6
+          Flexible
+            Text text="En cours"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff3e6b4f
+
+@@ sepia
+LimpidBadge
+  Semantics semanticsLabel="En cours"
+    DecoratedBox background=#ffe3e4d6 border="1 #59356043" radius=999
+      Padding padding=9,5,9,5
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+              RichText fontSize=14 textColor=#ff356043
+          SizedBox maxWidth=6 minWidth=6
+          Flexible
+            Text text="En cours"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff356043
+
+@@ night
+LimpidBadge
+  Semantics semanticsLabel="En cours"
+    DecoratedBox background=#ff282b24 border="1 #597fb093" radius=999
+      Padding padding=9,5,9,5
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+              RichText fontSize=14 textColor=#ff7fb093
+          SizedBox maxWidth=6 minWidth=6
+          Flexible
+            Text text="En cours"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7fb093
+
+@@ contrast
+LimpidBadge
+  Semantics semanticsLabel="En cours"
+    DecoratedBox background=#ff0d1a13 border="1 #596ed79b" radius=999
+      Padding padding=9,5,9,5
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+              RichText fontSize=14 textColor=#ff6ed79b
+          SizedBox maxWidth=6 minWidth=6
+          Flexible
+            Text text="En cours"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6ed79b
+

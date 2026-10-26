@@ -1,0 +1,1335 @@
+# settings
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+SettingsScreen
+  PhysicalModel surface=#fffaf8f4
+    Text text="Réglages"
+      RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff16130f
+    SizedBox maxHeight=20 minHeight=20
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="PROFIL"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidCard
+        DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel=Compte
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          LimpidAvatar
+                            Semantics semanticsLabel=Compte
+                              SizedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                                ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                                  DecoratedBox background=#fff6e7d6 border="1 #ffe4c4a0" shape=circle
+                                    Padding padding=1,1,1,1
+                                      Text text="C"
+                                        RichText fontSize=12.8 fontWeight=FontWeight.w600 textColor=#ff9c5518
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Compte"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Connectez-vous pour retrouver vos livres, même hors connexion."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="THÈME"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidCard
+        DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                ConstrainedBox minHeight=48
+                  DecoratedBox background=#fff6e7d6 radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#fffaf8f4 border="2 #ff9c5518" radius=6
+                            Padding padding=2,2,2,2
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Papier"
+                            RichText fontSize=14 fontWeight=FontWeight.w600 textColor=#ff9c5518
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ff9c5518
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#fff4ebd8 border="1 #ffd8d0c2" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Sépia"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#ff14110e border="1 #ffd8d0c2" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Nuit"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#ff000000 border="1 #ffd8d0c2" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Contraste élevé"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="ÉDITEUR"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidCard
+        DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Votre rythme"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff16130f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Votre rythme"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="1500 mots par jour"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="SYNCHRONISATION"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidCard
+        DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel=Synchronisé
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff3e6b4f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Synchronisé"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel=Réessayer
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff16130f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Réessayer"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="SÉCURITÉ"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidCard
+        DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Double authentification"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff16130f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Double authentification"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Un code à six chiffres est demandé à chaque connexion sur les formules Pro et Studio."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel="Clés d’API"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff16130f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Clés d’API"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Une clé donne à un programme l’accès à votre compte. Elle ne se montre qu’une fois."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel=Webhooks
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff16130f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Webhooks"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Limpid appelle votre service quand un événement arrive."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="APPAREILS"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidCard
+        DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Rien à afficher pour l'instant"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff16130f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Rien à afficher pour l'instant"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Aucun service distant n'est configuré. La session s'ouvrira localement, sans envoi de données."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="DONNÉES ET RGPD"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidCard
+        DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Exporter toutes mes données"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff16130f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Exporter toutes mes données"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Ce service n’est pas configuré sur ce poste."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel="Supprimer mon compte"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff16130f
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Supprimer mon compte"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="La suppression du compte n’est pas disponible sur ce poste."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+    SizedBox maxHeight=24 minHeight=24
+    LimpidButton
+      Semantics semanticsLabel="Se déconnecter"
+        ConstrainedBox minHeight=40
+          Material radius=6 shape=RoundedRectangleBorder
+            CustomPaint
+              Padding padding=16,0,16,0
+                Row direction=horizontal
+                  Icon
+                    SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                      RichText fontSize=18 textColor=#ffffffff
+                  SizedBox maxWidth=8 minWidth=8
+                  Flexible
+                    Text text="Se déconnecter"
+                      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+    Stack
+
+@@ sepia
+SettingsScreen
+  PhysicalModel surface=#fff4ebd8
+    Text text="Réglages"
+      RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff33281a
+    SizedBox maxHeight=20 minHeight=20
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="PROFIL"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidCard
+        DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel=Compte
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          LimpidAvatar
+                            Semantics semanticsLabel=Compte
+                              SizedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                                ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                                  DecoratedBox background=#fff0e0c8 border="1 #ffdcbc93" shape=circle
+                                    Padding padding=1,1,1,1
+                                      Text text="C"
+                                        RichText fontSize=12.8 fontWeight=FontWeight.w600 textColor=#ff8e4a12
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Compte"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Connectez-vous pour retrouver vos livres, même hors connexion."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="THÈME"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidCard
+        DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#fffaf8f4 border="1 #ffcdbfa0" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Papier"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox background=#fff0e0c8 radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#fff4ebd8 border="2 #ff8e4a12" radius=6
+                            Padding padding=2,2,2,2
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Sépia"
+                            RichText fontSize=14 fontWeight=FontWeight.w600 textColor=#ff8e4a12
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ff8e4a12
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#ff14110e border="1 #ffcdbfa0" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Nuit"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#ff000000 border="1 #ffcdbfa0" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Contraste élevé"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="ÉDITEUR"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidCard
+        DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Votre rythme"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff33281a
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Votre rythme"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="1500 mots par jour"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="SYNCHRONISATION"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidCard
+        DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel=Synchronisé
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff356043
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Synchronisé"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel=Réessayer
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff33281a
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Réessayer"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="SÉCURITÉ"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidCard
+        DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Double authentification"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff33281a
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Double authentification"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Un code à six chiffres est demandé à chaque connexion sur les formules Pro et Studio."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel="Clés d’API"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff33281a
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Clés d’API"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Une clé donne à un programme l’accès à votre compte. Elle ne se montre qu’une fois."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel=Webhooks
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff33281a
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Webhooks"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Limpid appelle votre service quand un événement arrive."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="APPAREILS"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidCard
+        DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Rien à afficher pour l'instant"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff33281a
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Rien à afficher pour l'instant"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Aucun service distant n'est configuré. La session s'ouvrira localement, sans envoi de données."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="DONNÉES ET RGPD"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidCard
+        DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Exporter toutes mes données"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff33281a
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Exporter toutes mes données"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Ce service n’est pas configuré sur ce poste."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel="Supprimer mon compte"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff33281a
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Supprimer mon compte"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="La suppression du compte n’est pas disponible sur ce poste."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+    SizedBox maxHeight=24 minHeight=24
+    LimpidButton
+      Semantics semanticsLabel="Se déconnecter"
+        ConstrainedBox minHeight=40
+          Material radius=6 shape=RoundedRectangleBorder
+            CustomPaint
+              Padding padding=16,0,16,0
+                Row direction=horizontal
+                  Icon
+                    SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                      RichText fontSize=18 textColor=#ffffffff
+                  SizedBox maxWidth=8 minWidth=8
+                  Flexible
+                    Text text="Se déconnecter"
+                      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+    Stack
+
+@@ night
+SettingsScreen
+  PhysicalModel surface=#ff14110e
+    Text text="Réglages"
+      RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+    SizedBox maxHeight=20 minHeight=20
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="PROFIL"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidCard
+        DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel=Compte
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          LimpidAvatar
+                            Semantics semanticsLabel=Compte
+                              SizedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                                ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                                  DecoratedBox background=#ff2e2418 border="1 #ff4a3a22" shape=circle
+                                    Padding padding=1,1,1,1
+                                      Text text="C"
+                                        RichText fontSize=12.8 fontWeight=FontWeight.w600 textColor=#ffe0a460
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Compte"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Connectez-vous pour retrouver vos livres, même hors connexion."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="THÈME"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidCard
+        DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#fffaf8f4 border="1 #ff3a332a" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Papier"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#fff4ebd8 border="1 #ff3a332a" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Sépia"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox background=#ff2e2418 radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#ff14110e border="2 #ffe0a460" radius=6
+                            Padding padding=2,2,2,2
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Nuit"
+                            RichText fontSize=14 fontWeight=FontWeight.w600 textColor=#ffe0a460
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ffe0a460
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#ff000000 border="1 #ff3a332a" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Contraste élevé"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="ÉDITEUR"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidCard
+        DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Votre rythme"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#fff0ebe2
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Votre rythme"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="1500 mots par jour"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="SYNCHRONISATION"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidCard
+        DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel=Synchronisé
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff7fb093
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Synchronisé"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel=Réessayer
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#fff0ebe2
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Réessayer"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="SÉCURITÉ"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidCard
+        DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Double authentification"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#fff0ebe2
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Double authentification"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Un code à six chiffres est demandé à chaque connexion sur les formules Pro et Studio."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel="Clés d’API"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#fff0ebe2
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Clés d’API"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Une clé donne à un programme l’accès à votre compte. Elle ne se montre qu’une fois."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel=Webhooks
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#fff0ebe2
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Webhooks"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Limpid appelle votre service quand un événement arrive."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="APPAREILS"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidCard
+        DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Rien à afficher pour l'instant"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#fff0ebe2
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Rien à afficher pour l'instant"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Aucun service distant n'est configuré. La session s'ouvrira localement, sans envoi de données."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="DONNÉES ET RGPD"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidCard
+        DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Exporter toutes mes données"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#fff0ebe2
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Exporter toutes mes données"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Ce service n’est pas configuré sur ce poste."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel="Supprimer mon compte"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#fff0ebe2
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Supprimer mon compte"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="La suppression du compte n’est pas disponible sur ce poste."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+    SizedBox maxHeight=24 minHeight=24
+    LimpidButton
+      Semantics semanticsLabel="Se déconnecter"
+        ConstrainedBox minHeight=40
+          Material radius=6 shape=RoundedRectangleBorder
+            CustomPaint
+              Padding padding=16,0,16,0
+                Row direction=horizontal
+                  Icon
+                    SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                      RichText fontSize=18 textColor=#ff1a1207
+                  SizedBox maxWidth=8 minWidth=8
+                  Flexible
+                    Text text="Se déconnecter"
+                      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff1a1207
+    Stack
+
+@@ contrast
+SettingsScreen
+  PhysicalModel surface=#ff000000
+    Text text="Réglages"
+      RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ffffffff
+    SizedBox maxHeight=20 minHeight=20
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="PROFIL"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidCard
+        DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel=Compte
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          LimpidAvatar
+                            Semantics semanticsLabel=Compte
+                              SizedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                                ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                                  DecoratedBox background=#ff2a2013 border="1 #ff6b5223" shape=circle
+                                    Padding padding=1,1,1,1
+                                      Text text="C"
+                                        RichText fontSize=12.8 fontWeight=FontWeight.w600 textColor=#ffffb454
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Compte"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Connectez-vous pour retrouver vos livres, même hors connexion."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="THÈME"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidCard
+        DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#fffaf8f4 border="1 #ffffffff" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Papier"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#fff4ebd8 border="1 #ffffffff" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Sépia"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#ff14110e border="1 #ffffffff" radius=6
+                            Padding padding=1,1,1,1
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Nuit"
+                            RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+                        Padding padding=0,0,0,1
+                ConstrainedBox minHeight=48
+                  DecoratedBox background=#ff2a2013 radius=6
+                    Padding padding=12,0,12,0
+                      Row direction=horizontal
+                        ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                          DecoratedBox background=#ff000000 border="2 #ffffb454" radius=6
+                            Padding padding=2,2,2,2
+                        SizedBox maxWidth=12 minWidth=12
+                        Expanded
+                          Text text="Contraste élevé"
+                            RichText fontSize=14 fontWeight=FontWeight.w600 textColor=#ffffb454
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ffffb454
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="ÉDITEUR"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidCard
+        DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Votre rythme"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ffffffff
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Votre rythme"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="1500 mots par jour"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="SYNCHRONISATION"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidCard
+        DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel=Synchronisé
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ff6ed79b
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Synchronisé"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel=Réessayer
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ffffffff
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Réessayer"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="SÉCURITÉ"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidCard
+        DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Double authentification"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ffffffff
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Double authentification"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Un code à six chiffres est demandé à chaque connexion sur les formules Pro et Studio."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel="Clés d’API"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ffffffff
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Clés d’API"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Une clé donne à un programme l’accès à votre compte. Elle ne se montre qu’une fois."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel=Webhooks
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ffffffff
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Webhooks"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Limpid appelle votre service quand un événement arrive."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="APPAREILS"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidCard
+        DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Rien à afficher pour l'instant"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ffffffff
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Rien à afficher pour l'instant"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Aucun service distant n'est configuré. La session s'ouvrira localement, sans envoi de données."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+    SizedBox maxHeight=16 minHeight=16
+    Column direction=vertical
+      Padding padding=4,0,0,8
+        Text text="DONNÉES ET RGPD"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidCard
+        DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+          Padding padding=0,0,0,0
+            Column direction=vertical
+              Column direction=vertical
+                LimpidListTile
+                  Semantics semanticsLabel="Exporter toutes mes données"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ffffffff
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Exporter toutes mes données"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="Ce service n’est pas configuré sur ce poste."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=1 minHeight=1
+                  Padding padding=16,0,16,0
+                    ConstrainedBox maxHeight=1 minHeight=1
+                      DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+                        Padding padding=0,0,0,1
+                LimpidListTile
+                  Semantics semanticsLabel="Supprimer mon compte"
+                    CustomPaint
+                      Padding padding=16,12,16,12
+                        Row direction=horizontal
+                          Icon
+                            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                              RichText fontSize=20 textColor=#ffffffff
+                          SizedBox maxWidth=12 minWidth=12
+                          Expanded
+                            Column direction=vertical
+                              Text text="Supprimer mon compte"
+                                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              SizedBox maxHeight=2 minHeight=2
+                              Text text="La suppression du compte n’est pas disponible sur ce poste."
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+    SizedBox maxHeight=24 minHeight=24
+    LimpidButton
+      Semantics semanticsLabel="Se déconnecter"
+        ConstrainedBox minHeight=40
+          Material radius=6 shape=RoundedRectangleBorder
+            CustomPaint
+              Padding padding=16,0,16,0
+                Row direction=horizontal
+                  Icon
+                    SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                      RichText fontSize=18 textColor=#ff000000
+                  SizedBox maxWidth=8 minWidth=8
+                  Flexible
+                    Text text="Se déconnecter"
+                      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff000000
+    Stack
+

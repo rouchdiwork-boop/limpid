@@ -1,0 +1,59 @@
+# LimpidListTile
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidListTile
+  Semantics semanticsLabel="Les Heures de Cendre"
+    CustomPaint
+      Padding padding=16,12,16,12
+        Row direction=horizontal
+          Expanded
+            Column direction=vertical
+              Text text="Les Heures de Cendre"
+                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+              SizedBox maxHeight=2 minHeight=2
+              Text text="Ecriture"
+                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+
+@@ sepia
+LimpidListTile
+  Semantics semanticsLabel="Les Heures de Cendre"
+    CustomPaint
+      Padding padding=16,12,16,12
+        Row direction=horizontal
+          Expanded
+            Column direction=vertical
+              Text text="Les Heures de Cendre"
+                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+              SizedBox maxHeight=2 minHeight=2
+              Text text="Ecriture"
+                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+
+@@ night
+LimpidListTile
+  Semantics semanticsLabel="Les Heures de Cendre"
+    CustomPaint
+      Padding padding=16,12,16,12
+        Row direction=horizontal
+          Expanded
+            Column direction=vertical
+              Text text="Les Heures de Cendre"
+                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+              SizedBox maxHeight=2 minHeight=2
+              Text text="Ecriture"
+                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+
+@@ contrast
+LimpidListTile
+  Semantics semanticsLabel="Les Heures de Cendre"
+    CustomPaint
+      Padding padding=16,12,16,12
+        Row direction=horizontal
+          Expanded
+            Column direction=vertical
+              Text text="Les Heures de Cendre"
+                RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+              SizedBox maxHeight=2 minHeight=2
+              Text text="Ecriture"
+                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+

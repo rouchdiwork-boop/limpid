@@ -1,0 +1,39 @@
+# LimpidTag
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidTag
+  Semantics semanticsLabel=Manuscrit
+    DecoratedBox background=#ffe6ecef radius=4
+      Padding padding=8,2,8,2
+        Row direction=horizontal
+          Text text="Manuscrit"
+            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff2e5f7a
+
+@@ sepia
+LimpidTag
+  Semantics semanticsLabel=Manuscrit
+    DecoratedBox background=#ffe2e3db radius=4
+      Padding padding=8,2,8,2
+        Row direction=horizontal
+          Text text="Manuscrit"
+            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff28566f
+
+@@ night
+LimpidTag
+  Semantics semanticsLabel=Manuscrit
+    DecoratedBox background=#ff282b2b radius=4
+      Padding padding=8,2,8,2
+        Row direction=horizontal
+          Text text="Manuscrit"
+            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7fb3ce
+
+@@ contrast
+LimpidTag
+  Semantics semanticsLabel=Manuscrit
+    DecoratedBox background=#ff0f191d radius=4
+      Padding padding=8,2,8,2
+        Row direction=horizontal
+          Text text="Manuscrit"
+            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7fd4f5
+

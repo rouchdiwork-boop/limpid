@@ -1,0 +1,27 @@
+# LimpidMenu
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidMenu
+  Row direction=horizontal
+    Text text="Actions"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+
+@@ sepia
+LimpidMenu
+  Row direction=horizontal
+    Text text="Actions"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+
+@@ night
+LimpidMenu
+  Row direction=horizontal
+    Text text="Actions"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+
+@@ contrast
+LimpidMenu
+  Row direction=horizontal
+    Text text="Actions"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+

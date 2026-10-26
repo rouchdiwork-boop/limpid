@@ -1,0 +1,39 @@
+# LimpidCircularProgress
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidCircularProgress
+  Semantics semanticsValue=40%
+    SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+      CircularProgressIndicator
+        Semantics semanticsValue=40
+          ConstrainedBox minHeight=36 minWidth=36
+            CustomPaint
+
+@@ sepia
+LimpidCircularProgress
+  Semantics semanticsValue=40%
+    SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+      CircularProgressIndicator
+        Semantics semanticsValue=40
+          ConstrainedBox minHeight=36 minWidth=36
+            CustomPaint
+
+@@ night
+LimpidCircularProgress
+  Semantics semanticsValue=40%
+    SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+      CircularProgressIndicator
+        Semantics semanticsValue=40
+          ConstrainedBox minHeight=36 minWidth=36
+            CustomPaint
+
+@@ contrast
+LimpidCircularProgress
+  Semantics semanticsValue=40%
+    SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+      CircularProgressIndicator
+        Semantics semanticsValue=40
+          ConstrainedBox minHeight=36 minWidth=36
+            CustomPaint
+

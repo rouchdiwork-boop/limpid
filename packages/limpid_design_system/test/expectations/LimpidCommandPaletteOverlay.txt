@@ -1,0 +1,107 @@
+# LimpidCommandPaletteOverlay
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidCommandPaletteOverlay
+  Padding padding=24,24,24,24
+    CustomPaint
+      SizedBox maxWidth=560 minWidth=560
+        Column direction=vertical
+          Padding padding=16,16,16,16
+            ConstrainedBox minHeight=48 minWidth=48
+              Icon
+                SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                  RichText fontSize=18 textColor=#ff57504a
+            SizedBox maxHeight=0 maxWidth=0
+            CustomPaint
+          SizedBox maxHeight=1 minHeight=1
+            Padding padding=0,0,0,0
+              ConstrainedBox maxHeight=1 minHeight=1
+                DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+                  Padding padding=0,0,0,1
+          Flexible
+            Semantics semanticsLabel="Enregistrer le chapitre"
+              Padding padding=16,12,16,12
+                Row direction=horizontal
+                  Expanded
+                    Text text="Enregistrer le chapitre"
+                      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+
+@@ sepia
+LimpidCommandPaletteOverlay
+  Padding padding=24,24,24,24
+    CustomPaint
+      SizedBox maxWidth=560 minWidth=560
+        Column direction=vertical
+          Padding padding=16,16,16,16
+            ConstrainedBox minHeight=48 minWidth=48
+              Icon
+                SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                  RichText fontSize=18 textColor=#ff6b5c48
+            SizedBox maxHeight=0 maxWidth=0
+            CustomPaint
+          SizedBox maxHeight=1 minHeight=1
+            Padding padding=0,0,0,0
+              ConstrainedBox maxHeight=1 minHeight=1
+                DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+                  Padding padding=0,0,0,1
+          Flexible
+            Semantics semanticsLabel="Enregistrer le chapitre"
+              Padding padding=16,12,16,12
+                Row direction=horizontal
+                  Expanded
+                    Text text="Enregistrer le chapitre"
+                      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+
+@@ night
+LimpidCommandPaletteOverlay
+  Padding padding=24,24,24,24
+    CustomPaint
+      SizedBox maxWidth=560 minWidth=560
+        Column direction=vertical
+          Padding padding=16,16,16,16
+            ConstrainedBox minHeight=48 minWidth=48
+              Icon
+                SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                  RichText fontSize=18 textColor=#ffa79e92
+            SizedBox maxHeight=0 maxWidth=0
+            CustomPaint
+          SizedBox maxHeight=1 minHeight=1
+            Padding padding=0,0,0,0
+              ConstrainedBox maxHeight=1 minHeight=1
+                DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+                  Padding padding=0,0,0,1
+          Flexible
+            Semantics semanticsLabel="Enregistrer le chapitre"
+              Padding padding=16,12,16,12
+                Row direction=horizontal
+                  Expanded
+                    Text text="Enregistrer le chapitre"
+                      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+
+@@ contrast
+LimpidCommandPaletteOverlay
+  Padding padding=24,24,24,24
+    CustomPaint
+      SizedBox maxWidth=560 minWidth=560
+        Column direction=vertical
+          Padding padding=16,16,16,16
+            ConstrainedBox minHeight=48 minWidth=48
+              Icon
+                SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                  RichText fontSize=18 textColor=#ffffffff
+            SizedBox maxHeight=0 maxWidth=0
+            CustomPaint
+          SizedBox maxHeight=1 minHeight=1
+            Padding padding=0,0,0,0
+              ConstrainedBox maxHeight=1 minHeight=1
+                DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+                  Padding padding=0,0,0,1
+          Flexible
+            Semantics semanticsLabel="Enregistrer le chapitre"
+              Padding padding=16,12,16,12
+                Row direction=horizontal
+                  Expanded
+                    Text text="Enregistrer le chapitre"
+                      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+

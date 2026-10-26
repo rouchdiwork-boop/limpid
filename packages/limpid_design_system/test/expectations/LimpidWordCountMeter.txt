@@ -1,0 +1,63 @@
+# LimpidWordCountMeter
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidWordCountMeter
+  Semantics semanticsLabel="Objectif du jour" semanticsValue=60%
+    Column direction=vertical
+      Row direction=horizontal
+        Text text="Objectif du jour"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+        Text text="1200 / 2000"
+          RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff57504a
+      SizedBox maxHeight=6 minHeight=6
+      LinearProgressIndicator
+        Semantics semanticsValue=60
+          ConstrainedBox minHeight=4
+            CustomPaint
+
+@@ sepia
+LimpidWordCountMeter
+  Semantics semanticsLabel="Objectif du jour" semanticsValue=60%
+    Column direction=vertical
+      Row direction=horizontal
+        Text text="Objectif du jour"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+        Text text="1200 / 2000"
+          RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+      SizedBox maxHeight=6 minHeight=6
+      LinearProgressIndicator
+        Semantics semanticsValue=60
+          ConstrainedBox minHeight=4
+            CustomPaint
+
+@@ night
+LimpidWordCountMeter
+  Semantics semanticsLabel="Objectif du jour" semanticsValue=60%
+    Column direction=vertical
+      Row direction=horizontal
+        Text text="Objectif du jour"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+        Text text="1200 / 2000"
+          RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffa79e92
+      SizedBox maxHeight=6 minHeight=6
+      LinearProgressIndicator
+        Semantics semanticsValue=60
+          ConstrainedBox minHeight=4
+            CustomPaint
+
+@@ contrast
+LimpidWordCountMeter
+  Semantics semanticsLabel="Objectif du jour" semanticsValue=60%
+    Column direction=vertical
+      Row direction=horizontal
+        Text text="Objectif du jour"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+        Text text="1200 / 2000"
+          RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffffffff
+      SizedBox maxHeight=6 minHeight=6
+      LinearProgressIndicator
+        Semantics semanticsValue=60
+          ConstrainedBox minHeight=4
+            CustomPaint
+

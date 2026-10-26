@@ -1,0 +1,167 @@
+# LimpidStepper
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidStepper
+  Row direction=horizontal
+    Semantics semanticsLabel=Plan
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#1f3e6b4f border="1 #ff3e6b4f" shape=circle
+            Padding padding=1,1,1,1
+              Icon
+                SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                  RichText fontSize=16 textColor=#ff3e6b4f
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Plan"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+    Expanded
+      Padding padding=8,0,8,0
+        ConstrainedBox maxHeight=2 minHeight=2
+    Semantics semanticsLabel=Ecriture
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#fff6e7d6 border="2 #ff9c5518" shape=circle
+            Padding padding=2,2,2,2
+              Text text="2"
+                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff9c5518
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Ecriture"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff16130f
+    Expanded
+      Padding padding=8,0,8,0
+        ConstrainedBox maxHeight=2 minHeight=2
+    Semantics semanticsLabel=Relecture
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#fff2eee6 border="1 #ff857c72" shape=circle
+            Padding padding=1,1,1,1
+              Text text="3"
+                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Relecture"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+
+@@ sepia
+LimpidStepper
+  Row direction=horizontal
+    Semantics semanticsLabel=Plan
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#1f356043 border="1 #ff356043" shape=circle
+            Padding padding=1,1,1,1
+              Icon
+                SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                  RichText fontSize=16 textColor=#ff356043
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Plan"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+    Expanded
+      Padding padding=8,0,8,0
+        ConstrainedBox maxHeight=2 minHeight=2
+    Semantics semanticsLabel=Ecriture
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#fff0e0c8 border="2 #ff8e4a12" shape=circle
+            Padding padding=2,2,2,2
+              Text text="2"
+                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8e4a12
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Ecriture"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff33281a
+    Expanded
+      Padding padding=8,0,8,0
+        ConstrainedBox maxHeight=2 minHeight=2
+    Semantics semanticsLabel=Relecture
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#ffe9dec6 border="1 #ff8c7c64" shape=circle
+            Padding padding=1,1,1,1
+              Text text="3"
+                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Relecture"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+
+@@ night
+LimpidStepper
+  Row direction=horizontal
+    Semantics semanticsLabel=Plan
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#1f7fb093 border="1 #ff7fb093" shape=circle
+            Padding padding=1,1,1,1
+              Icon
+                SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                  RichText fontSize=16 textColor=#ff7fb093
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Plan"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+    Expanded
+      Padding padding=8,0,8,0
+        ConstrainedBox maxHeight=2 minHeight=2
+    Semantics semanticsLabel=Ecriture
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#ff2e2418 border="2 #ffe0a460" shape=circle
+            Padding padding=2,2,2,2
+              Text text="2"
+                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe0a460
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Ecriture"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#fff0ebe2
+    Expanded
+      Padding padding=8,0,8,0
+        ConstrainedBox maxHeight=2 minHeight=2
+    Semantics semanticsLabel=Relecture
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#ff0f0d0a border="1 #ff7a7268" shape=circle
+            Padding padding=1,1,1,1
+              Text text="3"
+                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Relecture"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+
+@@ contrast
+LimpidStepper
+  Row direction=horizontal
+    Semantics semanticsLabel=Plan
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#1f6ed79b border="1 #ff6ed79b" shape=circle
+            Padding padding=1,1,1,1
+              Icon
+                SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                  RichText fontSize=16 textColor=#ff6ed79b
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Plan"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+    Expanded
+      Padding padding=8,0,8,0
+        ConstrainedBox maxHeight=2 minHeight=2
+    Semantics semanticsLabel=Ecriture
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#ff2a2013 border="2 #ffffb454" shape=circle
+            Padding padding=2,2,2,2
+              Text text="2"
+                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffb454
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Ecriture"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+    Expanded
+      Padding padding=8,0,8,0
+        ConstrainedBox maxHeight=2 minHeight=2
+    Semantics semanticsLabel=Relecture
+      Column direction=vertical
+        ConstrainedBox maxHeight=28 maxWidth=28 minHeight=28 minWidth=28
+          DecoratedBox background=#ff000000 border="1 #ffe6e6e6" shape=circle
+            Padding padding=1,1,1,1
+              Text text="3"
+                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+        SizedBox maxHeight=8 minHeight=8
+        Text text="Relecture"
+          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+

@@ -225,12 +225,106 @@ transformation, so the components apply it explicitly with
 
 ---
 
+## Les temoins (les goldens)
+
+Le design system a **deux temoins**, et ils ne se ressemblent pas.
+
+| Temoin | Ou il tourne | Ce qu'il prouve |
+| --- | --- | --- |
+| **Structurel** | partout, CI comprise | le rendu n'a pas change : meme arbre, memes textes, memes couleurs, memes rayons, memes espacements |
+| **Image** (`matchesGoldenFile`) | sur la plateforme qui l'a genere | a quoi le widget ressemble reellement |
+
+### Pourquoi deux
+
+Une image PNG est **pixel pour pixel**. Le rendu du texte et
+l'anticrenelage different d'une plateforme a l'autre : une image generee
+sous Windows ne correspond pas sous Linux. Une telle image **ferait echouer
+la CI** — la CI tourne sur `ubuntu-latest`.
+
+Le temoin structurel, lui, ne mesure jamais le texte : il decrit l'**arbre
+de rendu** — les widgets, leurs textes, les couleurs resolues, les rayons,
+les espacements, les tailles declarees. La meme description est produite sur
+toutes les plateformes, et elle change des que le design system change.
+
+C'est donc le temoin structurel qui est le **contrat de la CI**. L'image
+est une **preuve pour l'auteur** : elle montre le widget, elle se lit, mais
+elle ne lie personne.
+
+### La forme du temoin structurel
+
+L'attente est un fichier **textuel**, une section par theme :
+
+```text
+@@ paper
+LimpidBadge
+  Semantics semanticsLabel="En cours"
+    DecoratedBox background=#ffe8edea border="1 #593e6b4f" radius=999
+      Padding padding=9,5,9,5
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+              RichText fontSize=14 textColor=#ff3e6b4f
+```
+
+Une ligne par noeud, deux espaces par niveau. Quand le rendu change, le
+rapport dit **le widget et la valeur qui ont change** :
+
+```text
+Le temoin structurel de « LimpidBadge » differe de l'attente (theme : paper).
+
+-       DecoratedBox background=#ffee0000 border="1 #593e6b4f" radius=999
++       DecoratedBox background=#ffe8edea border="1 #593e6b4f" radius=999
+```
+
+### Regenerer les attentes
+
+Quand le changement est **voulu**, on regenere :
+
+```bash
+cd packages/limpid_design_system
+flutter test --update-goldens   # les attentes ET les images
+```
+
+La commande regenere les deux temoins : les fichiers d'attente de
+`test/expectations/` et les images de `test/goldens/`. Les images ne sont
+generees que sur la plateforme qui les possede — sur une autre, le test
+d'image est **saute** (`skip: !Platform.isWindows`).
+
+Les ecrans de reference de l'application ont leurs propres temoins, dans
+`apps/limpid_app/test/` :
+
+```bash
+cd apps/limpid_app
+flutter test --update-goldens
+```
+
+### Les polices
+
+`flutter test` ne charge pas les polices declarees dans le `pubspec.yaml` :
+sans `loadGoldenFonts()`, l'image dessine des **rectangles** a la place du
+texte. Les tests d'image chargent donc les faces de l'application — et la
+police des icones du SDK — pour montrer la typographie reelle. Le temoin
+structurel, lui, n'en depend pas : il ne mesure jamais le texte.
+
+### Les ecrans de reference
+
+Les cinq ecrans de reference — le tableau de bord, la bibliotheque, l'ecran
+d'ecriture, la relecture et les reglages — sont rendus dans les quatre
+themes. Le test verifie que l'ecran rend **complet** : il tient dans la
+surface donnee, il ne deborde pas, et aucun texte n'est coupe. Une troncature
+**voulue** — le nom de l'auteur sur la couverture d'un livre — est toleree ;
+une troncature **subie** — un texte coupe sans points de suspension — est
+une erreur.
+
+---
+
 ## Development
 
 ```bash
 flutter pub get
 flutter analyze          # must report zero issue
-flutter test             # widget tests and token parity
+flutter test             # widget tests, token parity and the witnesses
+flutter test --update-goldens   # regenerates the expectations and the images
 flutter test tool/export_tokens.dart   # regenerates tokens.json
 dart format .
 ```
@@ -238,3 +332,8 @@ dart format .
 `tokens.json` is generated from the Dart constants — never edit it by hand.
 The parity test in `test/tokens_parity_test.dart` compares both sources and
 fails on any drift.
+
+The witnesses live in `test/golden/`: `widgets_structure_test.dart` holds the
+structural contract of the 48 covered widgets in the four themes, and
+`golden_widgets_image_test.dart` holds their images. The expectations are in
+`test/expectations/`, the images in `test/goldens/`.

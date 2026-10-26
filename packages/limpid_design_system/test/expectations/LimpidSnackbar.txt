@@ -1,0 +1,47 @@
+# LimpidSnackbar
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidSnackbar
+  Row direction=horizontal
+    Icon
+      SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+        RichText fontSize=20 textColor=#ffffffff
+    SizedBox maxWidth=12 minWidth=12
+    Expanded
+      Text text="Le chapitre est enregistre."
+        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+
+@@ sepia
+LimpidSnackbar
+  Row direction=horizontal
+    Icon
+      SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+        RichText fontSize=20 textColor=#ffffffff
+    SizedBox maxWidth=12 minWidth=12
+    Expanded
+      Text text="Le chapitre est enregistre."
+        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+
+@@ night
+LimpidSnackbar
+  Row direction=horizontal
+    Icon
+      SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+        RichText fontSize=20 textColor=#ff1a1207
+    SizedBox maxWidth=12 minWidth=12
+    Expanded
+      Text text="Le chapitre est enregistre."
+        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff1a1207
+
+@@ contrast
+LimpidSnackbar
+  Row direction=horizontal
+    Icon
+      SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+        RichText fontSize=20 textColor=#ff000000
+    SizedBox maxWidth=12 minWidth=12
+    Expanded
+      Text text="Le chapitre est enregistre."
+        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff000000
+

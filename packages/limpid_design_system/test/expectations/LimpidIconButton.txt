@@ -1,0 +1,47 @@
+# LimpidIconButton
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidIconButton
+  Semantics semanticsLabel=Supprimer
+    ConstrainedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+      Material radius=6 shape=RoundedRectangleBorder
+        CustomPaint
+          Padding padding=8,8,8,8
+            Icon
+              SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                RichText fontSize=20 textColor=#ff16130f
+
+@@ sepia
+LimpidIconButton
+  Semantics semanticsLabel=Supprimer
+    ConstrainedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+      Material radius=6 shape=RoundedRectangleBorder
+        CustomPaint
+          Padding padding=8,8,8,8
+            Icon
+              SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                RichText fontSize=20 textColor=#ff33281a
+
+@@ night
+LimpidIconButton
+  Semantics semanticsLabel=Supprimer
+    ConstrainedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+      Material radius=6 shape=RoundedRectangleBorder
+        CustomPaint
+          Padding padding=8,8,8,8
+            Icon
+              SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                RichText fontSize=20 textColor=#fff0ebe2
+
+@@ contrast
+LimpidIconButton
+  Semantics semanticsLabel=Supprimer
+    ConstrainedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+      Material radius=6 shape=RoundedRectangleBorder
+        CustomPaint
+          Padding padding=8,8,8,8
+            Icon
+              SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                RichText fontSize=20 textColor=#ffffffff
+

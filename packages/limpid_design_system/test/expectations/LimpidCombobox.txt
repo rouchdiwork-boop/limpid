@@ -1,0 +1,59 @@
+# LimpidCombobox
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidCombobox
+  Semantics semanticsLabel=Genre
+    Text text="Genre"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff57504a
+    Text text="Choisir un genre"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff857c72
+    ConstrainedBox minHeight=48 minWidth=48
+      Icon
+        SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+          RichText fontSize=18 textColor=#ff57504a
+    SizedBox maxHeight=0 maxWidth=0
+    CustomPaint
+
+@@ sepia
+LimpidCombobox
+  Semantics semanticsLabel=Genre
+    Text text="Genre"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+    Text text="Choisir un genre"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff8c7c64
+    ConstrainedBox minHeight=48 minWidth=48
+      Icon
+        SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+          RichText fontSize=18 textColor=#ff6b5c48
+    SizedBox maxHeight=0 maxWidth=0
+    CustomPaint
+
+@@ night
+LimpidCombobox
+  Semantics semanticsLabel=Genre
+    Text text="Genre"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffa79e92
+    Text text="Choisir un genre"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff7a7268
+    ConstrainedBox minHeight=48 minWidth=48
+      Icon
+        SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+          RichText fontSize=18 textColor=#ffa79e92
+    SizedBox maxHeight=0 maxWidth=0
+    CustomPaint
+
+@@ contrast
+LimpidCombobox
+  Semantics semanticsLabel=Genre
+    Text text="Genre"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+    Text text="Choisir un genre"
+      RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffe6e6e6
+    ConstrainedBox minHeight=48 minWidth=48
+      Icon
+        SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+          RichText fontSize=18 textColor=#ffffffff
+    SizedBox maxHeight=0 maxWidth=0
+    CustomPaint
+

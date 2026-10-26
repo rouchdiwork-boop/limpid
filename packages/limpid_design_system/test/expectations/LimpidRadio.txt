@@ -1,0 +1,39 @@
+# LimpidRadio
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidRadio
+  Semantics semanticsLabel=Brouillon
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        CustomPaint
+        Text text="Brouillon"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+
+@@ sepia
+LimpidRadio
+  Semantics semanticsLabel=Brouillon
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        CustomPaint
+        Text text="Brouillon"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+
+@@ night
+LimpidRadio
+  Semantics semanticsLabel=Brouillon
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        CustomPaint
+        Text text="Brouillon"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+
+@@ contrast
+LimpidRadio
+  Semantics semanticsLabel=Brouillon
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        CustomPaint
+        Text text="Brouillon"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+

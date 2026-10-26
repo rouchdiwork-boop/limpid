@@ -1,0 +1,27 @@
+# LimpidTooltip
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidTooltip
+  Icon
+    SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+      RichText fontSize=20 textColor=#ff16130f
+
+@@ sepia
+LimpidTooltip
+  Icon
+    SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+      RichText fontSize=20 textColor=#ff33281a
+
+@@ night
+LimpidTooltip
+  Icon
+    SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+      RichText fontSize=20 textColor=#fff0ebe2
+
+@@ contrast
+LimpidTooltip
+  Icon
+    SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+      RichText fontSize=20 textColor=#ffffffff
+

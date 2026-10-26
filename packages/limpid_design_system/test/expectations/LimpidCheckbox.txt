@@ -1,0 +1,39 @@
+# LimpidCheckbox
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidCheckbox
+  Semantics semanticsLabel="Chapitre termine"
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        CustomPaint
+        Text text="Chapitre termine"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+
+@@ sepia
+LimpidCheckbox
+  Semantics semanticsLabel="Chapitre termine"
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        CustomPaint
+        Text text="Chapitre termine"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+
+@@ night
+LimpidCheckbox
+  Semantics semanticsLabel="Chapitre termine"
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        CustomPaint
+        Text text="Chapitre termine"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+
+@@ contrast
+LimpidCheckbox
+  Semantics semanticsLabel="Chapitre termine"
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        CustomPaint
+        Text text="Chapitre termine"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+

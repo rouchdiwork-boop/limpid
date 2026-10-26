@@ -1,0 +1,87 @@
+# LimpidCharacterAvatar
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidCharacterAvatar
+  Semantics semanticsLabel="Ines Barreau, Archiviste"
+    Row direction=horizontal
+      Stack
+        LimpidAvatar
+          Semantics semanticsLabel="Ines Barreau"
+            SizedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+              ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                DecoratedBox background=#fff6e7d6 border="1 #ffe4c4a0" shape=circle
+                  Padding padding=1,1,1,1
+                    Text text="IB"
+                      RichText fontSize=12.8 fontWeight=FontWeight.w600 textColor=#ff9c5518
+        Positioned
+          ConstrainedBox maxHeight=10 maxWidth=10 minHeight=10 minWidth=10
+            DecoratedBox background=#ff3e6b4f border="2 #ffffffff" shape=circle
+              Padding padding=2,2,2,2
+      SizedBox maxWidth=8 minWidth=8
+      Text text="Ines Barreau"
+        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+
+@@ sepia
+LimpidCharacterAvatar
+  Semantics semanticsLabel="Ines Barreau, Archiviste"
+    Row direction=horizontal
+      Stack
+        LimpidAvatar
+          Semantics semanticsLabel="Ines Barreau"
+            SizedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+              ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                DecoratedBox background=#fff0e0c8 border="1 #ffdcbc93" shape=circle
+                  Padding padding=1,1,1,1
+                    Text text="IB"
+                      RichText fontSize=12.8 fontWeight=FontWeight.w600 textColor=#ff8e4a12
+        Positioned
+          ConstrainedBox maxHeight=10 maxWidth=10 minHeight=10 minWidth=10
+            DecoratedBox background=#ff356043 border="2 #fffbf6ea" shape=circle
+              Padding padding=2,2,2,2
+      SizedBox maxWidth=8 minWidth=8
+      Text text="Ines Barreau"
+        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+
+@@ night
+LimpidCharacterAvatar
+  Semantics semanticsLabel="Ines Barreau, Archiviste"
+    Row direction=horizontal
+      Stack
+        LimpidAvatar
+          Semantics semanticsLabel="Ines Barreau"
+            SizedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+              ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                DecoratedBox background=#ff2e2418 border="1 #ff4a3a22" shape=circle
+                  Padding padding=1,1,1,1
+                    Text text="IB"
+                      RichText fontSize=12.8 fontWeight=FontWeight.w600 textColor=#ffe0a460
+        Positioned
+          ConstrainedBox maxHeight=10 maxWidth=10 minHeight=10 minWidth=10
+            DecoratedBox background=#ff7fb093 border="2 #ff1c1915" shape=circle
+              Padding padding=2,2,2,2
+      SizedBox maxWidth=8 minWidth=8
+      Text text="Ines Barreau"
+        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+
+@@ contrast
+LimpidCharacterAvatar
+  Semantics semanticsLabel="Ines Barreau, Archiviste"
+    Row direction=horizontal
+      Stack
+        LimpidAvatar
+          Semantics semanticsLabel="Ines Barreau"
+            SizedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+              ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+                DecoratedBox background=#ff2a2013 border="1 #ff6b5223" shape=circle
+                  Padding padding=1,1,1,1
+                    Text text="IB"
+                      RichText fontSize=12.8 fontWeight=FontWeight.w600 textColor=#ffffb454
+        Positioned
+          ConstrainedBox maxHeight=10 maxWidth=10 minHeight=10 minWidth=10
+            DecoratedBox background=#ff6ed79b border="2 #ff000000" shape=circle
+              Padding padding=2,2,2,2
+      SizedBox maxWidth=8 minWidth=8
+      Text text="Ines Barreau"
+        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+

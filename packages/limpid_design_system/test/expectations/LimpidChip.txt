@@ -1,0 +1,43 @@
+# LimpidChip
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidChip
+  Semantics semanticsLabel=Polar
+    Material shape=StadiumBorder
+      CustomPaint
+        Padding padding=12,6,12,6
+          Row direction=horizontal
+            Text text="Polar"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff9c5518
+
+@@ sepia
+LimpidChip
+  Semantics semanticsLabel=Polar
+    Material shape=StadiumBorder
+      CustomPaint
+        Padding padding=12,6,12,6
+          Row direction=horizontal
+            Text text="Polar"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8e4a12
+
+@@ night
+LimpidChip
+  Semantics semanticsLabel=Polar
+    Material shape=StadiumBorder
+      CustomPaint
+        Padding padding=12,6,12,6
+          Row direction=horizontal
+            Text text="Polar"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe0a460
+
+@@ contrast
+LimpidChip
+  Semantics semanticsLabel=Polar
+    Material shape=StadiumBorder
+      CustomPaint
+        Padding padding=12,6,12,6
+          Row direction=horizontal
+            Text text="Polar"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffb454
+

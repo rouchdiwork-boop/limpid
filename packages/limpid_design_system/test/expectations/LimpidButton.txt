@@ -1,0 +1,51 @@
+# LimpidButton
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidButton
+  Semantics semanticsLabel=Enregistrer
+    ConstrainedBox minHeight=40
+      Material radius=6 shape=RoundedRectangleBorder
+        CustomPaint
+          Padding padding=16,0,16,0
+            Row direction=horizontal
+              Flexible
+                Text text="Enregistrer"
+                  RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+
+@@ sepia
+LimpidButton
+  Semantics semanticsLabel=Enregistrer
+    ConstrainedBox minHeight=40
+      Material radius=6 shape=RoundedRectangleBorder
+        CustomPaint
+          Padding padding=16,0,16,0
+            Row direction=horizontal
+              Flexible
+                Text text="Enregistrer"
+                  RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+
+@@ night
+LimpidButton
+  Semantics semanticsLabel=Enregistrer
+    ConstrainedBox minHeight=40
+      Material radius=6 shape=RoundedRectangleBorder
+        CustomPaint
+          Padding padding=16,0,16,0
+            Row direction=horizontal
+              Flexible
+                Text text="Enregistrer"
+                  RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff1a1207
+
+@@ contrast
+LimpidButton
+  Semantics semanticsLabel=Enregistrer
+    ConstrainedBox minHeight=40
+      Material radius=6 shape=RoundedRectangleBorder
+        CustomPaint
+          Padding padding=16,0,16,0
+            Row direction=horizontal
+              Flexible
+                Text text="Enregistrer"
+                  RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff000000
+

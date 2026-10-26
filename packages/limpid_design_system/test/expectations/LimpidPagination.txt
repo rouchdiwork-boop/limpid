@@ -1,0 +1,155 @@
+# LimpidPagination
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidPagination
+  Row direction=horizontal
+    Semantics semanticsLabel="Page précédente"
+      ConstrainedBox minHeight=44 minWidth=44
+        Material radius=6 shape=RoundedRectangleBorder
+          CustomPaint
+            Padding padding=8,8,8,8
+              Icon
+                SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                  RichText fontSize=20 textColor=#ff16130f
+    Semantics semanticsLabel="Page 1"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="1"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+    Semantics semanticsLabel="Page 2"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="2"
+              RichText fontSize=12 fontWeight=FontWeight.w600 textColor=#ff9c5518
+    Semantics semanticsLabel="Page 3"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="3"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+    Semantics semanticsLabel="Page suivante"
+      ConstrainedBox minHeight=44 minWidth=44
+        Material radius=6 shape=RoundedRectangleBorder
+          CustomPaint
+            Padding padding=8,8,8,8
+              Icon
+                SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                  RichText fontSize=20 textColor=#ff16130f
+
+@@ sepia
+LimpidPagination
+  Row direction=horizontal
+    Semantics semanticsLabel="Page précédente"
+      ConstrainedBox minHeight=44 minWidth=44
+        Material radius=6 shape=RoundedRectangleBorder
+          CustomPaint
+            Padding padding=8,8,8,8
+              Icon
+                SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                  RichText fontSize=20 textColor=#ff33281a
+    Semantics semanticsLabel="Page 1"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="1"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+    Semantics semanticsLabel="Page 2"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="2"
+              RichText fontSize=12 fontWeight=FontWeight.w600 textColor=#ff8e4a12
+    Semantics semanticsLabel="Page 3"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="3"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+    Semantics semanticsLabel="Page suivante"
+      ConstrainedBox minHeight=44 minWidth=44
+        Material radius=6 shape=RoundedRectangleBorder
+          CustomPaint
+            Padding padding=8,8,8,8
+              Icon
+                SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                  RichText fontSize=20 textColor=#ff33281a
+
+@@ night
+LimpidPagination
+  Row direction=horizontal
+    Semantics semanticsLabel="Page précédente"
+      ConstrainedBox minHeight=44 minWidth=44
+        Material radius=6 shape=RoundedRectangleBorder
+          CustomPaint
+            Padding padding=8,8,8,8
+              Icon
+                SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                  RichText fontSize=20 textColor=#fff0ebe2
+    Semantics semanticsLabel="Page 1"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="1"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+    Semantics semanticsLabel="Page 2"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="2"
+              RichText fontSize=12 fontWeight=FontWeight.w600 textColor=#ffe0a460
+    Semantics semanticsLabel="Page 3"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="3"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+    Semantics semanticsLabel="Page suivante"
+      ConstrainedBox minHeight=44 minWidth=44
+        Material radius=6 shape=RoundedRectangleBorder
+          CustomPaint
+            Padding padding=8,8,8,8
+              Icon
+                SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                  RichText fontSize=20 textColor=#fff0ebe2
+
+@@ contrast
+LimpidPagination
+  Row direction=horizontal
+    Semantics semanticsLabel="Page précédente"
+      ConstrainedBox minHeight=44 minWidth=44
+        Material radius=6 shape=RoundedRectangleBorder
+          CustomPaint
+            Padding padding=8,8,8,8
+              Icon
+                SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                  RichText fontSize=20 textColor=#ffffffff
+    Semantics semanticsLabel="Page 1"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="1"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+    Semantics semanticsLabel="Page 2"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="2"
+              RichText fontSize=12 fontWeight=FontWeight.w600 textColor=#ffffb454
+    Semantics semanticsLabel="Page 3"
+      Padding padding=2,0,2,0
+        CustomPaint
+          ConstrainedBox minHeight=44 minWidth=44
+            Text text="3"
+              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+    Semantics semanticsLabel="Page suivante"
+      ConstrainedBox minHeight=44 minWidth=44
+        Material radius=6 shape=RoundedRectangleBorder
+          CustomPaint
+            Padding padding=8,8,8,8
+              Icon
+                SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+                  RichText fontSize=20 textColor=#ffffffff
+

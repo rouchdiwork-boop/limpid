@@ -1,0 +1,43 @@
+# LimpidSwitch
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidSwitch
+  Semantics semanticsLabel=Synchronisation
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        Text text="Synchronisation"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff16130f
+        Opacity opacity=1
+          CustomPaint
+
+@@ sepia
+LimpidSwitch
+  Semantics semanticsLabel=Synchronisation
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        Text text="Synchronisation"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ff33281a
+        Opacity opacity=1
+          CustomPaint
+
+@@ night
+LimpidSwitch
+  Semantics semanticsLabel=Synchronisation
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        Text text="Synchronisation"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+        Opacity opacity=1
+          CustomPaint
+
+@@ contrast
+LimpidSwitch
+  Semantics semanticsLabel=Synchronisation
+    Padding padding=0,0,0,0
+      Padding padding=0,0,0,0
+        Text text="Synchronisation"
+          RichText fontSize=16 fontWeight=FontWeight.w400 textColor=#ffffffff
+        Opacity opacity=1
+          CustomPaint
+

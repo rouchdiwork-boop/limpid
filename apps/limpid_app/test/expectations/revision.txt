@@ -1,0 +1,583 @@
+# revision
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+RevisionPanel
+  Column direction=vertical
+    Padding padding=16,12,16,8
+      Row direction=horizontal
+        Icon
+          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+            RichText fontSize=16 textColor=#ff35407e
+        SizedBox maxWidth=8 minWidth=8
+        Expanded
+          Text text="Révision"
+            RichText fontSize=15 fontWeight=FontWeight.w600 textColor=#ff16130f
+        LimpidBadge
+          Semantics semanticsLabel=1
+            DecoratedBox background=#ffe6ecef border="1 #592e5f7a" radius=999
+              Padding padding=9,5,9,5
+                Row direction=horizontal
+                  Icon
+                    SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                      RichText fontSize=14 textColor=#ff2e5f7a
+                  SizedBox maxWidth=6 minWidth=6
+                  Flexible
+                    Text text="1"
+                      RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff2e5f7a
+    SizedBox maxHeight=0 maxWidth=0
+    SizedBox maxHeight=40 minHeight=40
+      Padding padding=0,0,12,0
+        Row direction=horizontal
+          LimpidAvatar
+            Semantics semanticsLabel="Ines Barreau"
+              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                  DecoratedBox background=#fff6e7d6 border="1 #ffe4c4a0" shape=circle
+                    Padding padding=1,1,1,1
+                      Text text="IB"
+                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ff9c5518
+          SizedBox maxWidth=6 minWidth=6
+          LimpidBadge
+            Semantics semanticsLabel=Propriétaire
+              DecoratedBox background=#ffebeae9 border="1 #5957504a" radius=999
+                Padding padding=9,5,9,5
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                        RichText fontSize=14 textColor=#ff57504a
+                    SizedBox maxWidth=6 minWidth=6
+                    Flexible
+                      Text text="Propriétaire"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+      Padding padding=0,0,12,0
+        Row direction=horizontal
+          LimpidAvatar
+            Semantics semanticsLabel="Thomas Derval"
+              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                  DecoratedBox background=#fff6e7d6 border="1 #ffe4c4a0" shape=circle
+                    Padding padding=1,1,1,1
+                      Text text="TD"
+                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ff9c5518
+          SizedBox maxWidth=6 minWidth=6
+          LimpidBadge
+            Semantics semanticsLabel=Bêta-lecteur
+              DecoratedBox background=#ffebeae9 border="1 #5957504a" radius=999
+                Padding padding=9,5,9,5
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                        RichText fontSize=14 textColor=#ff57504a
+                    SizedBox maxWidth=6 minWidth=6
+                    Flexible
+                      Text text="Bêta-lecteur"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+    SizedBox maxHeight=1 minHeight=1
+      Padding padding=0,0,0,0
+        ConstrainedBox maxHeight=1 minHeight=1
+          DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+            Padding padding=0,0,0,1
+    Expanded
+      Semantics semanticsLabel=auteur-2
+        PhysicalModel surface=#ffffffff
+          DecoratedBox border="1 #ffe7e1d6" radius=6
+            Padding padding=9,9,9,9
+              Column direction=vertical
+                LimpidCommentThread
+                  DecoratedBox background=#fff2eee6 border="1 #ffe7e1d6" radius=6
+                    Padding padding=13,13,13,13
+                      Column direction=vertical
+                        Row direction=horizontal
+                          LimpidAvatar
+                            Semantics semanticsLabel=auteur-2
+                              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                                  DecoratedBox background=#fff6e7d6 border="1 #ffe4c4a0" shape=circle
+                                    Padding padding=1,1,1,1
+                                      Text text="A"
+                                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ff9c5518
+                          SizedBox maxWidth=8 minWidth=8
+                          Expanded
+                            Text text="auteur-2"
+                              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+                          Text text="20 oct. 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+                        SizedBox maxHeight=8 minHeight=8
+                        Text text="Ce sel est deja pose au chapitre I"
+                          RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+                SizedBox maxHeight=8 minHeight=8
+                Row direction=horizontal
+                  Expanded
+                    LimpidTextField
+                      Text text="Votre réponse"
+                        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff857c72
+                      SizedBox maxHeight=0 maxWidth=0
+                      CustomPaint
+                  SizedBox maxWidth=8 minWidth=8
+                  LimpidButton
+                    Semantics semanticsLabel=Répondre
+                      ConstrainedBox minHeight=32
+                        Material radius=6 shape=RoundedRectangleBorder
+                          CustomPaint
+                            Padding padding=12,0,12,0
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                    RichText fontSize=16 textColor=#ff857c72
+                                SizedBox maxWidth=8 minWidth=8
+                                Flexible
+                                  Text text="Répondre"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+                SizedBox maxHeight=4 minHeight=4
+                LimpidButton
+                  Semantics semanticsLabel="Résoudre le fil"
+                    ConstrainedBox minHeight=32
+                      Material radius=6 shape=RoundedRectangleBorder
+                        CustomPaint
+                          Padding padding=12,0,12,0
+                            Row direction=horizontal
+                              Icon
+                                SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                  RichText fontSize=16 textColor=#ff9c5518
+                              SizedBox maxWidth=8 minWidth=8
+                              Flexible
+                                Text text="Résoudre le fil"
+                                  RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff9c5518
+      SizedBox maxHeight=8 minHeight=8
+
+@@ sepia
+RevisionPanel
+  Column direction=vertical
+    Padding padding=16,12,16,8
+      Row direction=horizontal
+        Icon
+          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+            RichText fontSize=16 textColor=#ff2f3a72
+        SizedBox maxWidth=8 minWidth=8
+        Expanded
+          Text text="Révision"
+            RichText fontSize=15 fontWeight=FontWeight.w600 textColor=#ff33281a
+        LimpidBadge
+          Semantics semanticsLabel=1
+            DecoratedBox background=#ffe2e3db border="1 #5928566f" radius=999
+              Padding padding=9,5,9,5
+                Row direction=horizontal
+                  Icon
+                    SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                      RichText fontSize=14 textColor=#ff28566f
+                  SizedBox maxWidth=6 minWidth=6
+                  Flexible
+                    Text text="1"
+                      RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff28566f
+    SizedBox maxHeight=0 maxWidth=0
+    SizedBox maxHeight=40 minHeight=40
+      Padding padding=0,0,12,0
+        Row direction=horizontal
+          LimpidAvatar
+            Semantics semanticsLabel="Ines Barreau"
+              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                  DecoratedBox background=#fff0e0c8 border="1 #ffdcbc93" shape=circle
+                    Padding padding=1,1,1,1
+                      Text text="IB"
+                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ff8e4a12
+          SizedBox maxWidth=6 minWidth=6
+          LimpidBadge
+            Semantics semanticsLabel=Propriétaire
+              DecoratedBox background=#ffeae4d7 border="1 #596b5c48" radius=999
+                Padding padding=9,5,9,5
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                        RichText fontSize=14 textColor=#ff6b5c48
+                    SizedBox maxWidth=6 minWidth=6
+                    Flexible
+                      Text text="Propriétaire"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+      Padding padding=0,0,12,0
+        Row direction=horizontal
+          LimpidAvatar
+            Semantics semanticsLabel="Thomas Derval"
+              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                  DecoratedBox background=#fff0e0c8 border="1 #ffdcbc93" shape=circle
+                    Padding padding=1,1,1,1
+                      Text text="TD"
+                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ff8e4a12
+          SizedBox maxWidth=6 minWidth=6
+          LimpidBadge
+            Semantics semanticsLabel=Bêta-lecteur
+              DecoratedBox background=#ffeae4d7 border="1 #596b5c48" radius=999
+                Padding padding=9,5,9,5
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                        RichText fontSize=14 textColor=#ff6b5c48
+                    SizedBox maxWidth=6 minWidth=6
+                    Flexible
+                      Text text="Bêta-lecteur"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+    SizedBox maxHeight=1 minHeight=1
+      Padding padding=0,0,0,0
+        ConstrainedBox maxHeight=1 minHeight=1
+          DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+            Padding padding=0,0,0,1
+    Expanded
+      Semantics semanticsLabel=auteur-2
+        PhysicalModel surface=#fffbf6ea
+          DecoratedBox border="1 #ffdfd3b8" radius=6
+            Padding padding=9,9,9,9
+              Column direction=vertical
+                LimpidCommentThread
+                  DecoratedBox background=#ffe9dec6 border="1 #ffdfd3b8" radius=6
+                    Padding padding=13,13,13,13
+                      Column direction=vertical
+                        Row direction=horizontal
+                          LimpidAvatar
+                            Semantics semanticsLabel=auteur-2
+                              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                                  DecoratedBox background=#fff0e0c8 border="1 #ffdcbc93" shape=circle
+                                    Padding padding=1,1,1,1
+                                      Text text="A"
+                                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ff8e4a12
+                          SizedBox maxWidth=8 minWidth=8
+                          Expanded
+                            Text text="auteur-2"
+                              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+                          Text text="20 oct. 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+                        SizedBox maxHeight=8 minHeight=8
+                        Text text="Ce sel est deja pose au chapitre I"
+                          RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+                SizedBox maxHeight=8 minHeight=8
+                Row direction=horizontal
+                  Expanded
+                    LimpidTextField
+                      Text text="Votre réponse"
+                        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff8c7c64
+                      SizedBox maxHeight=0 maxWidth=0
+                      CustomPaint
+                  SizedBox maxWidth=8 minWidth=8
+                  LimpidButton
+                    Semantics semanticsLabel=Répondre
+                      ConstrainedBox minHeight=32
+                        Material radius=6 shape=RoundedRectangleBorder
+                          CustomPaint
+                            Padding padding=12,0,12,0
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                    RichText fontSize=16 textColor=#ff8c7c64
+                                SizedBox maxWidth=8 minWidth=8
+                                Flexible
+                                  Text text="Répondre"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+                SizedBox maxHeight=4 minHeight=4
+                LimpidButton
+                  Semantics semanticsLabel="Résoudre le fil"
+                    ConstrainedBox minHeight=32
+                      Material radius=6 shape=RoundedRectangleBorder
+                        CustomPaint
+                          Padding padding=12,0,12,0
+                            Row direction=horizontal
+                              Icon
+                                SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                  RichText fontSize=16 textColor=#ff8e4a12
+                              SizedBox maxWidth=8 minWidth=8
+                              Flexible
+                                Text text="Résoudre le fil"
+                                  RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8e4a12
+      SizedBox maxHeight=8 minHeight=8
+
+@@ night
+RevisionPanel
+  Column direction=vertical
+    Padding padding=16,12,16,8
+      Row direction=horizontal
+        Icon
+          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+            RichText fontSize=16 textColor=#ff9ba4e8
+        SizedBox maxWidth=8 minWidth=8
+        Expanded
+          Text text="Révision"
+            RichText fontSize=15 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+        LimpidBadge
+          Semantics semanticsLabel=1
+            DecoratedBox background=#ff282b2b border="1 #597fb3ce" radius=999
+              Padding padding=9,5,9,5
+                Row direction=horizontal
+                  Icon
+                    SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                      RichText fontSize=14 textColor=#ff7fb3ce
+                  SizedBox maxWidth=6 minWidth=6
+                  Flexible
+                    Text text="1"
+                      RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7fb3ce
+    SizedBox maxHeight=0 maxWidth=0
+    SizedBox maxHeight=40 minHeight=40
+      Padding padding=0,0,12,0
+        Row direction=horizontal
+          LimpidAvatar
+            Semantics semanticsLabel="Ines Barreau"
+              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                  DecoratedBox background=#ff2e2418 border="1 #ff4a3a22" shape=circle
+                    Padding padding=1,1,1,1
+                      Text text="IB"
+                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ffe0a460
+          SizedBox maxWidth=6 minWidth=6
+          LimpidBadge
+            Semantics semanticsLabel=Propriétaire
+              DecoratedBox background=#ff2d2924 border="1 #59a79e92" radius=999
+                Padding padding=9,5,9,5
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                        RichText fontSize=14 textColor=#ffa79e92
+                    SizedBox maxWidth=6 minWidth=6
+                    Flexible
+                      Text text="Propriétaire"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+      Padding padding=0,0,12,0
+        Row direction=horizontal
+          LimpidAvatar
+            Semantics semanticsLabel="Thomas Derval"
+              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                  DecoratedBox background=#ff2e2418 border="1 #ff4a3a22" shape=circle
+                    Padding padding=1,1,1,1
+                      Text text="TD"
+                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ffe0a460
+          SizedBox maxWidth=6 minWidth=6
+          LimpidBadge
+            Semantics semanticsLabel=Bêta-lecteur
+              DecoratedBox background=#ff2d2924 border="1 #59a79e92" radius=999
+                Padding padding=9,5,9,5
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                        RichText fontSize=14 textColor=#ffa79e92
+                    SizedBox maxWidth=6 minWidth=6
+                    Flexible
+                      Text text="Bêta-lecteur"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+    SizedBox maxHeight=1 minHeight=1
+      Padding padding=0,0,0,0
+        ConstrainedBox maxHeight=1 minHeight=1
+          DecoratedBox border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+            Padding padding=0,0,0,1
+    Expanded
+      Semantics semanticsLabel=auteur-2
+        PhysicalModel surface=#ff1c1915
+          DecoratedBox border="1 #ff2b261f" radius=6
+            Padding padding=9,9,9,9
+              Column direction=vertical
+                LimpidCommentThread
+                  DecoratedBox background=#ff0f0d0a border="1 #ff2b261f" radius=6
+                    Padding padding=13,13,13,13
+                      Column direction=vertical
+                        Row direction=horizontal
+                          LimpidAvatar
+                            Semantics semanticsLabel=auteur-2
+                              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                                  DecoratedBox background=#ff2e2418 border="1 #ff4a3a22" shape=circle
+                                    Padding padding=1,1,1,1
+                                      Text text="A"
+                                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ffe0a460
+                          SizedBox maxWidth=8 minWidth=8
+                          Expanded
+                            Text text="auteur-2"
+                              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+                          Text text="20 oct. 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+                        SizedBox maxHeight=8 minHeight=8
+                        Text text="Ce sel est deja pose au chapitre I"
+                          RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                SizedBox maxHeight=8 minHeight=8
+                Row direction=horizontal
+                  Expanded
+                    LimpidTextField
+                      Text text="Votre réponse"
+                        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff7a7268
+                      SizedBox maxHeight=0 maxWidth=0
+                      CustomPaint
+                  SizedBox maxWidth=8 minWidth=8
+                  LimpidButton
+                    Semantics semanticsLabel=Répondre
+                      ConstrainedBox minHeight=32
+                        Material radius=6 shape=RoundedRectangleBorder
+                          CustomPaint
+                            Padding padding=12,0,12,0
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                    RichText fontSize=16 textColor=#ff7a7268
+                                SizedBox maxWidth=8 minWidth=8
+                                Flexible
+                                  Text text="Répondre"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+                SizedBox maxHeight=4 minHeight=4
+                LimpidButton
+                  Semantics semanticsLabel="Résoudre le fil"
+                    ConstrainedBox minHeight=32
+                      Material radius=6 shape=RoundedRectangleBorder
+                        CustomPaint
+                          Padding padding=12,0,12,0
+                            Row direction=horizontal
+                              Icon
+                                SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                  RichText fontSize=16 textColor=#ffe0a460
+                              SizedBox maxWidth=8 minWidth=8
+                              Flexible
+                                Text text="Résoudre le fil"
+                                  RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe0a460
+      SizedBox maxHeight=8 minHeight=8
+
+@@ contrast
+RevisionPanel
+  Column direction=vertical
+    Padding padding=16,12,16,8
+      Row direction=horizontal
+        Icon
+          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+            RichText fontSize=16 textColor=#ffaeb6f5
+        SizedBox maxWidth=8 minWidth=8
+        Expanded
+          Text text="Révision"
+            RichText fontSize=15 fontWeight=FontWeight.w600 textColor=#ffffffff
+        LimpidBadge
+          Semantics semanticsLabel=1
+            DecoratedBox background=#ff0f191d border="1 #597fd4f5" radius=999
+              Padding padding=9,5,9,5
+                Row direction=horizontal
+                  Icon
+                    SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                      RichText fontSize=14 textColor=#ff7fd4f5
+                  SizedBox maxWidth=6 minWidth=6
+                  Flexible
+                    Text text="1"
+                      RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7fd4f5
+    SizedBox maxHeight=0 maxWidth=0
+    SizedBox maxHeight=40 minHeight=40
+      Padding padding=0,0,12,0
+        Row direction=horizontal
+          LimpidAvatar
+            Semantics semanticsLabel="Ines Barreau"
+              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                  DecoratedBox background=#ff2a2013 border="1 #ff6b5223" shape=circle
+                    Padding padding=1,1,1,1
+                      Text text="IB"
+                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ffffb454
+          SizedBox maxWidth=6 minWidth=6
+          LimpidBadge
+            Semantics semanticsLabel=Propriétaire
+              DecoratedBox background=#ff1f1f1f border="1 #59ffffff" radius=999
+                Padding padding=9,5,9,5
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                        RichText fontSize=14 textColor=#ffffffff
+                    SizedBox maxWidth=6 minWidth=6
+                    Flexible
+                      Text text="Propriétaire"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+      Padding padding=0,0,12,0
+        Row direction=horizontal
+          LimpidAvatar
+            Semantics semanticsLabel="Thomas Derval"
+              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                  DecoratedBox background=#ff2a2013 border="1 #ff6b5223" shape=circle
+                    Padding padding=1,1,1,1
+                      Text text="TD"
+                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ffffb454
+          SizedBox maxWidth=6 minWidth=6
+          LimpidBadge
+            Semantics semanticsLabel=Bêta-lecteur
+              DecoratedBox background=#ff1f1f1f border="1 #59ffffff" radius=999
+                Padding padding=9,5,9,5
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                        RichText fontSize=14 textColor=#ffffffff
+                    SizedBox maxWidth=6 minWidth=6
+                    Flexible
+                      Text text="Bêta-lecteur"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+    SizedBox maxHeight=1 minHeight=1
+      Padding padding=0,0,0,0
+        ConstrainedBox maxHeight=1 minHeight=1
+          DecoratedBox border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+            Padding padding=0,0,0,1
+    Expanded
+      Semantics semanticsLabel=auteur-2
+        PhysicalModel surface=#ff000000
+          DecoratedBox border="1 #ffffffff" radius=6
+            Padding padding=9,9,9,9
+              Column direction=vertical
+                LimpidCommentThread
+                  DecoratedBox background=#ff000000 border="1 #ffffffff" radius=6
+                    Padding padding=13,13,13,13
+                      Column direction=vertical
+                        Row direction=horizontal
+                          LimpidAvatar
+                            Semantics semanticsLabel=auteur-2
+                              SizedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                                ConstrainedBox maxHeight=24 maxWidth=24 minHeight=24 minWidth=24
+                                  DecoratedBox background=#ff2a2013 border="1 #ff6b5223" shape=circle
+                                    Padding padding=1,1,1,1
+                                      Text text="A"
+                                        RichText fontSize=9.6 fontWeight=FontWeight.w600 textColor=#ffffb454
+                          SizedBox maxWidth=8 minWidth=8
+                          Expanded
+                            Text text="auteur-2"
+                              RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                          Text text="20 oct. 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+                        SizedBox maxHeight=8 minHeight=8
+                        Text text="Ce sel est deja pose au chapitre I"
+                          RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+                SizedBox maxHeight=8 minHeight=8
+                Row direction=horizontal
+                  Expanded
+                    LimpidTextField
+                      Text text="Votre réponse"
+                        RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffe6e6e6
+                      SizedBox maxHeight=0 maxWidth=0
+                      CustomPaint
+                  SizedBox maxWidth=8 minWidth=8
+                  LimpidButton
+                    Semantics semanticsLabel=Répondre
+                      ConstrainedBox minHeight=32
+                        Material radius=6 shape=RoundedRectangleBorder
+                          CustomPaint
+                            Padding padding=12,0,12,0
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                    RichText fontSize=16 textColor=#ffe6e6e6
+                                SizedBox maxWidth=8 minWidth=8
+                                Flexible
+                                  Text text="Répondre"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+                SizedBox maxHeight=4 minHeight=4
+                LimpidButton
+                  Semantics semanticsLabel="Résoudre le fil"
+                    ConstrainedBox minHeight=32
+                      Material radius=6 shape=RoundedRectangleBorder
+                        CustomPaint
+                          Padding padding=12,0,12,0
+                            Row direction=horizontal
+                              Icon
+                                SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                  RichText fontSize=16 textColor=#ffffb454
+                              SizedBox maxWidth=8 minWidth=8
+                              Flexible
+                                Text text="Résoudre le fil"
+                                  RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffb454
+      SizedBox maxHeight=8 minHeight=8
+

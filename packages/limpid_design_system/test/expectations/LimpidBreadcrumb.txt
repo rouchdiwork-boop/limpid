@@ -1,0 +1,59 @@
+# LimpidBreadcrumb
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidBreadcrumb
+  Row direction=horizontal
+    Semantics semanticsLabel=Bibliotheque
+      Text text="Bibliotheque"
+        RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff9c5518
+    Icon
+      SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+        RichText fontSize=16 textColor=#ff857c72
+    SizedBox maxWidth=4 minWidth=4
+    Semantics semanticsLabel="Les Heures de Cendre"
+      Text text="Les Heures de Cendre"
+        RichText fontSize=13 fontWeight=FontWeight.w600 textColor=#ff16130f
+
+@@ sepia
+LimpidBreadcrumb
+  Row direction=horizontal
+    Semantics semanticsLabel=Bibliotheque
+      Text text="Bibliotheque"
+        RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff8e4a12
+    Icon
+      SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+        RichText fontSize=16 textColor=#ff8c7c64
+    SizedBox maxWidth=4 minWidth=4
+    Semantics semanticsLabel="Les Heures de Cendre"
+      Text text="Les Heures de Cendre"
+        RichText fontSize=13 fontWeight=FontWeight.w600 textColor=#ff33281a
+
+@@ night
+LimpidBreadcrumb
+  Row direction=horizontal
+    Semantics semanticsLabel=Bibliotheque
+      Text text="Bibliotheque"
+        RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffe0a460
+    Icon
+      SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+        RichText fontSize=16 textColor=#ff7a7268
+    SizedBox maxWidth=4 minWidth=4
+    Semantics semanticsLabel="Les Heures de Cendre"
+      Text text="Les Heures de Cendre"
+        RichText fontSize=13 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+
+@@ contrast
+LimpidBreadcrumb
+  Row direction=horizontal
+    Semantics semanticsLabel=Bibliotheque
+      Text text="Bibliotheque"
+        RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffb454
+    Icon
+      SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+        RichText fontSize=16 textColor=#ffe6e6e6
+    SizedBox maxWidth=4 minWidth=4
+    Semantics semanticsLabel="Les Heures de Cendre"
+      Text text="Les Heures de Cendre"
+        RichText fontSize=13 fontWeight=FontWeight.w600 textColor=#ffffffff
+

@@ -1,0 +1,1887 @@
+# dashboard
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+DashboardScreen
+  PhysicalModel surface=#fffaf8f4
+    Row direction=horizontal
+      Expanded
+        Column direction=vertical
+          Text text="Bureau"
+            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff16130f
+          SizedBox maxHeight=4 minHeight=4
+          Text text="Bonjour Ines Barreau"
+            RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+      SizedBox maxWidth=16 minWidth=16
+      LimpidIconButton
+        Semantics semanticsLabel=Rechercher
+          ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+            Material radius=6 shape=RoundedRectangleBorder
+              CustomPaint
+                Padding padding=8,8,8,8
+                  Icon
+                    SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                      RichText fontSize=16 textColor=#ff16130f
+      SizedBox maxWidth=8 minWidth=8
+      LimpidButton
+        Semantics semanticsLabel="Nouveau projet"
+          ConstrainedBox minHeight=32
+            Material radius=6 shape=RoundedRectangleBorder
+              CustomPaint
+                Padding padding=12,0,12,0
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                        RichText fontSize=16 textColor=#ffffffff
+                    SizedBox maxWidth=8 minWidth=8
+                    Flexible
+                      Text text="Nouveau projet"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+    SizedBox maxHeight=20 minHeight=20
+    Column direction=vertical
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Mots aujourd'hui"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ff16130f
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="sur 1 500 · 8 %"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Série en cours"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="7"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ff16130f
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="jours consécutifs"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Manuscrit"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ff16130f
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="2 %"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Cette semaine"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ff16130f
+      SizedBox maxHeight=20 minHeight=20
+      Row direction=horizontal
+        Expanded
+          Column direction=vertical
+            LimpidCard
+              DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Reprendre l'écriture"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff16130f
+                      SizedBox maxWidth=12 minWidth=12
+                      LimpidBadge
+                        Semantics semanticsLabel="En écriture"
+                          DecoratedBox background=#fff1ece2 border="1 #598a6410" radius=999
+                            Padding padding=9,5,9,5
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                                    RichText fontSize=14 textColor=#ff8a6410
+                                SizedBox maxWidth=6 minWidth=6
+                                Flexible
+                                  Text text="En écriture"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8a6410
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Row direction=horizontal
+                        Semantics semanticsLabel="Les Heures de Cendre, Ines Barreau"
+                          SizedBox maxHeight=117 maxWidth=78 minHeight=117 minWidth=78
+                            DecoratedBox radius=6
+                              Padding padding=10.14,10.14,10.14,10.14
+                                Column direction=vertical
+                                  Flexible
+                                    Text text="Les Heures de Cendre"
+                                      RichText fontSize=14.82 fontWeight=FontWeight.w600 textColor=#fffaf8f4
+                                  Text text="INES BARREAU"
+                                    RichText fontSize=7.8 fontWeight=FontWeight.w500 textColor=#d1faf8f4
+                        SizedBox maxWidth=16 minWidth=16
+                        Expanded
+                          Column direction=vertical
+                            Text text="Les Heures de Cendre"
+                              RichText fontSize=22 fontWeight=FontWeight.w600 textColor=#ff16130f
+                            SizedBox maxHeight=4 minHeight=4
+                            Text text="120 mots · 2 %"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                            SizedBox maxHeight=16 minHeight=16
+                            Wrap
+                              LimpidButton
+                                Semantics semanticsLabel=Reprendre
+                                  ConstrainedBox minHeight=32
+                                    Material radius=6 shape=RoundedRectangleBorder
+                                      CustomPaint
+                                        Padding padding=12,0,12,0
+                                          Row direction=horizontal
+                                            Flexible
+                                              Text text="Reprendre"
+                                                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                              LimpidButton
+                                Semantics semanticsLabel="Voir le plan"
+                                  ConstrainedBox minHeight=32
+                                    Material radius=6 shape=RoundedRectangleBorder
+                                      CustomPaint
+                                        Padding padding=12,0,12,0
+                                          Row direction=horizontal
+                                            Icon
+                                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                                RichText fontSize=16 textColor=#ffffffff
+                                            SizedBox maxWidth=8 minWidth=8
+                                            Flexible
+                                              Text text="Voir le plan"
+                                                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+            SizedBox maxHeight=20 minHeight=20
+            LimpidCard
+              DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Activité d'écriture"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff16130f
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Column direction=vertical
+                        Semantics semanticsLabel="120 mots"
+                          Row direction=horizontal
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#fff2eee6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff9c5518 radius=4
+                        SizedBox maxHeight=12 minHeight=12
+                        Row direction=horizontal
+                          Text text="3 août 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+                          Text text="25 oct. 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+                        SizedBox maxHeight=16 minHeight=16
+                        Column direction=vertical
+                          Padding padding=0,0,0,6
+                            Row direction=horizontal
+                              Text text="Cette semaine"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                              Text text="120 mots"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff16130f
+                          Padding padding=0,0,0,6
+                            Row direction=horizontal
+                              Text text="Meilleur jour"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                              Text text="25 oct. 2026 · 120 mots"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff16130f
+        SizedBox maxWidth=20 minWidth=20
+        Expanded
+          Column direction=vertical
+            LimpidCard
+              DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Objectif du jour"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff16130f
+                          SizedBox maxHeight=2 minHeight=2
+                          Text text="120 / 1 500 mots"
+                            RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Column direction=vertical
+                        LimpidLinearProgress
+                          Semantics semanticsValue=8%
+                            Column direction=vertical
+                              LinearProgressIndicator
+                                Semantics semanticsValue=8
+                                  ConstrainedBox minHeight=4
+                                    CustomPaint
+                        SizedBox maxHeight=8 minHeight=8
+                        Row direction=horizontal
+                          Text text="1 380 mots restants"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff57504a
+                          Text text="≈ 6 min"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+            SizedBox maxHeight=20 minHeight=20
+            LimpidCard
+              DecoratedBox background=#ffffffff border="1 #ffe7e1d6" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="À faire"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff16130f
+                      SizedBox maxWidth=12 minWidth=12
+                      LimpidBadge
+                        Semantics semanticsLabel=0
+                          DecoratedBox background=#ffebeae9 border="1 #5957504a" radius=999
+                            Padding padding=9,5,9,5
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                                    RichText fontSize=14 textColor=#ff57504a
+                                SizedBox maxWidth=6 minWidth=6
+                                Flexible
+                                  Text text="0"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,12,0,0
+                      Column direction=vertical
+                        Text text="Rien à faire. Profitez-en pour écrire."
+                          RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+                        SizedBox maxHeight=16 minHeight=16
+                        LimpidButton
+                          Semantics semanticsLabel="Ajouter une tâche"
+                            ConstrainedBox minHeight=32
+                              Material radius=6 shape=RoundedRectangleBorder
+                                CustomPaint
+                                  Padding padding=12,0,12,0
+                                    Row direction=horizontal
+                                      Flexible
+                                        Text text="Ajouter une tâche"
+                                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff857c72
+    Stack
+
+@@ sepia
+DashboardScreen
+  PhysicalModel surface=#fff4ebd8
+    Row direction=horizontal
+      Expanded
+        Column direction=vertical
+          Text text="Bureau"
+            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff33281a
+          SizedBox maxHeight=4 minHeight=4
+          Text text="Bonjour Ines Barreau"
+            RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+      SizedBox maxWidth=16 minWidth=16
+      LimpidIconButton
+        Semantics semanticsLabel=Rechercher
+          ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+            Material radius=6 shape=RoundedRectangleBorder
+              CustomPaint
+                Padding padding=8,8,8,8
+                  Icon
+                    SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                      RichText fontSize=16 textColor=#ff33281a
+      SizedBox maxWidth=8 minWidth=8
+      LimpidButton
+        Semantics semanticsLabel="Nouveau projet"
+          ConstrainedBox minHeight=32
+            Material radius=6 shape=RoundedRectangleBorder
+              CustomPaint
+                Padding padding=12,0,12,0
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                        RichText fontSize=16 textColor=#ffffffff
+                    SizedBox maxWidth=8 minWidth=8
+                    Flexible
+                      Text text="Nouveau projet"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+    SizedBox maxHeight=20 minHeight=20
+    Column direction=vertical
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Mots aujourd'hui"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ff33281a
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="sur 1 500 · 8 %"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Série en cours"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="7"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ff33281a
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="jours consécutifs"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Manuscrit"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ff33281a
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="2 %"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Cette semaine"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ff33281a
+      SizedBox maxHeight=20 minHeight=20
+      Row direction=horizontal
+        Expanded
+          Column direction=vertical
+            LimpidCard
+              DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Reprendre l'écriture"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff33281a
+                      SizedBox maxWidth=12 minWidth=12
+                      LimpidBadge
+                        Semantics semanticsLabel="En écriture"
+                          DecoratedBox background=#ffece3d0 border="1 #597a5810" radius=999
+                            Padding padding=9,5,9,5
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                                    RichText fontSize=14 textColor=#ff7a5810
+                                SizedBox maxWidth=6 minWidth=6
+                                Flexible
+                                  Text text="En écriture"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a5810
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Row direction=horizontal
+                        Semantics semanticsLabel="Les Heures de Cendre, Ines Barreau"
+                          SizedBox maxHeight=117 maxWidth=78 minHeight=117 minWidth=78
+                            DecoratedBox radius=6
+                              Padding padding=10.14,10.14,10.14,10.14
+                                Column direction=vertical
+                                  Flexible
+                                    Text text="Les Heures de Cendre"
+                                      RichText fontSize=14.82 fontWeight=FontWeight.w600 textColor=#fff4ebd8
+                                  Text text="INES BARREAU"
+                                    RichText fontSize=7.8 fontWeight=FontWeight.w500 textColor=#d1f4ebd8
+                        SizedBox maxWidth=16 minWidth=16
+                        Expanded
+                          Column direction=vertical
+                            Text text="Les Heures de Cendre"
+                              RichText fontSize=22 fontWeight=FontWeight.w600 textColor=#ff33281a
+                            SizedBox maxHeight=4 minHeight=4
+                            Text text="120 mots · 2 %"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                            SizedBox maxHeight=16 minHeight=16
+                            Wrap
+                              LimpidButton
+                                Semantics semanticsLabel=Reprendre
+                                  ConstrainedBox minHeight=32
+                                    Material radius=6 shape=RoundedRectangleBorder
+                                      CustomPaint
+                                        Padding padding=12,0,12,0
+                                          Row direction=horizontal
+                                            Flexible
+                                              Text text="Reprendre"
+                                                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                              LimpidButton
+                                Semantics semanticsLabel="Voir le plan"
+                                  ConstrainedBox minHeight=32
+                                    Material radius=6 shape=RoundedRectangleBorder
+                                      CustomPaint
+                                        Padding padding=12,0,12,0
+                                          Row direction=horizontal
+                                            Icon
+                                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                                RichText fontSize=16 textColor=#ffffffff
+                                            SizedBox maxWidth=8 minWidth=8
+                                            Flexible
+                                              Text text="Voir le plan"
+                                                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+            SizedBox maxHeight=20 minHeight=20
+            LimpidCard
+              DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Activité d'écriture"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff33281a
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Column direction=vertical
+                        Semantics semanticsLabel="120 mots"
+                          Row direction=horizontal
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe9dec6 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff8e4a12 radius=4
+                        SizedBox maxHeight=12 minHeight=12
+                        Row direction=horizontal
+                          Text text="3 août 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+                          Text text="25 oct. 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+                        SizedBox maxHeight=16 minHeight=16
+                        Column direction=vertical
+                          Padding padding=0,0,0,6
+                            Row direction=horizontal
+                              Text text="Cette semaine"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                              Text text="120 mots"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff33281a
+                          Padding padding=0,0,0,6
+                            Row direction=horizontal
+                              Text text="Meilleur jour"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                              Text text="25 oct. 2026 · 120 mots"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff33281a
+        SizedBox maxWidth=20 minWidth=20
+        Expanded
+          Column direction=vertical
+            LimpidCard
+              DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Objectif du jour"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff33281a
+                          SizedBox maxHeight=2 minHeight=2
+                          Text text="120 / 1 500 mots"
+                            RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Column direction=vertical
+                        LimpidLinearProgress
+                          Semantics semanticsValue=8%
+                            Column direction=vertical
+                              LinearProgressIndicator
+                                Semantics semanticsValue=8
+                                  ConstrainedBox minHeight=4
+                                    CustomPaint
+                        SizedBox maxHeight=8 minHeight=8
+                        Row direction=horizontal
+                          Text text="1 380 mots restants"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+                          Text text="≈ 6 min"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+            SizedBox maxHeight=20 minHeight=20
+            LimpidCard
+              DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="À faire"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff33281a
+                      SizedBox maxWidth=12 minWidth=12
+                      LimpidBadge
+                        Semantics semanticsLabel=0
+                          DecoratedBox background=#ffeae4d7 border="1 #596b5c48" radius=999
+                            Padding padding=9,5,9,5
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                                    RichText fontSize=14 textColor=#ff6b5c48
+                                SizedBox maxWidth=6 minWidth=6
+                                Flexible
+                                  Text text="0"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,12,0,0
+                      Column direction=vertical
+                        Text text="Rien à faire. Profitez-en pour écrire."
+                          RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+                        SizedBox maxHeight=16 minHeight=16
+                        LimpidButton
+                          Semantics semanticsLabel="Ajouter une tâche"
+                            ConstrainedBox minHeight=32
+                              Material radius=6 shape=RoundedRectangleBorder
+                                CustomPaint
+                                  Padding padding=12,0,12,0
+                                    Row direction=horizontal
+                                      Flexible
+                                        Text text="Ajouter une tâche"
+                                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+    Stack
+
+@@ night
+DashboardScreen
+  PhysicalModel surface=#ff14110e
+    Row direction=horizontal
+      Expanded
+        Column direction=vertical
+          Text text="Bureau"
+            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+          SizedBox maxHeight=4 minHeight=4
+          Text text="Bonjour Ines Barreau"
+            RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+      SizedBox maxWidth=16 minWidth=16
+      LimpidIconButton
+        Semantics semanticsLabel=Rechercher
+          ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+            Material radius=6 shape=RoundedRectangleBorder
+              CustomPaint
+                Padding padding=8,8,8,8
+                  Icon
+                    SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                      RichText fontSize=16 textColor=#fff0ebe2
+      SizedBox maxWidth=8 minWidth=8
+      LimpidButton
+        Semantics semanticsLabel="Nouveau projet"
+          ConstrainedBox minHeight=32
+            Material radius=6 shape=RoundedRectangleBorder
+              CustomPaint
+                Padding padding=12,0,12,0
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                        RichText fontSize=16 textColor=#ff1a1207
+                    SizedBox maxWidth=8 minWidth=8
+                    Flexible
+                      Text text="Nouveau projet"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff1a1207
+    SizedBox maxHeight=20 minHeight=20
+    Column direction=vertical
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Mots aujourd'hui"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="sur 1 500 · 8 %"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Série en cours"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="7"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="jours consécutifs"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Manuscrit"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="2 %"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Cette semaine"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+      SizedBox maxHeight=20 minHeight=20
+      Row direction=horizontal
+        Expanded
+          Column direction=vertical
+            LimpidCard
+              DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Reprendre l'écriture"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                      SizedBox maxWidth=12 minWidth=12
+                      LimpidBadge
+                        Semantics semanticsLabel="En écriture"
+                          DecoratedBox background=#ff332a1b border="1 #59d9a845" radius=999
+                            Padding padding=9,5,9,5
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                                    RichText fontSize=14 textColor=#ffd9a845
+                                SizedBox maxWidth=6 minWidth=6
+                                Flexible
+                                  Text text="En écriture"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffd9a845
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Row direction=horizontal
+                        Semantics semanticsLabel="Les Heures de Cendre, Ines Barreau"
+                          SizedBox maxHeight=117 maxWidth=78 minHeight=117 minWidth=78
+                            DecoratedBox radius=6
+                              Padding padding=10.14,10.14,10.14,10.14
+                                Column direction=vertical
+                                  Flexible
+                                    Text text="Les Heures de Cendre"
+                                      RichText fontSize=14.82 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                                  Text text="INES BARREAU"
+                                    RichText fontSize=7.8 fontWeight=FontWeight.w500 textColor=#d1f0ebe2
+                        SizedBox maxWidth=16 minWidth=16
+                        Expanded
+                          Column direction=vertical
+                            Text text="Les Heures de Cendre"
+                              RichText fontSize=22 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                            SizedBox maxHeight=4 minHeight=4
+                            Text text="120 mots · 2 %"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                            SizedBox maxHeight=16 minHeight=16
+                            Wrap
+                              LimpidButton
+                                Semantics semanticsLabel=Reprendre
+                                  ConstrainedBox minHeight=32
+                                    Material radius=6 shape=RoundedRectangleBorder
+                                      CustomPaint
+                                        Padding padding=12,0,12,0
+                                          Row direction=horizontal
+                                            Flexible
+                                              Text text="Reprendre"
+                                                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff1a1207
+                              LimpidButton
+                                Semantics semanticsLabel="Voir le plan"
+                                  ConstrainedBox minHeight=32
+                                    Material radius=6 shape=RoundedRectangleBorder
+                                      CustomPaint
+                                        Padding padding=12,0,12,0
+                                          Row direction=horizontal
+                                            Icon
+                                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                                RichText fontSize=16 textColor=#ff1a1207
+                                            SizedBox maxWidth=8 minWidth=8
+                                            Flexible
+                                              Text text="Voir le plan"
+                                                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff1a1207
+            SizedBox maxHeight=20 minHeight=20
+            LimpidCard
+              DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Activité d'écriture"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Column direction=vertical
+                        Semantics semanticsLabel="120 mots"
+                          Row direction=horizontal
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff0f0d0a radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffe0a460 radius=4
+                        SizedBox maxHeight=12 minHeight=12
+                        Row direction=horizontal
+                          Text text="3 août 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+                          Text text="25 oct. 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+                        SizedBox maxHeight=16 minHeight=16
+                        Column direction=vertical
+                          Padding padding=0,0,0,6
+                            Row direction=horizontal
+                              Text text="Cette semaine"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                              Text text="120 mots"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                          Padding padding=0,0,0,6
+                            Row direction=horizontal
+                              Text text="Meilleur jour"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                              Text text="25 oct. 2026 · 120 mots"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+        SizedBox maxWidth=20 minWidth=20
+        Expanded
+          Column direction=vertical
+            LimpidCard
+              DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Objectif du jour"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                          SizedBox maxHeight=2 minHeight=2
+                          Text text="120 / 1 500 mots"
+                            RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Column direction=vertical
+                        LimpidLinearProgress
+                          Semantics semanticsValue=8%
+                            Column direction=vertical
+                              LinearProgressIndicator
+                                Semantics semanticsValue=8
+                                  ConstrainedBox minHeight=4
+                                    CustomPaint
+                        SizedBox maxHeight=8 minHeight=8
+                        Row direction=horizontal
+                          Text text="1 380 mots restants"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffa79e92
+                          Text text="≈ 6 min"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+            SizedBox maxHeight=20 minHeight=20
+            LimpidCard
+              DecoratedBox background=#ff1c1915 border="1 #ff2b261f" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="À faire"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+                      SizedBox maxWidth=12 minWidth=12
+                      LimpidBadge
+                        Semantics semanticsLabel=0
+                          DecoratedBox background=#ff2d2924 border="1 #59a79e92" radius=999
+                            Padding padding=9,5,9,5
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                                    RichText fontSize=14 textColor=#ffa79e92
+                                SizedBox maxWidth=6 minWidth=6
+                                Flexible
+                                  Text text="0"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,12,0,0
+                      Column direction=vertical
+                        Text text="Rien à faire. Profitez-en pour écrire."
+                          RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+                        SizedBox maxHeight=16 minHeight=16
+                        LimpidButton
+                          Semantics semanticsLabel="Ajouter une tâche"
+                            ConstrainedBox minHeight=32
+                              Material radius=6 shape=RoundedRectangleBorder
+                                CustomPaint
+                                  Padding padding=12,0,12,0
+                                    Row direction=horizontal
+                                      Flexible
+                                        Text text="Ajouter une tâche"
+                                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7a7268
+    Stack
+
+@@ contrast
+DashboardScreen
+  PhysicalModel surface=#ff000000
+    Row direction=horizontal
+      Expanded
+        Column direction=vertical
+          Text text="Bureau"
+            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ffffffff
+          SizedBox maxHeight=4 minHeight=4
+          Text text="Bonjour Ines Barreau"
+            RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+      SizedBox maxWidth=16 minWidth=16
+      LimpidIconButton
+        Semantics semanticsLabel=Rechercher
+          ConstrainedBox maxHeight=32 maxWidth=32 minHeight=32 minWidth=32
+            Material radius=6 shape=RoundedRectangleBorder
+              CustomPaint
+                Padding padding=8,8,8,8
+                  Icon
+                    SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                      RichText fontSize=16 textColor=#ffffffff
+      SizedBox maxWidth=8 minWidth=8
+      LimpidButton
+        Semantics semanticsLabel="Nouveau projet"
+          ConstrainedBox minHeight=32
+            Material radius=6 shape=RoundedRectangleBorder
+              CustomPaint
+                Padding padding=12,0,12,0
+                  Row direction=horizontal
+                    Icon
+                      SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                        RichText fontSize=16 textColor=#ff000000
+                    SizedBox maxWidth=8 minWidth=8
+                    Flexible
+                      Text text="Nouveau projet"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff000000
+    SizedBox maxHeight=20 minHeight=20
+    Column direction=vertical
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Mots aujourd'hui"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ffffffff
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="sur 1 500 · 8 %"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Série en cours"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="7"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ffffffff
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="jours consécutifs"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Manuscrit"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ffffffff
+                  SizedBox maxHeight=4 minHeight=4
+                  Text text="2 %"
+                    RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+      LimpidStatCard
+        LimpidCard
+          DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+            Padding padding=16,16,16,16
+              Column direction=vertical
+                Column direction=vertical
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Cette semaine"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                  SizedBox maxHeight=8 minHeight=8
+                  Text text="120"
+                    RichText fontSize=26 fontWeight=FontWeight.w600 textColor=#ffffffff
+      SizedBox maxHeight=20 minHeight=20
+      Row direction=horizontal
+        Expanded
+          Column direction=vertical
+            LimpidCard
+              DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Reprendre l'écriture"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ffffffff
+                      SizedBox maxWidth=12 minWidth=12
+                      LimpidBadge
+                        Semantics semanticsLabel="En écriture"
+                          DecoratedBox background=#ff1f1809 border="1 #59ffc44d" radius=999
+                            Padding padding=9,5,9,5
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                                    RichText fontSize=14 textColor=#ffffc44d
+                                SizedBox maxWidth=6 minWidth=6
+                                Flexible
+                                  Text text="En écriture"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffc44d
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Row direction=horizontal
+                        Semantics semanticsLabel="Les Heures de Cendre, Ines Barreau"
+                          SizedBox maxHeight=117 maxWidth=78 minHeight=117 minWidth=78
+                            DecoratedBox radius=6
+                              Padding padding=10.14,10.14,10.14,10.14
+                                Column direction=vertical
+                                  Flexible
+                                    Text text="Les Heures de Cendre"
+                                      RichText fontSize=14.82 fontWeight=FontWeight.w600 textColor=#ffffffff
+                                  Text text="INES BARREAU"
+                                    RichText fontSize=7.8 fontWeight=FontWeight.w500 textColor=#d1ffffff
+                        SizedBox maxWidth=16 minWidth=16
+                        Expanded
+                          Column direction=vertical
+                            Text text="Les Heures de Cendre"
+                              RichText fontSize=22 fontWeight=FontWeight.w600 textColor=#ffffffff
+                            SizedBox maxHeight=4 minHeight=4
+                            Text text="120 mots · 2 %"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                            SizedBox maxHeight=16 minHeight=16
+                            Wrap
+                              LimpidButton
+                                Semantics semanticsLabel=Reprendre
+                                  ConstrainedBox minHeight=32
+                                    Material radius=6 shape=RoundedRectangleBorder
+                                      CustomPaint
+                                        Padding padding=12,0,12,0
+                                          Row direction=horizontal
+                                            Flexible
+                                              Text text="Reprendre"
+                                                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff000000
+                              LimpidButton
+                                Semantics semanticsLabel="Voir le plan"
+                                  ConstrainedBox minHeight=32
+                                    Material radius=6 shape=RoundedRectangleBorder
+                                      CustomPaint
+                                        Padding padding=12,0,12,0
+                                          Row direction=horizontal
+                                            Icon
+                                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                                RichText fontSize=16 textColor=#ff000000
+                                            SizedBox maxWidth=8 minWidth=8
+                                            Flexible
+                                              Text text="Voir le plan"
+                                                RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff000000
+            SizedBox maxHeight=20 minHeight=20
+            LimpidCard
+              DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Activité d'écriture"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ffffffff
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Column direction=vertical
+                        Semantics semanticsLabel="120 mots"
+                          Row direction=horizontal
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                            Expanded
+                              Column direction=vertical
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ff000000 radius=4
+                                Padding padding=2,2,2,2
+                                  DecoratedBox background=#ffffb454 radius=4
+                        SizedBox maxHeight=12 minHeight=12
+                        Row direction=horizontal
+                          Text text="3 août 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+                          Text text="25 oct. 2026"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+                        SizedBox maxHeight=16 minHeight=16
+                        Column direction=vertical
+                          Padding padding=0,0,0,6
+                            Row direction=horizontal
+                              Text text="Cette semaine"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              Text text="120 mots"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                          Padding padding=0,0,0,6
+                            Row direction=horizontal
+                              Text text="Meilleur jour"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                              Text text="25 oct. 2026 · 120 mots"
+                                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+        SizedBox maxWidth=20 minWidth=20
+        Expanded
+          Column direction=vertical
+            LimpidCard
+              DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="Objectif du jour"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ffffffff
+                          SizedBox maxHeight=2 minHeight=2
+                          Text text="120 / 1 500 mots"
+                            RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,16,0,0
+                      Column direction=vertical
+                        LimpidLinearProgress
+                          Semantics semanticsValue=8%
+                            Column direction=vertical
+                              LinearProgressIndicator
+                                Semantics semanticsValue=8
+                                  ConstrainedBox minHeight=4
+                                    CustomPaint
+                        SizedBox maxHeight=8 minHeight=8
+                        Row direction=horizontal
+                          Text text="1 380 mots restants"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffffffff
+                          Text text="≈ 6 min"
+                            RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+            SizedBox maxHeight=20 minHeight=20
+            LimpidCard
+              DecoratedBox background=#ff000000 border="1 #ffffffff" radius=10
+                Padding padding=16,16,16,16
+                  Column direction=vertical
+                    Row direction=horizontal
+                      Expanded
+                        Column direction=vertical
+                          Text text="À faire"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ffffffff
+                      SizedBox maxWidth=12 minWidth=12
+                      LimpidBadge
+                        Semantics semanticsLabel=0
+                          DecoratedBox background=#ff1f1f1f border="1 #59ffffff" radius=999
+                            Padding padding=9,5,9,5
+                              Row direction=horizontal
+                                Icon
+                                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                                    RichText fontSize=14 textColor=#ffffffff
+                                SizedBox maxWidth=6 minWidth=6
+                                Flexible
+                                  Text text="0"
+                                    RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                    SizedBox maxHeight=12 minHeight=12
+                    Padding padding=0,12,0,0
+                      Column direction=vertical
+                        Text text="Rien à faire. Profitez-en pour écrire."
+                          RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+                        SizedBox maxHeight=16 minHeight=16
+                        LimpidButton
+                          Semantics semanticsLabel="Ajouter une tâche"
+                            ConstrainedBox minHeight=32
+                              Material radius=6 shape=RoundedRectangleBorder
+                                CustomPaint
+                                  Padding padding=12,0,12,0
+                                    Row direction=horizontal
+                                      Flexible
+                                        Text text="Ajouter une tâche"
+                                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+    Stack
+

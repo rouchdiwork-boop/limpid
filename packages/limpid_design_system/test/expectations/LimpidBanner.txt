@@ -1,0 +1,75 @@
+# LimpidBanner
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidBanner
+  Semantics semanticsLabel="Connexion instable. Le chapitre sera enregistre plus tard."
+    DecoratedBox background=#fff1ece2 border="1 #598a6410" radius=10
+      Padding padding=17,17,17,17
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+              RichText fontSize=20 textColor=#ff8a6410
+          SizedBox maxWidth=12 minWidth=12
+          Expanded
+            Column direction=vertical
+              Text text="Connexion instable"
+                RichText fontSize=14 fontWeight=FontWeight.w600 textColor=#ff16130f
+              SizedBox maxHeight=4 minHeight=4
+              Text text="Le chapitre sera enregistre plus tard."
+                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+
+@@ sepia
+LimpidBanner
+  Semantics semanticsLabel="Connexion instable. Le chapitre sera enregistre plus tard."
+    DecoratedBox background=#ffece3d0 border="1 #597a5810" radius=10
+      Padding padding=17,17,17,17
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+              RichText fontSize=20 textColor=#ff7a5810
+          SizedBox maxWidth=12 minWidth=12
+          Expanded
+            Column direction=vertical
+              Text text="Connexion instable"
+                RichText fontSize=14 fontWeight=FontWeight.w600 textColor=#ff33281a
+              SizedBox maxHeight=4 minHeight=4
+              Text text="Le chapitre sera enregistre plus tard."
+                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+
+@@ night
+LimpidBanner
+  Semantics semanticsLabel="Connexion instable. Le chapitre sera enregistre plus tard."
+    DecoratedBox background=#ff332a1b border="1 #59d9a845" radius=10
+      Padding padding=17,17,17,17
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+              RichText fontSize=20 textColor=#ffd9a845
+          SizedBox maxWidth=12 minWidth=12
+          Expanded
+            Column direction=vertical
+              Text text="Connexion instable"
+                RichText fontSize=14 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+              SizedBox maxHeight=4 minHeight=4
+              Text text="Le chapitre sera enregistre plus tard."
+                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+
+@@ contrast
+LimpidBanner
+  Semantics semanticsLabel="Connexion instable. Le chapitre sera enregistre plus tard."
+    DecoratedBox background=#ff1f1809 border="1 #59ffc44d" radius=10
+      Padding padding=17,17,17,17
+        Row direction=horizontal
+          Icon
+            SizedBox maxHeight=20 maxWidth=20 minHeight=20 minWidth=20
+              RichText fontSize=20 textColor=#ffffc44d
+          SizedBox maxWidth=12 minWidth=12
+          Expanded
+            Column direction=vertical
+              Text text="Connexion instable"
+                RichText fontSize=14 fontWeight=FontWeight.w600 textColor=#ffffffff
+              SizedBox maxHeight=4 minHeight=4
+              Text text="Le chapitre sera enregistre plus tard."
+                RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+

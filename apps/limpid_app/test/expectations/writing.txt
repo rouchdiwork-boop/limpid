@@ -1,0 +1,683 @@
+# writing
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+WritingScreen
+  PhysicalModel surface=#fffaf8f4
+    Column direction=vertical
+      ConstrainedBox minHeight=44
+        DecoratedBox background=#ffffffff border="0 #ff000000/0 #ff000000/1 #ffe7e1d6/0 #ff000000"
+          Padding padding=12,0,12,1
+            Row direction=horizontal
+              Expanded
+                Row direction=horizontal
+                  Semantics semanticsLabel=Plan
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff57504a
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Plan"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                  Semantics semanticsLabel=Écrire
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff9c5518
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Écrire"
+                              RichText fontSize=13 fontWeight=FontWeight.w600 textColor=#ff9c5518
+                  Semantics semanticsLabel=Relire
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff57504a
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Relire"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+                  Semantics semanticsLabel=Bible
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff857c72
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Bible"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff857c72
+              Semantics semanticsLabel="Mode lecture"
+                CustomPaint
+                  ConstrainedBox minHeight=44
+                    Padding padding=8,0,8,0
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ff57504a
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Mode lecture"
+                          RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+              Semantics semanticsLabel=Assistant
+                CustomPaint
+                  ConstrainedBox minHeight=44
+                    Padding padding=8,0,8,0
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ff57504a
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Assistant"
+                          RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff57504a
+              SizedBox maxWidth=8 minWidth=8
+              LimpidSyncStatusPill
+                Semantics semanticsLabel=Synchronisé
+                  DecoratedBox background=#1f3e6b4f border="1 #593e6b4f" radius=999
+                    Padding padding=9,5,9,5
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                            RichText fontSize=14 textColor=#ff3e6b4f
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Synchronisé"
+                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff3e6b4f
+      Expanded
+        Stack
+          Row direction=horizontal
+            SizedBox maxWidth=268 minWidth=268
+              Column direction=vertical
+                Padding padding=16,12,16,8
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Plan"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+                    ConstrainedBox minHeight=44 minWidth=44
+                      Material radius=6 shape=RoundedRectangleBorder
+                        CustomPaint
+                          Padding padding=8,8,8,8
+                            Icon
+                              SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                                RichText fontSize=18 textColor=#ff57504a
+                Expanded
+                  LimpidEmptyState
+                    ConstrainedBox maxWidth=420
+                      Padding padding=24,24,24,24
+                        Column direction=vertical
+                          Icon
+                            SizedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+                              RichText fontSize=40 textColor=#ff857c72
+                          SizedBox maxHeight=16 minHeight=16
+                          Text text="Aucune scène pour l'instant"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff16130f
+            SizedBox maxWidth=1 minWidth=1
+              Padding padding=0,0,0,0
+                ConstrainedBox maxWidth=1 minWidth=1
+                  DecoratedBox border="0 #ff000000/0 #ff000000/0 #ff000000/1 #ffe7e1d6"
+                    Padding padding=1,0,0,0
+            Expanded
+              LimpidEmptyState
+                ConstrainedBox maxWidth=420
+                  Padding padding=24,24,24,24
+                    Column direction=vertical
+                      Icon
+                        SizedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+                          RichText fontSize=40 textColor=#ff857c72
+                      SizedBox maxHeight=16 minHeight=16
+                      Text text="Aucune scène pour l'instant"
+                        RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff16130f
+      DecoratedBox background=#ffffffff border="1 #ffe7e1d6/0 #ff000000/0 #ff000000/0 #ff000000"
+        Padding padding=16,9,16,8
+          Row direction=horizontal
+            Semantics semanticsLabel="0 mots"
+              Row direction=horizontal
+                Icon
+                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                    RichText fontSize=14 textColor=#ff857c72
+                SizedBox maxWidth=6 minWidth=6
+                Text text="0 mots"
+                  RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+            SizedBox maxWidth=16 minWidth=16
+            Semantics semanticsLabel="0 min de lecture"
+              Row direction=horizontal
+                Icon
+                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                    RichText fontSize=14 textColor=#ff857c72
+                SizedBox maxWidth=6 minWidth=6
+                Text text="0 min de lecture"
+                  RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff857c72
+            Expanded
+              SizedBox maxHeight=0 maxWidth=0
+            SizedBox maxHeight=0 maxWidth=0
+            SizedBox maxWidth=12 minWidth=12
+            LimpidBadge
+              Semantics semanticsLabel="Enregistrement automatique"
+                DecoratedBox background=#ffebeae9 border="1 #5957504a" radius=999
+                  Padding padding=9,5,9,5
+                    Row direction=horizontal
+                      ConstrainedBox maxHeight=6 maxWidth=6 minHeight=6 minWidth=6
+                        DecoratedBox background=#ff57504a shape=circle
+                          Padding padding=0,0,0,0
+                      SizedBox maxWidth=6 minWidth=6
+                      Flexible
+                        Text text="Enregistrement automatique"
+                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff57504a
+    Stack
+
+@@ sepia
+WritingScreen
+  PhysicalModel surface=#fff4ebd8
+    Column direction=vertical
+      ConstrainedBox minHeight=44
+        DecoratedBox background=#fffbf6ea border="0 #ff000000/0 #ff000000/1 #ffdfd3b8/0 #ff000000"
+          Padding padding=12,0,12,1
+            Row direction=horizontal
+              Expanded
+                Row direction=horizontal
+                  Semantics semanticsLabel=Plan
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff6b5c48
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Plan"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                  Semantics semanticsLabel=Écrire
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff8e4a12
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Écrire"
+                              RichText fontSize=13 fontWeight=FontWeight.w600 textColor=#ff8e4a12
+                  Semantics semanticsLabel=Relire
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff6b5c48
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Relire"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+                  Semantics semanticsLabel=Bible
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff8c7c64
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Bible"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff8c7c64
+              Semantics semanticsLabel="Mode lecture"
+                CustomPaint
+                  ConstrainedBox minHeight=44
+                    Padding padding=8,0,8,0
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ff6b5c48
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Mode lecture"
+                          RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+              Semantics semanticsLabel=Assistant
+                CustomPaint
+                  ConstrainedBox minHeight=44
+                    Padding padding=8,0,8,0
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ff6b5c48
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Assistant"
+                          RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff6b5c48
+              SizedBox maxWidth=8 minWidth=8
+              LimpidSyncStatusPill
+                Semantics semanticsLabel=Synchronisé
+                  DecoratedBox background=#1f356043 border="1 #59356043" radius=999
+                    Padding padding=9,5,9,5
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                            RichText fontSize=14 textColor=#ff356043
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Synchronisé"
+                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff356043
+      Expanded
+        Stack
+          Row direction=horizontal
+            SizedBox maxWidth=268 minWidth=268
+              Column direction=vertical
+                Padding padding=16,12,16,8
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Plan"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+                    ConstrainedBox minHeight=44 minWidth=44
+                      Material radius=6 shape=RoundedRectangleBorder
+                        CustomPaint
+                          Padding padding=8,8,8,8
+                            Icon
+                              SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                                RichText fontSize=18 textColor=#ff6b5c48
+                Expanded
+                  LimpidEmptyState
+                    ConstrainedBox maxWidth=420
+                      Padding padding=24,24,24,24
+                        Column direction=vertical
+                          Icon
+                            SizedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+                              RichText fontSize=40 textColor=#ff8c7c64
+                          SizedBox maxHeight=16 minHeight=16
+                          Text text="Aucune scène pour l'instant"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff33281a
+            SizedBox maxWidth=1 minWidth=1
+              Padding padding=0,0,0,0
+                ConstrainedBox maxWidth=1 minWidth=1
+                  DecoratedBox border="0 #ff000000/0 #ff000000/0 #ff000000/1 #ffdfd3b8"
+                    Padding padding=1,0,0,0
+            Expanded
+              LimpidEmptyState
+                ConstrainedBox maxWidth=420
+                  Padding padding=24,24,24,24
+                    Column direction=vertical
+                      Icon
+                        SizedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+                          RichText fontSize=40 textColor=#ff8c7c64
+                      SizedBox maxHeight=16 minHeight=16
+                      Text text="Aucune scène pour l'instant"
+                        RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ff33281a
+      DecoratedBox background=#fffbf6ea border="1 #ffdfd3b8/0 #ff000000/0 #ff000000/0 #ff000000"
+        Padding padding=16,9,16,8
+          Row direction=horizontal
+            Semantics semanticsLabel="0 mots"
+              Row direction=horizontal
+                Icon
+                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                    RichText fontSize=14 textColor=#ff8c7c64
+                SizedBox maxWidth=6 minWidth=6
+                Text text="0 mots"
+                  RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+            SizedBox maxWidth=16 minWidth=16
+            Semantics semanticsLabel="0 min de lecture"
+              Row direction=horizontal
+                Icon
+                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                    RichText fontSize=14 textColor=#ff8c7c64
+                SizedBox maxWidth=6 minWidth=6
+                Text text="0 min de lecture"
+                  RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff8c7c64
+            Expanded
+              SizedBox maxHeight=0 maxWidth=0
+            SizedBox maxHeight=0 maxWidth=0
+            SizedBox maxWidth=12 minWidth=12
+            LimpidBadge
+              Semantics semanticsLabel="Enregistrement automatique"
+                DecoratedBox background=#ffeae4d7 border="1 #596b5c48" radius=999
+                  Padding padding=9,5,9,5
+                    Row direction=horizontal
+                      ConstrainedBox maxHeight=6 maxWidth=6 minHeight=6 minWidth=6
+                        DecoratedBox background=#ff6b5c48 shape=circle
+                          Padding padding=0,0,0,0
+                      SizedBox maxWidth=6 minWidth=6
+                      Flexible
+                        Text text="Enregistrement automatique"
+                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6b5c48
+    Stack
+
+@@ night
+WritingScreen
+  PhysicalModel surface=#ff14110e
+    Column direction=vertical
+      ConstrainedBox minHeight=44
+        DecoratedBox background=#ff1c1915 border="0 #ff000000/0 #ff000000/1 #ff2b261f/0 #ff000000"
+          Padding padding=12,0,12,1
+            Row direction=horizontal
+              Expanded
+                Row direction=horizontal
+                  Semantics semanticsLabel=Plan
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ffa79e92
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Plan"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                  Semantics semanticsLabel=Écrire
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ffe0a460
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Écrire"
+                              RichText fontSize=13 fontWeight=FontWeight.w600 textColor=#ffe0a460
+                  Semantics semanticsLabel=Relire
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ffa79e92
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Relire"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+                  Semantics semanticsLabel=Bible
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ff7a7268
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Bible"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ff7a7268
+              Semantics semanticsLabel="Mode lecture"
+                CustomPaint
+                  ConstrainedBox minHeight=44
+                    Padding padding=8,0,8,0
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ffa79e92
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Mode lecture"
+                          RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+              Semantics semanticsLabel=Assistant
+                CustomPaint
+                  ConstrainedBox minHeight=44
+                    Padding padding=8,0,8,0
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ffa79e92
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Assistant"
+                          RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffa79e92
+              SizedBox maxWidth=8 minWidth=8
+              LimpidSyncStatusPill
+                Semantics semanticsLabel=Synchronisé
+                  DecoratedBox background=#1f7fb093 border="1 #597fb093" radius=999
+                    Padding padding=9,5,9,5
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                            RichText fontSize=14 textColor=#ff7fb093
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Synchronisé"
+                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff7fb093
+      Expanded
+        Stack
+          Row direction=horizontal
+            SizedBox maxWidth=268 minWidth=268
+              Column direction=vertical
+                Padding padding=16,12,16,8
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Plan"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+                    ConstrainedBox minHeight=44 minWidth=44
+                      Material radius=6 shape=RoundedRectangleBorder
+                        CustomPaint
+                          Padding padding=8,8,8,8
+                            Icon
+                              SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                                RichText fontSize=18 textColor=#ffa79e92
+                Expanded
+                  LimpidEmptyState
+                    ConstrainedBox maxWidth=420
+                      Padding padding=24,24,24,24
+                        Column direction=vertical
+                          Icon
+                            SizedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+                              RichText fontSize=40 textColor=#ff7a7268
+                          SizedBox maxHeight=16 minHeight=16
+                          Text text="Aucune scène pour l'instant"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+            SizedBox maxWidth=1 minWidth=1
+              Padding padding=0,0,0,0
+                ConstrainedBox maxWidth=1 minWidth=1
+                  DecoratedBox border="0 #ff000000/0 #ff000000/0 #ff000000/1 #ff2b261f"
+                    Padding padding=1,0,0,0
+            Expanded
+              LimpidEmptyState
+                ConstrainedBox maxWidth=420
+                  Padding padding=24,24,24,24
+                    Column direction=vertical
+                      Icon
+                        SizedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+                          RichText fontSize=40 textColor=#ff7a7268
+                      SizedBox maxHeight=16 minHeight=16
+                      Text text="Aucune scène pour l'instant"
+                        RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#fff0ebe2
+      DecoratedBox background=#ff1c1915 border="1 #ff2b261f/0 #ff000000/0 #ff000000/0 #ff000000"
+        Padding padding=16,9,16,8
+          Row direction=horizontal
+            Semantics semanticsLabel="0 mots"
+              Row direction=horizontal
+                Icon
+                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                    RichText fontSize=14 textColor=#ff7a7268
+                SizedBox maxWidth=6 minWidth=6
+                Text text="0 mots"
+                  RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+            SizedBox maxWidth=16 minWidth=16
+            Semantics semanticsLabel="0 min de lecture"
+              Row direction=horizontal
+                Icon
+                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                    RichText fontSize=14 textColor=#ff7a7268
+                SizedBox maxWidth=6 minWidth=6
+                Text text="0 min de lecture"
+                  RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ff7a7268
+            Expanded
+              SizedBox maxHeight=0 maxWidth=0
+            SizedBox maxHeight=0 maxWidth=0
+            SizedBox maxWidth=12 minWidth=12
+            LimpidBadge
+              Semantics semanticsLabel="Enregistrement automatique"
+                DecoratedBox background=#ff2d2924 border="1 #59a79e92" radius=999
+                  Padding padding=9,5,9,5
+                    Row direction=horizontal
+                      ConstrainedBox maxHeight=6 maxWidth=6 minHeight=6 minWidth=6
+                        DecoratedBox background=#ffa79e92 shape=circle
+                          Padding padding=0,0,0,0
+                      SizedBox maxWidth=6 minWidth=6
+                      Flexible
+                        Text text="Enregistrement automatique"
+                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffa79e92
+    Stack
+
+@@ contrast
+WritingScreen
+  PhysicalModel surface=#ff000000
+    Column direction=vertical
+      ConstrainedBox minHeight=44
+        DecoratedBox background=#ff000000 border="0 #ff000000/0 #ff000000/1 #ffffffff/0 #ff000000"
+          Padding padding=12,0,12,1
+            Row direction=horizontal
+              Expanded
+                Row direction=horizontal
+                  Semantics semanticsLabel=Plan
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ffffffff
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Plan"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                  Semantics semanticsLabel=Écrire
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ffffb454
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Écrire"
+                              RichText fontSize=13 fontWeight=FontWeight.w600 textColor=#ffffb454
+                  Semantics semanticsLabel=Relire
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ffffffff
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Relire"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+                  Semantics semanticsLabel=Bible
+                    CustomPaint
+                      ConstrainedBox minHeight=44
+                        Padding padding=8,0,8,0
+                          Row direction=horizontal
+                            Icon
+                              SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                                RichText fontSize=16 textColor=#ffe6e6e6
+                            SizedBox maxWidth=6 minWidth=6
+                            Text text="Bible"
+                              RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffe6e6e6
+              Semantics semanticsLabel="Mode lecture"
+                CustomPaint
+                  ConstrainedBox minHeight=44
+                    Padding padding=8,0,8,0
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ffffffff
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Mode lecture"
+                          RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+              Semantics semanticsLabel=Assistant
+                CustomPaint
+                  ConstrainedBox minHeight=44
+                    Padding padding=8,0,8,0
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=16 maxWidth=16 minHeight=16 minWidth=16
+                            RichText fontSize=16 textColor=#ffffffff
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Assistant"
+                          RichText fontSize=13 fontWeight=FontWeight.w400 textColor=#ffffffff
+              SizedBox maxWidth=8 minWidth=8
+              LimpidSyncStatusPill
+                Semantics semanticsLabel=Synchronisé
+                  DecoratedBox background=#1f6ed79b border="1 #596ed79b" radius=999
+                    Padding padding=9,5,9,5
+                      Row direction=horizontal
+                        Icon
+                          SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                            RichText fontSize=14 textColor=#ff6ed79b
+                        SizedBox maxWidth=6 minWidth=6
+                        Text text="Synchronisé"
+                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ff6ed79b
+      Expanded
+        Stack
+          Row direction=horizontal
+            SizedBox maxWidth=268 minWidth=268
+              Column direction=vertical
+                Padding padding=16,12,16,8
+                  Row direction=horizontal
+                    Expanded
+                      Text text="Plan"
+                        RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+                    ConstrainedBox minHeight=44 minWidth=44
+                      Material radius=6 shape=RoundedRectangleBorder
+                        CustomPaint
+                          Padding padding=8,8,8,8
+                            Icon
+                              SizedBox maxHeight=18 maxWidth=18 minHeight=18 minWidth=18
+                                RichText fontSize=18 textColor=#ffffffff
+                Expanded
+                  LimpidEmptyState
+                    ConstrainedBox maxWidth=420
+                      Padding padding=24,24,24,24
+                        Column direction=vertical
+                          Icon
+                            SizedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+                              RichText fontSize=40 textColor=#ffe6e6e6
+                          SizedBox maxHeight=16 minHeight=16
+                          Text text="Aucune scène pour l'instant"
+                            RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ffffffff
+            SizedBox maxWidth=1 minWidth=1
+              Padding padding=0,0,0,0
+                ConstrainedBox maxWidth=1 minWidth=1
+                  DecoratedBox border="0 #ff000000/0 #ff000000/0 #ff000000/1 #ffffffff"
+                    Padding padding=1,0,0,0
+            Expanded
+              LimpidEmptyState
+                ConstrainedBox maxWidth=420
+                  Padding padding=24,24,24,24
+                    Column direction=vertical
+                      Icon
+                        SizedBox maxHeight=40 maxWidth=40 minHeight=40 minWidth=40
+                          RichText fontSize=40 textColor=#ffe6e6e6
+                      SizedBox maxHeight=16 minHeight=16
+                      Text text="Aucune scène pour l'instant"
+                        RichText fontSize=18 fontWeight=FontWeight.w600 textColor=#ffffffff
+      DecoratedBox background=#ff000000 border="1 #ffffffff/0 #ff000000/0 #ff000000/0 #ff000000"
+        Padding padding=16,9,16,8
+          Row direction=horizontal
+            Semantics semanticsLabel="0 mots"
+              Row direction=horizontal
+                Icon
+                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                    RichText fontSize=14 textColor=#ffe6e6e6
+                SizedBox maxWidth=6 minWidth=6
+                Text text="0 mots"
+                  RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+            SizedBox maxWidth=16 minWidth=16
+            Semantics semanticsLabel="0 min de lecture"
+              Row direction=horizontal
+                Icon
+                  SizedBox maxHeight=14 maxWidth=14 minHeight=14 minWidth=14
+                    RichText fontSize=14 textColor=#ffe6e6e6
+                SizedBox maxWidth=6 minWidth=6
+                Text text="0 min de lecture"
+                  RichText fontSize=11 fontWeight=FontWeight.w500 textColor=#ffe6e6e6
+            Expanded
+              SizedBox maxHeight=0 maxWidth=0
+            SizedBox maxHeight=0 maxWidth=0
+            SizedBox maxWidth=12 minWidth=12
+            LimpidBadge
+              Semantics semanticsLabel="Enregistrement automatique"
+                DecoratedBox background=#ff1f1f1f border="1 #59ffffff" radius=999
+                  Padding padding=9,5,9,5
+                    Row direction=horizontal
+                      ConstrainedBox maxHeight=6 maxWidth=6 minHeight=6 minWidth=6
+                        DecoratedBox background=#ffffffff shape=circle
+                          Padding padding=0,0,0,0
+                      SizedBox maxWidth=6 minWidth=6
+                      Flexible
+                        Text text="Enregistrement automatique"
+                          RichText fontSize=12 fontWeight=FontWeight.w500 textColor=#ffffffff
+    Stack
+

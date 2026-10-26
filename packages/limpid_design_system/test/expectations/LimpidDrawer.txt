@@ -1,0 +1,47 @@
+# LimpidDrawer
+# Genere par `flutter test --update-goldens` : ne pas editer a la main.
+
+@@ paper
+LimpidDrawer
+  Semantics semanticsLabel="Navigation menu"
+    ConstrainedBox maxWidth=304 minWidth=304
+      Material radius=0 shape=RoundedRectangleBorder
+        CustomPaint
+          Column direction=vertical
+            Flexible
+              Text text="Le contenu du tiroir."
+                RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff16130f
+
+@@ sepia
+LimpidDrawer
+  Semantics semanticsLabel="Navigation menu"
+    ConstrainedBox maxWidth=304 minWidth=304
+      Material radius=0 shape=RoundedRectangleBorder
+        CustomPaint
+          Column direction=vertical
+            Flexible
+              Text text="Le contenu du tiroir."
+                RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ff33281a
+
+@@ night
+LimpidDrawer
+  Semantics semanticsLabel="Navigation menu"
+    ConstrainedBox maxWidth=304 minWidth=304
+      Material radius=0 shape=RoundedRectangleBorder
+        CustomPaint
+          Column direction=vertical
+            Flexible
+              Text text="Le contenu du tiroir."
+                RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#fff0ebe2
+
+@@ contrast
+LimpidDrawer
+  Semantics semanticsLabel="Navigation menu"
+    ConstrainedBox maxWidth=304 minWidth=304
+      Material radius=0 shape=RoundedRectangleBorder
+        CustomPaint
+          Column direction=vertical
+            Flexible
+              Text text="Le contenu du tiroir."
+                RichText fontSize=14 fontWeight=FontWeight.w400 textColor=#ffffffff
+
