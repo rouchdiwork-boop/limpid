@@ -75,8 +75,8 @@ le PDF print-ready aux plans Pro et Studio.
 
 - [ ] `flutter analyze` : 0 erreur, 0 avertissement sur `apps/` et `packages/` ; `dart format --set-exit-if-changed .` propre.
 - [x] La règle de dépendance de PROMPT §5 est vérifiée automatiquement par l'analyseur ; toute violation échoue la CI.
-- [ ] 30 widgets du design system livrés, chacun couvert par au moins un test golden dans les 4 thèmes.
-- [ ] Les 4 thèmes rendent les écrans de référence sans retouche.
+- [x] 30 widgets du design system livrés, chacun couvert par au moins un test golden dans les 4 thèmes.
+- [x] Les 4 thèmes rendent les écrans de référence sans retouche.
 - [ ] Inscription par lien magique, puis connexion OAuth Google et Apple, validées en environnement de test.
 - [ ] JWT de 15 min, rotation du jeton de rafraîchissement, révocation serveur effective depuis la liste des appareils.
 - [ ] `flutter test` vert et CI GitHub Actions exécutant analyse, tests et build web.
@@ -189,8 +189,8 @@ le PDF print-ready aux plans Pro et Studio.
 
 **Critères d'acceptation.**
 
-- [ ] Un commentaire s'ancre sur une plage de caractères et suit le texte quand le bloc est réécrit ; il est stocké comme surcharge du CRDT, donc jamais en conflit avec le texte.
-- [ ] Un fil de discussion se répond, se résout et se rouvre.
+- [x] Un commentaire s'ancre sur une plage de caractères et suit le texte quand le bloc est réécrit ; il est stocké comme surcharge du CRDT, donc jamais en conflit avec le texte.
+- [x] Un fil de discussion se répond, se résout et se rouvre.
 - [ ] Deux personnes connectées voient la frappe de l'autre en moins de 300 ms.
 - [x] La présence affiche les curseurs distants et les avatars, et disparaît en moins de 30 s après déconnexion.
 - [ ] Les rôles `propriétaire`, `co-auteur`, `bêta-lecteur` et `lecteur` sont appliqués côté serveur ; un bêta-lecteur ne peut pas modifier le texte.
@@ -492,11 +492,18 @@ visible.
 
 **Où en est le dépôt.** Le tableau est le verdict de l'audit, à sa date : il
 ne bouge pas quand une correction arrive. Ce qui bouge, c'est le compte des
-**cases cochées** : le lot 8 en a coché **21 sur 68**. Les 15 que l'audit
-avait vérifiés s'y ajoutent, sauf ceux du lot 7 qu'il avait déjà comptés —
-soit **29 des 68 critères** vérifiés sur preuve aujourd'hui. Les 39
-restants sont répartis par l'audit entre *partiel* et *non vérifié*, et la
-section « Ce qui n'est pas encore tenu » de chaque lot dit ce qui manque.
+**cases cochées** : les lots 8 et 9 en ont coché **25 sur 68**. Les 15 que
+l'audit avait vérifiés s'y ajoutent, sauf ceux du lot 7 qu'il avait déjà
+comptés — soit **33 des 68 critères** vérifiés sur preuve aujourd'hui. Les
+35 restants sont répartis par l'audit entre *partiel* et *non vérifié*, et
+la section « Ce qui n'est pas encore tenu » de chaque lot dit ce qui
+manque.
+
+Le témoin du design system est un **double** : un témoin **structurel**
+(l'arbre de rendu, ses textes, ses couleurs, ses rayons, ses espacements)
+qui tourne partout, CI comprise, et un témoin d'**image** (les PNG) que le
+poste de travail garde pour lui — une image générée sous Windows ne
+correspond pas sous Linux, et ferait échouer la CI.
 
 Une différence instructive entre les deux moitiés du tableau : dans les
 lots 4 à 6, l'écart vient d'**écrans vides** — la fonction est là, elle n'a
@@ -538,8 +545,8 @@ Onze critères ne sont pas vérifiés, et quinze ne le sont qu'à moitié. Les
 | 6 | **La compaction du journal n'existe pas.** L'instantané stocke tout le journal, sans seuil : il croît sans borne. | 2.6 |
 | 7 | **Aucun historique de versions.** Le seul diff du dépôt compare deux textes pour la suggestion IA, pas deux révisions de blocs. | 2.9 |
 | 8 | **Aucune invitation par courriel.** L'invitation vise un compte existant, s'applique immédiatement, et n'a ni date d'expiration ni jeton : il n'y a rien qui puisse expirer. | 3.8 |
-| 9 | **L'ancre de commentaire ne suit pas le texte réécrit** : la plage de la marque est réutilisée telle quelle quand le contenu change. | 3.1 |
-| 10 | **Les fils de discussion ne se répondent ni ne se rouvrent** : il n'y a pas de champ de saisie, et un fil résolu ne se rouvre pas. | 3.2 |
+| 9 | ~~**L'ancre de commentaire ne suit pas le texte réécrit** : la plage de la marque est réutilisée telle quelle quand le contenu change.~~ **Fermé** : la marque porte le Lamport de sa pose, et la plage est **recalculée** sur le contenu effectif à travers le diff de Myers déjà présent (`packages/limpid_core/lib/src/sync/internal/text_diff.dart`). Une réécriture avant décale la plage, une réécriture après ne la bouge pas, une réécriture au milieu la tronque. | 3.1 |
+| 10 | ~~**Les fils de discussion ne se répondent ni ne se rouvrent** : il n'y a pas de champ de saisie, et un fil résolu ne se rouvre pas.~~ **Fermé** : le panneau de relecture a un champ de réponse, un bouton **Répondre**, un bouton **Résoudre le fil** et un bouton **Rouvrir le fil** ; la réponse, la résolution et la réouverture sont écrites et relues après rechargement. | 3.2 |
 | 11 | ~~**La règle de dépendance n'est pas vérifiée automatiquement** : l'invariant tient, mais rien ne le contrôle.~~ **Fermé** : `tools/dependances.py` lit les imports de chaque paquet et **échoue la CI** quand la règle de PROMPT §5 est violée (D-42). Le contrôle est un script, pas une règle de l'analyseur : la différence est notée en 14.4. | 0.2 |
 
 Trois écarts sont **presque** des bugs plutôt que des fonctions
@@ -555,6 +562,12 @@ move_and_text_test.dart` prouve qu'un déplacement concurrent et une
 réécriture du même texte survivent tous les deux, et que les deux clients
 aboutissent au même état quel que soit l'ordre de réception. Les deux
 autres écarts sont encore ouverts.
+
+Les écarts 9 et 10 sont **fermés eux aussi** : l'ancre de commentaire suit
+le texte réécrit — la plage est recalculée sur le contenu effectif, à
+travers le diff de Myers — et le fil de discussion se répond, se résout et
+se rouvre, la réponse et les deux changements d'état étant écrits et relus
+après rechargement.
 
 ### 14.4 Ce que l'audit a fait corriger
 

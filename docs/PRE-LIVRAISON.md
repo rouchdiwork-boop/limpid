@@ -18,7 +18,7 @@ conditions réelles** — pas dans un test, pas avec un double.
 | # | Élément | Ce qui bloque | Vérification | Bloque |
 |---|---|---|---|---|
 | 1 | Supabase Auth | un projet Supabase réel | inscription par lien magique, OAuth Google et Apple | la connexion |
-| 2 | Stripe | un compte Stripe | un achat de bout en bout en bac à sable : page de vente, paiement, réception du webhook, page de téléchargement | le paiement |
+| 2 | Stripe | un compte Stripe en mode bac à sable | un achat de bout en bout : page de vente (prix affiché), paiement sur la page du prestataire, réception du webhook, retour sur l'écran de retour, page de téléchargement | le paiement |
 | 3 | Secret du webhook Stripe | la clé de signature | un webhook signé qui arrive, et un qui arrive **mal signé** et qui est refusé | la facturation |
 | 4 | Cloudflare R2 | un seau et des identifiants | un export déposé, une URL signée qui expire | le stockage des exports |
 | 5 | Anthropic | une clé d'API | une génération réelle, et le **consentement** enregistré avant le premier envoi de texte | l'IA |
