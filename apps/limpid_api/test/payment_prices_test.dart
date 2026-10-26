@@ -89,8 +89,9 @@ void main() {
       );
 
       expect(
-        Uri.splitQueryString(client.body ?? '')[
-            'line_items[0][price_data][unit_amount]'],
+        Uri.splitQueryString(
+          client.body ?? '',
+        )['line_items[0][price_data][unit_amount]'],
         '2499',
       );
     });

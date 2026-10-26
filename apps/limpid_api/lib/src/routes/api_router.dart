@@ -60,11 +60,21 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
   // câble pas ne sert pas leurs routes, plutôt que de les servir en
   // erreur.
   if (quotaDatabase != null) {
-    registerQuotaRoutes(router, quotaDatabase, config, audit: dependencies.audit);
+    registerQuotaRoutes(
+      router,
+      quotaDatabase,
+      config,
+      audit: dependencies.audit,
+    );
   }
   final TwoFactorDatabase? twoFactor = dependencies.twoFactor;
   if (twoFactor != null) {
-    registerTwoFactorRoutes(router, twoFactor, config, planOf: dependencies.planOf);
+    registerTwoFactorRoutes(
+      router,
+      twoFactor,
+      config,
+      planOf: dependencies.planOf,
+    );
   }
   final TeamDatabase? teams = dependencies.teams;
   if (teams != null) {

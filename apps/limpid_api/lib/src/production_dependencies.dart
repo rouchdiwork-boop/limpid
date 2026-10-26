@@ -214,7 +214,10 @@ Future<_Stores> _postgresStores(
     purge: SqlAccountPurgeStore(PostgresAccountPurgeDatabase(resolvedPool)),
     quotas: quotas,
     twoFactor: PostgresTwoFactorDatabase(resolvedPool),
-    teams: PostgresTeamDatabase(resolvedPool, planLookup: _planLookupOf(quotas)),
+    teams: PostgresTeamDatabase(
+      resolvedPool,
+      planLookup: _planLookupOf(quotas),
+    ),
     admin: PostgresAdminDatabase(resolvedPool),
     probe: _PoolHealthProbe(resolvedPool),
     close: () => resolvedPool.close(),
