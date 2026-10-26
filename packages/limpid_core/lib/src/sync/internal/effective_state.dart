@@ -3,6 +3,7 @@ import 'package:limpid_core/src/domain/content.dart';
 import 'package:limpid_core/src/domain/ids.dart';
 import 'package:limpid_core/src/domain/mark.dart';
 import 'package:limpid_core/src/sync/block_state.dart';
+import 'package:limpid_core/src/sync/internal/text_diff.dart';
 import 'package:limpid_core/src/sync/ops.dart';
 import 'package:limpid_core/src/sync/three_way_merge.dart';
 
@@ -15,12 +16,7 @@ Block? effectiveBlock(BlockState state, DocumentId docId) {
       move != null && isNewerVersion(move.lamport, move.author, insert.key);
   final parent = useMove ? move.parent : insert.parent;
   final order = useMove ? move.order : insert.order;
-  final marks = <MarkId, MarkRange>{};
-  for (final mark in state.marks.keys) {
-    if (state.isMarkPresent(mark)) {
-      marks[mark] = state.marks[mark]!.range;
-    }
-  }
+  final BlockContent content = effectiveContent(state);
   final lamport = latestLamport(state);
   return Block(
     id: state.id,
@@ -28,12 +24,59 @@ Block? effectiveBlock(BlockState state, DocumentId docId) {
     parent: parent,
     order: order,
     type: insert.type,
-    content: effectiveContent(state),
-    marks: Map<MarkId, MarkRange>.unmodifiable(marks),
+    content: content,
+    marks: effectiveMarkRanges(state, content),
     lamport: lamport,
     author: latestAuthor(state, lamport),
     deleted: state.isDeleted,
     version: state.opCount,
+  );
+}
+
+/// The ranges of the marks of a block, moved on the text they cover.
+///
+/// A mark is a surcharge of the CRDT: it never conflicts with the text. But
+/// its range is expressed in the coordinates of the text it was written on,
+/// and the text moves when the block is rewritten. The range is therefore
+/// computed again on the effective content of the block: it follows the words
+/// it covers.
+Map<MarkId, MarkRange> effectiveMarkRanges(
+  BlockState state,
+  BlockContent content,
+) {
+  final String text = content.plainText;
+  final Map<MarkId, MarkRange> ranges = <MarkId, MarkRange>{};
+  final Map<String, RangeMapper> mappers = <String, RangeMapper>{};
+  for (final MarkId id in state.marks.keys) {
+    if (!state.isMarkPresent(id)) continue;
+    final MarkState mark = state.marks[id]!;
+    final String reference = referenceContentOf(state, mark).plainText;
+    final RangeMapper mapper = mappers.putIfAbsent(
+      reference,
+      () => RangeMapper(reference: reference, text: text),
+    );
+    ranges[id] = mapper.map(mark.range);
+  }
+  return Map<MarkId, MarkRange>.unmodifiable(ranges);
+}
+
+/// The content the range of [mark] was computed on.
+///
+/// The mark was added after the versions that carry its text: the reference
+/// is the content of those versions. It is the text the author was reading
+/// when the mark was written, and the diff between it and the effective
+/// content moves the range.
+///
+/// A version written by another author and received after the mark may join
+/// the reference: the CRDT does not keep what the author was reading. The
+/// range then follows the words of the text the two versions share.
+BlockContent referenceContentOf(BlockState state, MarkState mark) {
+  final List<ContentVersion> versions = state.versions
+      .where((ContentVersion version) => version.lamport < mark.addedAt)
+      .toList(growable: false);
+  return effectiveContentOf(
+    versions,
+    state.insert?.content ?? const TextContent(''),
   );
 }
 
@@ -92,13 +135,27 @@ AuthorId latestAuthor(BlockState state, int lamport) {
 /// used as the base of the 3-way merge. The result only depends on the set
 /// of versions, never on the order in which they were received.
 BlockContent effectiveContent(BlockState state) {
-  final versions = state.versions;
+  return effectiveContentOf(
+    state.versions,
+    state.insert?.content ?? const TextContent(''),
+  );
+}
+
+/// Computes the effective content of a set of versions.
+///
+/// [fallback] is the content of the block when it holds no version at all.
+/// The result only depends on the set of versions, never on the order in
+/// which they were received.
+BlockContent effectiveContentOf(
+  List<ContentVersion> versions,
+  BlockContent fallback,
+) {
   if (versions.isEmpty) {
-    return state.insert?.content ?? const TextContent('');
+    return fallback;
   }
   final leaves = _leaves(versions);
   if (leaves.length == 1) return leaves.first.content;
-  final base = _mergeBase(state, leaves);
+  final base = _mergeBase(versions, leaves, fallback);
   final variants = leaves
       .map(
         (version) => MergeVariant(
@@ -125,9 +182,13 @@ List<ContentVersion> _leaves(List<ContentVersion> versions) {
 }
 
 /// The common ancestor used as the base of the 3-way merge.
-BlockContent _mergeBase(BlockState state, List<ContentVersion> leaves) {
+BlockContent _mergeBase(
+  List<ContentVersion> versions,
+  List<ContentVersion> leaves,
+  BlockContent fallback,
+) {
   final byKey = <String, ContentVersion>{
-    for (final version in state.versions) version.ref.key: version,
+    for (final version in versions) version.ref.key: version,
   };
   List<ContentVersion>? common;
   for (final leaf in leaves) {
@@ -136,7 +197,7 @@ BlockContent _mergeBase(BlockState state, List<ContentVersion> leaves) {
     if (common.isEmpty) break;
   }
   final ancestor = (common == null || common.isEmpty) ? null : common.first;
-  return ancestor?.content ?? state.insert?.content ?? const TextContent('');
+  return ancestor?.content ?? fallback;
 }
 
 /// The chain of ancestors of [leaf], from the leaf to the root.

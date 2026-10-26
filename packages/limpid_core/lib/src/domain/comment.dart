@@ -66,6 +66,9 @@ final class Comment {
   String toString() => 'Comment($id)';
 }
 
+/// The marker of the fields a copy leaves untouched.
+const Object _untouched = Object();
+
 /// A conversation anchored on a mark (a comment mark).
 final class CommentThread {
   /// Creates a comment thread.
@@ -96,17 +99,49 @@ final class CommentThread {
   int get messageCount => comments.length;
 
   /// Returns a copy of this thread with the given fields replaced.
+  ///
+  /// The resolution is cleared when [resolvedAt] is `null`: a reopened thread
+  /// keeps no date. [resolve] and [reopen] are the two coherent transitions
+  /// of a thread.
   CommentThread copyWith({
     List<Comment>? comments,
     bool? isResolved,
-    DateTime? resolvedAt,
+    Object? resolvedAt = _untouched,
   }) {
     return CommentThread(
       id: id,
       markId: markId,
       comments: comments ?? this.comments,
       isResolved: isResolved ?? this.isResolved,
-      resolvedAt: resolvedAt ?? this.resolvedAt,
+      resolvedAt: identical(resolvedAt, _untouched)
+          ? this.resolvedAt
+          : resolvedAt as DateTime?,
+    );
+  }
+
+  /// Returns a copy of this thread, resolved at [date].
+  ///
+  /// The date of the resolution is kept by the copy: the thread it is built
+  /// from stays untouched.
+  CommentThread resolve(DateTime date) {
+    return CommentThread(
+      id: id,
+      markId: markId,
+      comments: comments,
+      isResolved: true,
+      resolvedAt: date,
+    );
+  }
+
+  /// Returns a copy of this thread, opened again.
+  ///
+  /// The reopened thread keeps no date of resolution.
+  CommentThread reopen() {
+    return CommentThread(
+      id: id,
+      markId: markId,
+      comments: comments,
+      isResolved: false,
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:limpid_core/src/domain/mark.dart';
 import 'package:limpid_core/src/sync/text_edit.dart';
 
 /// The kind of a chunk of the diff script.
@@ -36,6 +37,125 @@ final class DiffRuneText {
 
   /// UTF-16 offset of every code point, plus the total length.
   late final List<int> offsets;
+
+  /// The index of the code point that holds the UTF-16 [offset].
+  ///
+  /// An offset that falls inside a surrogate pair belongs to the code point
+  /// that follows it: a range never splits a code point.
+  int runeIndexOf(int offset) {
+    var low = 0;
+    var high = runes.length;
+    while (low < high) {
+      final int middle = (low + high) ~/ 2;
+      if (offsets[middle] < offset) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+    return low;
+  }
+}
+
+/// The mapper of the ranges of a reference text onto another text.
+///
+/// The mapper holds the diff of the two texts. A range of the reference is
+/// mapped through it: the code points that survived keep their place, and the
+/// code points that disappeared leave a hole the range steps over.
+///
+/// The range therefore follows the words it covers: a rewrite before it moves
+/// it, a rewrite after it leaves it alone, and a rewrite inside it truncates
+/// it. A range whose code points all disappeared becomes an empty range at
+/// the place of the hole.
+final class RangeMapper {
+  /// Creates the mapper of the ranges of [reference] onto [text].
+  RangeMapper({required this.reference, required this.text});
+
+  /// The text the ranges were computed on.
+  final String reference;
+
+  /// The text the ranges are mapped onto.
+  final String text;
+
+  /// The reference, split into code points.
+  late final DiffRuneText _base = DiffRuneText(reference);
+
+  /// The text, split into code points.
+  late final DiffRuneText _target = DiffRuneText(text);
+
+  /// The diff of the two texts, computed once.
+  late final List<DiffChunk> _chunks = reference == text
+      ? const <DiffChunk>[]
+      : diffRuneChunks(_base.runes, _target.runes);
+
+  /// Maps [range] from the reference onto the text.
+  ///
+  /// The returned range is expressed in the UTF-16 code units of the text.
+  MarkRange map(MarkRange range) {
+    if (reference == text) return range;
+    final int start = _base.runeIndexOf(range.start);
+    final int end = _base.runeIndexOf(range.end);
+    final _MappedRange mapped = _walk(start: start, end: end);
+    final int from = mapped.from ?? mapped.endOfReference;
+    final int to = mapped.to ?? mapped.endOfReference;
+    return MarkRange(
+      start: _target.offsets[from],
+      end: _target.offsets[to < from ? from : to],
+    );
+  }
+
+  /// Walks the diff and maps the code points `[start, end[` of the reference.
+  _MappedRange _walk({required int start, required int end}) {
+    var basePosition = 0;
+    var targetPosition = 0;
+    var endOfReference = 0;
+    int? from;
+    int? to;
+
+    for (final DiffChunk chunk in _chunks) {
+      if (chunk.kind == DiffChunkKind.insert) {
+        targetPosition += chunk.text.runes.length;
+        continue;
+      }
+      final int length = chunk.text.runes.length;
+      final bool survives = chunk.kind == DiffChunkKind.equal;
+      if (from == null &&
+          start >= basePosition &&
+          start < basePosition + length) {
+        from = survives
+            ? targetPosition + (start - basePosition)
+            : targetPosition;
+      }
+      if (to == null && end > basePosition && end <= basePosition + length) {
+        to = survives ? targetPosition + (end - basePosition) : targetPosition;
+      }
+      basePosition += length;
+      if (survives) targetPosition += length;
+      if (basePosition == _base.runes.length) endOfReference = targetPosition;
+    }
+
+    return _MappedRange(from: from, to: to, endOfReference: endOfReference);
+  }
+}
+
+/// The result of the walk of a diff: the place of the two ends of a range.
+final class _MappedRange {
+  /// Creates the result of the walk.
+  const _MappedRange({
+    required this.from,
+    required this.to,
+    required this.endOfReference,
+  });
+
+  /// The place of the first code point of the range, `null` when it is gone.
+  final int? from;
+
+  /// The place just after the last code point of the range, `null` when it is
+  /// gone.
+  final int? to;
+
+  /// The place of the end of the reference in the target.
+  final int endOfReference;
 }
 
 /// Computes the diff of two code point sequences with the Myers algorithm.
