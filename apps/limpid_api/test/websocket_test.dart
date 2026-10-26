@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:limpid_api/limpid_api.dart';
+import 'package:limpid_core/limpid_core.dart';
 import 'package:test/test.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -244,31 +245,182 @@ void main() {
     expect(stored.last.authorId, 'user-1');
     expect(stored.last.lamport, 2);
   });
+
+  group('présence', () {
+    test('annonce la jonction, le curseur et le départ', () async {
+      await _pushOperation(
+        server,
+        token,
+        projectId,
+        docId: 'doc-1',
+        lamport: 1,
+      );
+      server.projects.addMember(
+        projectId: projectId,
+        userId: 'user-2',
+        role: ProjectRole.coAuthor,
+      );
+      final String otherToken = server.tokenFor('user-2');
+
+      final _Frames alice = await _connect(server, token);
+      await alice.next();
+      alice.send(_joinFrame(projectId, 'doc-1'));
+      await alice.nextOfType('ack');
+
+      final _Frames bob = await _connect(server, otherToken);
+      await bob.next();
+      bob.send(_joinFrame(projectId, 'doc-1'));
+      await bob.nextOfType('ack');
+
+      // Alice apprend que Bob est dans la salle.
+      final Map<String, dynamic> joined = await alice.nextOfType('presence');
+      final Map<String, dynamic> joinedPayload =
+          joined['payload']! as Map<String, dynamic>;
+      expect(joinedPayload['doc_id'], 'doc-1');
+      expect(joinedPayload['user_id'], 'user-2');
+      expect(joinedPayload['state'], 'joined');
+
+      // Bob apprend qui est déjà là.
+      final Map<String, dynamic> roster = await bob.nextOfType('presence');
+      final Map<String, dynamic> rosterPayload =
+          roster['payload']! as Map<String, dynamic>;
+      expect(rosterPayload['user_id'], 'user-1');
+      expect(rosterPayload['state'], 'joined');
+
+      // Le curseur de Bob voyage jusqu'à Alice.
+      bob.send(<String, Object?>{
+        'type': 'cursor',
+        'payload': <String, Object?>{
+          'project_id': projectId,
+          'doc_id': 'doc-1',
+          'cursor': <String, Object?>{'block_id': 'block-1', 'offset': 12},
+        },
+      });
+      final Map<String, dynamic> moved = await alice.nextOfType('presence');
+      final Map<String, dynamic> movedPayload =
+          moved['payload']! as Map<String, dynamic>;
+      expect(movedPayload['state'], 'cursor');
+      expect(movedPayload['user_id'], 'user-2');
+      final Map<String, dynamic> cursor =
+          movedPayload['cursor']! as Map<String, dynamic>;
+      expect(cursor['block_id'], 'block-1');
+      expect(cursor['offset'], 12);
+
+      // Bob part : Alice le voit disparaître.
+      await bob.close();
+      final Map<String, dynamic> left = await alice.nextOfType('presence');
+      final Map<String, dynamic> leftPayload =
+          left['payload']! as Map<String, dynamic>;
+      expect(leftPayload['state'], 'left');
+      expect(leftPayload['user_id'], 'user-2');
+    });
+
+    test('purge un pair qui ne bat plus', () async {
+      final TestServer relay = await startTestServer(
+        configOverrides: <String, String>{
+          'LIMPID_RELAY_HEARTBEAT_SECONDS': '1',
+          'LIMPID_RELAY_PRESENCE_TIMEOUT_SECONDS': '2',
+        },
+      );
+      addTearDown(relay.stop);
+      final String relayToken = relay.tokenFor('user-1');
+      final String relayProject = await _createProject(relay, relayToken);
+      relay.projects.addMember(
+        projectId: relayProject,
+        userId: 'user-2',
+        role: ProjectRole.coAuthor,
+      );
+      await _pushOperation(
+        relay,
+        relayToken,
+        relayProject,
+        docId: 'doc-1',
+        lamport: 1,
+      );
+
+      // Alice ne répond jamais au ping du relais : elle ne bat plus.
+      final _Frames alice = await _connect(
+        relay,
+        relayToken,
+        answersThePing: false,
+      );
+      await alice.next();
+      alice.send(_joinFrame(relayProject, 'doc-1'));
+      await alice.nextOfType('ack');
+
+      final _Frames bob = await _connect(relay, relay.tokenFor('user-2'));
+      await bob.next();
+      bob.send(_joinFrame(relayProject, 'doc-1'));
+      await bob.nextOfType('ack');
+      await bob.nextOfType('presence');
+
+      final Map<String, dynamic> left = await bob.nextOfType('presence');
+      final Map<String, dynamic> payload =
+          left['payload']! as Map<String, dynamic>;
+      expect(payload['state'], 'left');
+      expect(payload['user_id'], 'user-1');
+    });
+  });
+
+  test('envoie un ping de garde-fou au client', () async {
+    final TestServer relay = await startTestServer(
+      configOverrides: <String, String>{
+        'LIMPID_RELAY_HEARTBEAT_SECONDS': '1',
+        'LIMPID_RELAY_PRESENCE_TIMEOUT_SECONDS': '30',
+      },
+    );
+    addTearDown(relay.stop);
+
+    final _Frames frames = await _connect(relay, relay.tokenFor('user-1'));
+    await frames.next();
+
+    final Map<String, dynamic> ping = await frames.nextOfType('ping');
+    expect(ping['type'], 'ping');
+  });
+}
+
+/// The frame that joins the room of [docId].
+Map<String, Object?> _joinFrame(String projectId, String docId) {
+  return <String, Object?>{
+    'type': 'join',
+    'payload': <String, Object?>{'project_id': projectId, 'doc_id': docId},
+  };
 }
 
 /// The frames received on a WebSocket connection.
 final class _Frames {
-  _Frames(this._channel) {
+  _Frames(this._channel, {this.answersThePing = true}) {
     _subscription = _channel.stream.listen(
       (dynamic raw) {
-        _queue.add(jsonDecode(raw as String) as Map<String, dynamic>);
+        final Map<String, dynamic> frame =
+            jsonDecode(raw as String) as Map<String, dynamic>;
+        _queue.add(frame);
+        // Le client bat : le relais purge les pairs qui se taisent.
+        if (answersThePing && frame['type'] == 'ping') {
+          _channel.sink.add(jsonEncode(<String, Object?>{'type': 'pong'}));
+        }
         if (!_pending.isCompleted) _pending.complete();
       },
       onError: (Object error) {
-        if (!_pending.isCompleted) _pending.completeError(error);
+        _isDone = true;
+        if (!_pending.isCompleted) _pending.complete();
       },
       onDone: () {
-        if (!_pending.isCompleted) {
-          _pending.completeError(StateError('La connexion a été fermée.'));
-        }
+        _isDone = true;
+        if (!_pending.isCompleted) _pending.complete();
       },
     );
   }
 
   final WebSocketChannel _channel;
+
+  /// Whether the client answers the ping of the relay.
+  final bool answersThePing;
+
   final Queue<Map<String, dynamic>> _queue = Queue<Map<String, dynamic>>();
   Completer<void> _pending = Completer<void>();
   late final StreamSubscription<dynamic> _subscription;
+  bool _isDone = false;
 
   /// Closes the connection and releases the subscription.
   Future<void> close() async {
@@ -284,6 +436,9 @@ final class _Frames {
   /// Waits for the next frame.
   Future<Map<String, dynamic>> next() async {
     while (_queue.isEmpty) {
+      if (_isDone) {
+        throw StateError('La connexion a été fermée.');
+      }
       if (_pending.isCompleted) {
         _pending = Completer<void>();
       } else {
@@ -309,13 +464,17 @@ final class _Frames {
   }
 }
 
-Future<_Frames> _connect(TestServer server, String? token) async {
+Future<_Frames> _connect(
+  TestServer server,
+  String? token, {
+  bool answersThePing = true,
+}) async {
   final Uri uri = Uri.parse(
     'ws://127.0.0.1:${server.server.port}/v1/sync'
     '${token == null ? '' : '?token=$token'}',
   );
   final WebSocketChannel channel = WebSocketChannel.connect(uri);
-  final _Frames frames = _Frames(channel);
+  final _Frames frames = _Frames(channel, answersThePing: answersThePing);
   addTearDown(frames.close);
   return frames;
 }

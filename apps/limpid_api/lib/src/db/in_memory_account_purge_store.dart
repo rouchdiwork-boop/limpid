@@ -1,13 +1,26 @@
 import 'account_purge_store.dart';
 import 'audit_entry.dart';
+import 'personal_data_tables.dart';
 
-/// An operation of the synchronisation journal, in memory.
-typedef _Operation = ({String projectId, String authorId});
+/// Une ligne d'une table du schéma, en mémoire.
+final class _Row {
+  /// Crée une ligne.
+  const _Row({required this.owners, this.projectId, this.email = ''});
 
-/// A collaboration on a project, in memory.
-typedef _Membership = ({String projectId, String userId});
+  /// Les comptes auxquels la ligne appartient.
+  final Set<String> owners;
 
-/// A purge recorded by the store, in memory.
+  /// L'adresse que la ligne vise, quand elle en porte une.
+  ///
+  /// Une invitation d'equipe vise une adresse, pas un compte : elle
+  /// disparait avec le compte qui l'a recue.
+  final String email;
+
+  /// Le livre auquel la ligne appartient, quand elle en a un.
+  final String? projectId;
+}
+
+/// Une purge enregistrée par le magasin, en mémoire.
 typedef _Purge = ({
   DateTime requestedAt,
   DateTime scheduledFor,
@@ -15,96 +28,132 @@ typedef _Purge = ({
   String workerId,
 });
 
-/// An in-memory [AccountPurgeStore], used by the test suite.
+/// Un [AccountPurgeStore] en mémoire, utilisé par la suite de tests.
 ///
-/// The store keeps the same invariants as the SQL implementation: the erase
-/// covers the projects of the account, the operations of the synchronisation
-/// journal that belong to them, the collaborations and the personal data of
-/// the account, and an account that was already purged is left untouched.
+/// Le magasin garde les mêmes invariants que l'implémentation SQL : il
+/// efface les mêmes tables, dans l'ordre de la déclaration, et un compte
+/// déjà purgé est laissé intact. C'est la déclaration des tables qui
+/// commande le double : le test qui compare le double et l'implémentation
+/// SQL compare donc le même périmètre des deux côtés.
 ///
-/// The journal is given to the store: it is the list of the entries of the
-/// audit log, and the store only reads it.
+/// Le journal lui est donné : c'est la liste des entrées du journal d'audit,
+/// et le magasin ne fait que la lire.
 final class InMemoryAccountPurgeStore implements AccountPurgeStore {
-  /// Creates a store reading the deletion requests in [entries].
+  /// Crée un magasin qui lit les demandes de suppression dans [entries].
   ///
-  /// The entries are the ones of the audit log: the store only reads them.
+  /// Les entrées sont celles du journal d'audit : le magasin ne fait que
+  /// les lire.
   InMemoryAccountPurgeStore({required List<AuditEntry> entries})
     : _journal = entries;
 
-  /// The entries of the journal, read by the store.
+  /// Les entrées du journal, lues par le magasin.
   final List<AuditEntry> _journal;
 
-  /// The projects of the database, by identifier and owner.
-  final Map<String, String> _projects = <String, String>{};
+  /// Les lignes des tables du schéma, par table, par identifiant.
+  final Map<String, Map<String, _Row>> _tables = <String, Map<String, _Row>>{};
 
-  /// The operations of the synchronisation journal, by identifier.
-  final Map<String, _Operation> _operations = <String, _Operation>{};
+  /// Les administrateurs qui ont changé les indicateurs, par indicateur.
+  final Map<String, String> _flags = <String, String>{};
 
-  /// The collaborations, by identifier.
-  final Map<String, _Membership> _members = <String, _Membership>{};
-
-  /// The messages of the discussions, by identifier and author.
-  final Map<String, String> _messages = <String, String>{};
-
-  /// The purges already performed, by account.
+  /// Les purges déjà effectuées, par compte.
   final Map<String, _Purge> _purges = <String, _Purge>{};
 
-  /// Adds a project owned by [ownerId] to the database.
+  /// Ajoute un livre possédé par [ownerId] à la base.
   void addProject({required String projectId, required String ownerId}) {
-    _projects[projectId] = ownerId;
+    _rows('projects')[projectId] = _Row(owners: <String>{ownerId});
   }
 
-  /// Adds an operation to the synchronisation journal.
+  /// Ajoute une opération au journal de synchronisation.
   void addOperation({
     required String operationId,
     required String projectId,
     required String authorId,
   }) {
-    _operations[operationId] = (projectId: projectId, authorId: authorId);
+    _rows('sync_ops')[operationId] = _Row(
+      owners: <String>{authorId},
+      projectId: projectId,
+    );
   }
 
-  /// Adds a collaboration on a project to the database.
+  /// Ajoute une collaboration sur un livre à la base.
   void addMember({required String projectId, required String userId}) {
-    _members['$projectId:$userId'] = (projectId: projectId, userId: userId);
+    _rows('project_members')['$projectId:$userId'] = _Row(
+      owners: <String>{userId},
+      projectId: projectId,
+    );
   }
 
-  /// Adds a message written by [authorId] to the database.
+  /// Ajoute un message écrit par [authorId] à la base.
   void addMessage({required String messageId, required String authorId}) {
-    _messages[messageId] = authorId;
+    _rows('comments')[messageId] = _Row(owners: <String>{authorId});
   }
 
-  /// The projects left in the database, by identifier and owner.
-  Map<String, String> get projects =>
-      Map<String, String>.unmodifiable(_projects);
+  /// Ajoute une ligne appartenant à [owners] dans la table [table].
+  ///
+  /// La méthode ressemble à l'écriture directe en SQL : le double tient une
+  /// ligne par table et par identifiant, avec les comptes auxquels elle
+  /// appartient. Une ligne attachée à un livre porte son identifiant : elle
+  /// disparaît avec le livre, comme le Cascade du SQL.
+  void addRow({
+    required String table,
+    required String rowId,
+    required Set<String> owners,
+    String? projectId,
+    String? email,
+  }) {
+    _rows(table)[rowId] = _Row(
+      owners: owners,
+      projectId: projectId,
+      email: email ?? '',
+    );
+  }
 
-  /// The identifiers of the operations left in the synchronisation journal.
-  List<String> get operationIds => List<String>.unmodifiable(_operations.keys);
+  /// Ajoute un indicateur changé par [updatedBy].
+  ///
+  /// L'indicateur reste : c'est la configuration du service. La purge vide
+  /// l'identifiant de l'administrateur, elle ne supprime pas l'indicateur.
+  void addFeatureFlag({required String flagKey, required String updatedBy}) {
+    _flags[flagKey] = updatedBy;
+  }
 
-  /// The identifiers of the collaborations left in the database.
-  List<String> get memberIds => List<String>.unmodifiable(_members.keys);
+  /// Les livres restants dans la base, par identifiant et propriétaire.
+  Map<String, String> get projects {
+    final Map<String, String> owners = <String, String>{};
+    for (final MapEntry<String, _Row> entry in _rows('projects').entries) {
+      owners[entry.key] = entry.value.owners.first;
+    }
+    return Map<String, String>.unmodifiable(owners);
+  }
 
-  /// The accounts already purged.
+  /// Les identifiants des opérations restants dans le journal de
+  /// synchronisation.
+  List<String> get operationIds =>
+      List<String>.unmodifiable(_rows('sync_ops').keys);
+
+  /// Les identifiants des collaborations restantes dans la base.
+  List<String> get memberIds =>
+      List<String>.unmodifiable(_rows('project_members').keys);
+
+  /// Les comptes déjà purgés.
   Set<String> get purgedAccounts => Set<String>.unmodifiable(_purges.keys);
 
-  /// The number of rows of the account left in the database.
+  /// Les administrateurs qui ont changé les indicateurs, par indicateur.
+  Map<String, String> get featureFlagOwners =>
+      Map<String, String>.unmodifiable(_flags);
+
+  /// Le nombre de lignes du compte restées dans la base.
+  ///
+  /// La méthode compte les lignes de l'auteur dans toutes les tables
+  /// personnelles : c'est la mesure que la suite de tests compare entre le
+  /// double et l'implémentation SQL.
   int remainingRows(String userId) {
-    final int projects = _projects.values
-        .where((String owner) => owner == userId)
-        .length;
-    final int operations = _operations.values
-        .where(
-          (_Operation operation) =>
-              operation.authorId == userId ||
-              _projects[operation.projectId] == userId,
-        )
-        .length;
-    final int collaborations = _members.values
-        .where((_Membership member) => member.userId == userId)
-        .length;
-    final int messages = _messages.values
-        .where((String author) => author == userId)
-        .length;
-    return projects + operations + collaborations + messages;
+    int total = 0;
+    for (final ErasedTable table in PersonalDataTables.erased) {
+      for (final _Row row in _rows(table.name).values) {
+        if (_belongsTo(row, userId)) total++;
+      }
+    }
+    return total;
   }
 
   @override
@@ -127,6 +176,7 @@ final class InMemoryAccountPurgeStore implements AccountPurgeStore {
   @override
   Future<AccountPurgeOutcome> purge({
     required String userId,
+    String? email,
     required DateTime requestedAt,
     required DateTime scheduledFor,
     required DateTime purgedAt,
@@ -140,6 +190,7 @@ final class InMemoryAccountPurgeStore implements AccountPurgeStore {
         operationsDeleted: 0,
         collaborationsDeleted: 0,
         messagesDeleted: 0,
+        personalRowsDeleted: 0,
         purged: false,
       );
     }
@@ -151,44 +202,92 @@ final class InMemoryAccountPurgeStore implements AccountPurgeStore {
       workerId: workerId,
     );
 
-    final int messages = _removeMatching(
-      _messages,
-      (String author) => author == userId,
-    );
-    final int operations = _removeMatching(
-      _operations,
-      (_Operation operation) =>
-          operation.authorId == userId ||
-          _projects[operation.projectId] == userId,
-    );
-    final int collaborations = _removeMatching(
-      _members,
-      (_Membership member) => member.userId == userId,
-    );
-    final int projects = _removeMatching(
-      _projects,
-      (String owner) => owner == userId,
-    );
+    final Map<String, int> erased = <String, int>{};
+    int total = 0;
+    for (final ErasedTable table in PersonalDataTables.erased) {
+      final int count = _erase(table.name, userId, email);
+      erased[table.name] = count;
+      total += count;
+    }
+    total += _emptyFlags(userId);
 
     return AccountPurgeOutcome(
       userId: userId,
-      projectsDeleted: projects,
-      operationsDeleted: operations,
-      collaborationsDeleted: collaborations,
-      messagesDeleted: messages,
+      projectsDeleted: erased['projects'] ?? 0,
+      operationsDeleted: erased['sync_ops'] ?? 0,
+      collaborationsDeleted: erased['project_members'] ?? 0,
+      messagesDeleted: erased['comments'] ?? 0,
+      personalRowsDeleted: total,
       purged: true,
     );
   }
 
-  /// The moment of an entry, the epoch when it carries none.
+  /// Les lignes de la table [table], la table étant créée à la demande.
+  Map<String, _Row> _rows(String table) =>
+      _tables.putIfAbsent(table, () => <String, _Row>{});
+
+  /// Si la ligne appartient au compte [userId].
+  ///
+  /// Une ligne appartient au compte quand elle porte son identifiant, ou
+  /// quand elle est attachée à un livre qu'il possède : c'est le Cascade du
+  /// SQL, la ligne d'un livre disparaît avec le livre.
+  bool _belongsTo(_Row row, String userId) {
+    if (row.owners.contains(userId)) return true;
+    final String? projectId = row.projectId;
+    if (projectId == null) return false;
+    final _Row? project = _rows('projects')[projectId];
+    return project != null && project.owners.contains(userId);
+  }
+
+  /// Efface les lignes de la table [table] qui appartiennent au compte
+  /// [userId], et rend leur nombre.
+  int _erase(String table, String userId, String? email) {
+    final ErasedTable? declared = _declarationOf(table);
+    final String address = email ?? '';
+    return _removeMatching(
+      _rows(table),
+      (_Row row) =>
+          _belongsTo(row, userId) ||
+          (declared?.emailColumn != null &&
+              address.isNotEmpty &&
+              row.email == address),
+    );
+  }
+
+  /// La declaration de la table [name], quand elle en a une.
+  ErasedTable? _declarationOf(String name) {
+    for (final ErasedTable table in PersonalDataTables.erased) {
+      if (table.name == name) return table;
+    }
+    return null;
+  }
+
+  /// Vide l'identifiant de l'administrateur des indicateurs qu'il a
+  /// changés, et rend leur nombre.
+  ///
+  /// L'indicateur reste : c'est la configuration du service. Seul
+  /// l'identifiant de l'administrateur est vidé, pour que l'auteur ne reste
+  /// pas identifiable dedans.
+  int _emptyFlags(String userId) {
+    final List<String> keys = <String>[];
+    for (final MapEntry<String, String> entry in _flags.entries) {
+      if (entry.value == userId) keys.add(entry.key);
+    }
+    for (final String key in keys) {
+      _flags[key] = '';
+    }
+    return keys.length;
+  }
+
+  /// L'instant d'une entrée, l'époque quand elle n'en porte pas.
   static DateTime _momentOf(AuditEntry entry) =>
       entry.createdAt?.toUtc() ??
       DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
-  /// Removes the rows matching [test] and answers their number.
+  /// Retire les lignes qui satisfont [test] et rend leur nombre.
   ///
-  /// The rows are collected before they are removed: the removal of a row
-  /// must never change the answer of the test of the next one.
+  /// Les lignes sont rassemblées avant d'être retirées : le retrait d'une
+  /// ligne ne doit jamais changer la réponse du test de la suivante.
   static int _removeMatching<V>(
     Map<String, V> rows,
     bool Function(V value) test,

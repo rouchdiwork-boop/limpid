@@ -7,72 +7,93 @@ import 'audit_entry.dart';
 import 'sqlite_database.dart';
 import 'sqlite_values.dart';
 
-/// The result of the purge of one account.
+/// Le résultat de la purge d'un compte.
 final class AccountPurgeOutcome {
-  /// Creates an outcome.
+  /// Crée un résultat.
   const AccountPurgeOutcome({
     required this.userId,
     required this.projectsDeleted,
     required this.operationsDeleted,
     required this.collaborationsDeleted,
     required this.messagesDeleted,
+    required this.personalRowsDeleted,
     required this.purged,
   });
 
-  /// The account whose data was erased.
+  /// Le compte dont la donnée a été effacée.
   final String userId;
 
-  /// The number of projects of the account that were erased.
+  /// Le nombre de livres du compte qui ont été effacés.
   final int projectsDeleted;
 
-  /// The number of operations of the synchronisation journal that were
-  /// erased.
+  /// Le nombre d'opérations du journal de synchronisation qui ont été
+  /// effacées.
   final int operationsDeleted;
 
-  /// The number of collaborations of the account that were erased.
+  /// Le nombre de collaborations du compte qui ont été effacées.
   final int collaborationsDeleted;
 
-  /// The number of messages of the account that were erased.
+  /// Le nombre de messages du compte qui ont été effacés.
   final int messagesDeleted;
 
-  /// Whether this worker performed the purge.
+  /// Le nombre de lignes de l'auteur effacées par la purge, dans toutes les
+  /// tables.
   ///
-  /// The purge is refused when the account was already purged: the ledger of
-  /// the purges already holds its trace, and a second purge would change
-  /// nothing.
+  /// Le compteur couvre tout le schéma : le secret de la double
+  /// authentification, la formule du compte, la consommation, les clés de
+  /// l'API, les points de rappel et leurs livraisons, les équipes, les
+  /// publications Amazon, et les livres eux-mêmes. Les lignes dont
+  /// l'identifiant de l'auteur a été vidé comptent aussi.
+  final int personalRowsDeleted;
+
+  /// Si ce worker a effectué la purge.
+  ///
+  /// La purge est refusée quand le compte était déjà purgé : le registre
+  /// des purges porte déjà sa trace, et une seconde purge ne changerait
+  /// rien.
   final bool purged;
 }
 
-/// The persistence port of the purge of the accounts.
+/// Le port de persistance de la purge des comptes.
 ///
-/// The port crosses two tables: the journal of the audit, which holds the
-/// deletion requests, and the ledger of the purges, which holds the accounts
-/// that were erased. It never writes to the journal and never empties it:
-/// the audit trail outlives the data it describes (D-19).
+/// Le port traverse deux tables : le journal d'audit, qui porte les demandes
+/// de suppression, et le registre des purges, qui porte les comptes effacés.
+/// Il n'écrit jamais dans le journal et ne le vide jamais : la piste d'audit
+/// survit à la donnée qu'elle décrit (D-19).
 abstract interface class AccountPurgeStore {
-  /// The entries of the audit journal carrying [action], the oldest first.
+  /// Les entrées du journal d'audit portant [action], les plus anciennes
+  /// d'abord.
   ///
-  /// The journal is the source of truth of the pending deletions: the
-  /// request of an author is a mark in the audit trail, and the purge reads
-  /// it to know which accounts must be emptied, and when.
+  /// Le journal est la source de vérité des suppressions en attente : la
+  /// demande d'un auteur est une marque dans la piste d'audit, et la purge
+  /// la lit pour savoir quels comptes doivent être vidés, et quand.
   Future<List<AuditEntry>> journalEntries({
     required String action,
     required int limit,
   });
 
-  /// Erases the data of [userId] for good.
+  /// Efface la donnée de [userId] pour de bon.
   ///
-  /// The erase covers the projects the account owns, the operations of the
-  /// synchronisation journal that belong to them, the rows of the
-  /// collaborations and the personal data of the account itself. The
-  /// operations of the account on a project of somebody else are erased too:
-  /// they are the personal data of the author, not the manuscript of the
-  /// co-author.
+  /// L'effacement couvre toutes les tables déclarées comme données
+  /// personnelles : les livres que le compte possède, les opérations du
+  /// journal de synchronisation qui leur appartiennent, les collaborations,
+  /// les messages, le secret de la double authentification et les codes de
+  /// récupération, la formule du compte, sa consommation, les clés d'API,
+  /// les points de rappel et leurs livraisons, les équipes, et les
+  /// publications Amazon. Les opérations de l'auteur sur le livre d'un autre
+  /// sont effacées aussi : c'est la donnée personnelle de l'auteur, pas le
+  /// manuscrit du co-auteur.
   ///
-  /// The call is idempotent: an account that was already purged is left
-  /// untouched, and the rows written after its purge survive.
+  /// Les tables qui sont gardées sont déclarées aussi, avec la raison de la
+  /// décision : la piste d'audit, le registre des purges et la trace des
+  /// suppressions des tiers sont conservés (D-19), et les identifiants de
+  /// l'administrateur qui a changé un indicateur sont vidés.
+  ///
+  /// L'appel est idempotent : un compte déjà purgé est laissé intact, et
+  /// les lignes écrites après sa purge survivent.
   Future<AccountPurgeOutcome> purge({
     required String userId,
+    String? email,
     required DateTime requestedAt,
     required DateTime scheduledFor,
     required DateTime purgedAt,
@@ -80,44 +101,46 @@ abstract interface class AccountPurgeStore {
   });
 }
 
-/// The SQL port of the purge.
+/// Le port SQL de la purge.
 ///
-/// The dialect is confined to the adapters: SQLite and Postgres differ on
-/// the placeholders, on the timestamps and on the JSON documents (D-29).
-/// The SQL itself is written once, with the `?` placeholders of SQLite.
+/// Le dialecte est confiné aux adaptateurs : SQLite et Postgres diffèrent
+/// sur les marqueurs de position, sur les horodatages et sur les documents
+/// JSON (D-29). Le SQL est écrit une seule fois, avec les marqueurs de
+/// position de SQLite.
 abstract interface class AccountPurgeDatabase {
-  /// Rewrites the `?` placeholders of [sql] for the engine.
+  /// Réécrit les marqueurs de position `?` de [sql] pour le moteur.
   String rewrite(String sql);
 
-  /// Runs the query [sql] and returns its rows.
+  /// Exécute la requête [sql] et rend ses lignes.
   Future<List<Map<String, Object?>>> query(String sql, List<Object?> args);
 
-  /// Runs [statements] in a single transaction.
+  /// Exécute [statements] dans une seule transaction.
   ///
-  /// The method answers the number of rows each statement touched, in the
-  /// order of the statements: the purge reads it to report what it erased.
+  /// La méthode rend le nombre de lignes que chaque instruction a
+  /// touchées, dans l'ordre des instructions : la purge le lit pour
+  /// rapporter ce qu'elle a effacé.
   Future<List<int>> transaction(List<(String, List<Object?>)> statements);
 
-  /// Encodes a timestamp for the engine.
+  /// Encode un horodatage pour le moteur.
   Object? encodeTimestamp(DateTime? value);
 
-  /// Decodes a timestamp read from the engine.
+  /// Décode un horodatage lu dans le moteur.
   DateTime? decodeTimestamp(Object? value);
 
-  /// Decodes a JSON document read from the engine.
+  /// Décode un document JSON lu dans le moteur.
   Map<String, dynamic> decodeJson(Object? value);
 }
 
-/// The SQLite adapter of the purge.
+/// L'adaptateur SQLite de la purge.
 ///
-/// The timestamps are the microseconds since the Unix epoch and the JSON
-/// documents are textual: the convention of the SQLite dialect (see
+/// Les horodatages sont les microsecondes depuis l'époque Unix et les
+/// documents JSON sont textuels : la convention du dialecte SQLite (voir
 /// `SqliteValues`).
 final class SqliteAccountPurgeDatabase implements AccountPurgeDatabase {
-  /// Creates an adapter on top of [database].
+  /// Crée un adaptateur sur [database].
   const SqliteAccountPurgeDatabase(this._database);
 
-  /// The database of the API.
+  /// La base de données de l'API.
   final SqliteDatabase _database;
 
   @override
@@ -156,16 +179,16 @@ final class SqliteAccountPurgeDatabase implements AccountPurgeDatabase {
       SqliteValues.decodeJson(value);
 }
 
-/// The Postgres adapter of the purge.
+/// L'adaptateur Postgres de la purge.
 ///
-/// The timestamps are sent as `TIMESTAMPTZ` and the JSON documents as
-/// `JSONB`; the placeholders of the SQL are rewritten into the indexed form
-/// of the protocol (`$1`, `$2`…).
+/// Les horodatages sont envoyés en `TIMESTAMPTZ` et les documents JSON en
+/// `JSONB` ; les marqueurs de position du SQL sont réécrits sous la forme
+/// indexée du protocole (`$1`, `$2`…).
 final class PostgresAccountPurgeDatabase implements AccountPurgeDatabase {
-  /// Creates an adapter on top of [pool].
+  /// Crée un adaptateur sur [pool].
   const PostgresAccountPurgeDatabase(this._pool);
 
-  /// The pool of the API.
+  /// Le pool de l'API.
   final Pool<Object?> _pool;
 
   @override

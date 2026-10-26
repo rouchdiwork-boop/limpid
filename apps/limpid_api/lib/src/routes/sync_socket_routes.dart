@@ -16,6 +16,7 @@ import '../errors/app_exception.dart';
 import '../services/access_control.dart';
 import '../services/document_ownership.dart';
 import '../services/sync_hub.dart';
+import '../sync/relay_presence.dart';
 import '../sync/sync_protocol.dart';
 
 /// Registers the real time relay of the synchronisation.
@@ -29,7 +30,7 @@ void registerSyncSocketRoute(
       WebSocketChannel channel,
       String? protocol,
     ) {
-      unawaited(_handle(channel, request, dependencies));
+      unawaited(_handle(channel, request, dependencies, config));
     });
     return handler(request);
   });
@@ -39,6 +40,7 @@ Future<void> _handle(
   WebSocketChannel channel,
   Request request,
   AppDependencies dependencies,
+  AppConfig config,
 ) async {
   final AuthContext? auth = await _authenticate(request, dependencies);
   if (auth == null) {
@@ -72,10 +74,21 @@ Future<void> _handle(
     }
   }
 
-  final Map<SyncRoomKey, SyncSubscription> subscriptions =
-      <SyncRoomKey, SyncSubscription>{};
-  final Map<SyncRoomKey, StreamSubscription<Map<String, Object?>>> relays =
-      <SyncRoomKey, StreamSubscription<Map<String, Object?>>>{};
+  // La presence appartient au relais : il annonce les jonctions, les
+  // positions des curseurs et les départs, et il purge les pairs qui
+  // cessent de battre.
+  late final RelayPresence presence;
+  presence = RelayPresence(
+    hub: dependencies.syncHub,
+    heartbeatInterval: config.relayHeartbeatInterval,
+    presenceTimeout: config.relayPresenceTimeout,
+    broadcast: dependencies.syncHub.broadcast,
+    onFrame: (Map<String, Object?> frame) =>
+        channel.sink.add(jsonEncode(frame)),
+    onPing: () => _send(channel, <String, Object?>{'type': 'ping'}),
+    onTimeout: () => _purge(channel, presence, auth.userId),
+  );
+  presence.start();
 
   unawaited(
     _send(channel, <String, Object?>{
@@ -85,20 +98,24 @@ Future<void> _handle(
     }),
   );
 
+  // Les trames sont traitées dans l'ordre : une trame « cursor » envoyée
+  // juste après la trame « join » doit trouver la salle ouverte.
+  Future<void> pending = Future<void>.value();
+
   final StreamSubscription<dynamic> listener = channel.stream.listen(
-    (dynamic raw) => unawaited(
-      _onFrame(channel, raw, auth, subscriptions, relays, dependencies),
-    ),
+    (dynamic raw) {
+      pending = pending.then((_) async {
+        try {
+          await _onFrame(channel, raw, auth, presence, dependencies);
+        } on Object catch (error) {
+          dependencies.logger.warning('sync.frame_error', <String, Object?>{
+            'error': error.runtimeType.toString(),
+          });
+        }
+      });
+    },
     onDone: () {
-      for (final SyncSubscription subscription in subscriptions.values) {
-        dependencies.syncHub.leave(subscription);
-      }
-      for (final StreamSubscription<Map<String, Object?>> relay
-          in relays.values) {
-        relay.cancel();
-      }
-      subscriptions.clear();
-      relays.clear();
+      unawaited(_depart(presence, auth.userId));
     },
     onError: (Object error) {
       dependencies.logger.warning('sync.socket_error', <String, Object?>{
@@ -109,6 +126,22 @@ Future<void> _handle(
   );
 
   controllerOnCancel(channel, listener);
+}
+
+/// Announces the departure of the client and releases its rooms.
+Future<void> _depart(RelayPresence presence, String userId) async {
+  presence.leaveAll(userId);
+  await presence.close();
+}
+
+/// Purges the connection that stopped beating.
+Future<void> _purge(
+  WebSocketChannel channel,
+  RelayPresence presence,
+  String userId,
+) async {
+  await _depart(presence, userId);
+  await channel.sink.close();
 }
 
 void controllerOnCancel(
@@ -137,8 +170,7 @@ Future<void> _onFrame(
   WebSocketChannel channel,
   dynamic raw,
   AuthContext auth,
-  Map<SyncRoomKey, SyncSubscription> subscriptions,
-  Map<SyncRoomKey, StreamSubscription<Map<String, Object?>>> relays,
+  RelayPresence presence,
   AppDependencies dependencies,
 ) async {
   final Map<String, dynamic>? frame = _decodeFrame(raw);
@@ -151,6 +183,10 @@ Future<void> _onFrame(
     return;
   }
 
+  // Toute trame reçue est un battement de vie : le relais purge les
+  // pairs qui cessent de répondre.
+  presence.beat();
+
   final Object? type = frame['type'];
   final Object? payload = frame['payload'];
   final Map<String, dynamic> body = payload is Map<String, dynamic>
@@ -160,12 +196,16 @@ Future<void> _onFrame(
   switch (type) {
     case 'ping':
       await _send(channel, <String, Object?>{'type': 'pong'});
+    case 'pong':
+      return;
     case 'join':
-      await _join(channel, body, auth, subscriptions, relays, dependencies);
+      await _join(channel, body, auth, presence, dependencies);
     case 'leave':
-      await _leave(body, subscriptions, relays, dependencies);
+      await _leave(body, auth, presence);
+    case 'cursor':
+      await _cursor(channel, body, auth, presence);
     case 'op':
-      await _pushOperation(channel, body, auth, subscriptions, dependencies);
+      await _pushOperation(channel, body, auth, presence, dependencies);
     default:
       await _sendError(
         channel,
@@ -179,8 +219,7 @@ Future<void> _join(
   WebSocketChannel channel,
   Map<String, dynamic> body,
   AuthContext auth,
-  Map<SyncRoomKey, SyncSubscription> subscriptions,
-  Map<SyncRoomKey, StreamSubscription<Map<String, Object?>>> relays,
+  RelayPresence presence,
   AppDependencies dependencies,
 ) async {
   final Object? rawProjectId = body['project_id'];
@@ -217,51 +256,26 @@ Future<void> _join(
     return;
   }
 
-  final SyncRoomKey room = (projectId, docId);
-  final SyncSubscription? previous = subscriptions[room];
-  if (previous != null) dependencies.syncHub.leave(previous);
-  final StreamSubscription<Map<String, Object?>>? previousRelay = relays.remove(
-    room,
-  );
-  await previousRelay?.cancel();
-
-  final SyncSubscription subscription = dependencies.syncHub.join(
-    projectId: projectId,
-    docId: docId,
-    userId: auth.userId,
-  );
-  subscriptions[room] = subscription;
-
-  // La subscription est annulée par `_leave`, par un nouveau `join` sur le
-  // même document et à la fermeture du canal.
-  // ignore: cancel_subscriptions
-  final StreamSubscription<Map<String, Object?>> relay = subscription.frames
-      .listen((Map<String, Object?> frame) {
-        channel.sink.add(jsonEncode(frame));
-      });
-  relays[room] = relay;
+  presence.join((projectId, docId), auth.userId);
 
   await _send(channel, <String, Object?>{
     'type': 'ack',
     'sent_at': DateTime.now().toUtc().toIso8601String(),
     'payload': <String, Object?>{'doc_id': docId, 'action': 'join'},
   });
-  dependencies.syncHub.broadcast(projectId, docId, <String, Object?>{
-    'type': 'presence',
-    'sent_at': DateTime.now().toUtc().toIso8601String(),
-    'payload': <String, Object?>{
-      'doc_id': docId,
-      'user_id': auth.userId,
-      'state': 'joined',
-    },
-  });
+
+  // Le newcomer apprend qui est déjà là : la présence d'un document se lit
+  // d'un coup d'œil, sans attendre que l'autre auteur bouge son curseur.
+  for (final String peer in dependencies.syncHub.peersOf(projectId, docId)) {
+    if (peer == auth.userId) continue;
+    await _send(channel, presence.joinedFrame(docId, peer));
+  }
 }
 
 Future<void> _leave(
   Map<String, dynamic> body,
-  Map<SyncRoomKey, SyncSubscription> subscriptions,
-  Map<SyncRoomKey, StreamSubscription<Map<String, Object?>>> relays,
-  AppDependencies dependencies,
+  AuthContext auth,
+  RelayPresence presence,
 ) async {
   final Object? rawDocId = body['doc_id'];
   final Object? rawProjectId = body['project_id'];
@@ -272,24 +286,73 @@ Future<void> _leave(
       : null;
 
   final List<SyncRoomKey> rooms = <SyncRoomKey>[
-    for (final SyncRoomKey room in subscriptions.keys)
+    for (final SyncRoomKey room in presence.subscriptions.keys)
       if (room.$2 == docId && (projectId == null || room.$1 == projectId)) room,
   ];
 
   for (final SyncRoomKey room in rooms) {
-    final SyncSubscription? subscription = subscriptions.remove(room);
-    final StreamSubscription<Map<String, Object?>>? relay = relays.remove(room);
-    await relay?.cancel();
-    if (subscription == null) continue;
-    dependencies.syncHub.leave(subscription);
+    presence.leave(room, auth.userId);
   }
+}
+
+/// Announces the position of the caret of the author.
+Future<void> _cursor(
+  WebSocketChannel channel,
+  Map<String, dynamic> body,
+  AuthContext auth,
+  RelayPresence presence,
+) async {
+  final Object? rawDocId = body['doc_id'];
+  final Object? rawProjectId = body['project_id'];
+  final Object? rawCursor = body['cursor'];
+  final String docId = rawDocId is String ? rawDocId : '';
+  if (docId.isEmpty || rawCursor is! Map<String, dynamic>) {
+    await _sendError(
+      channel,
+      ErrorCodes.validationFailed,
+      'La trame « cursor » doit porter « doc_id » et « cursor ».',
+    );
+    return;
+  }
+  final Object? rawBlockId = rawCursor['block_id'];
+  final Object? rawOffset = rawCursor['offset'];
+  if (rawBlockId is! String || rawOffset is! int) {
+    await _sendError(
+      channel,
+      ErrorCodes.validationFailed,
+      'La trame « cursor » doit porter un bloc et une position.',
+    );
+    return;
+  }
+
+  final String? addressedProject =
+      rawProjectId is String && rawProjectId.isNotEmpty ? rawProjectId : null;
+  final SyncRoomKey? room = _roomOf(
+    presence.subscriptions,
+    addressedProject: addressedProject,
+    docId: docId,
+  );
+  if (room == null) {
+    await _sendError(
+      channel,
+      ErrorCodes.validationFailed,
+      'Cette trame « cursor » ne porte pas un document suivi.',
+    );
+    return;
+  }
+
+  presence.moved(
+    room,
+    auth.userId,
+    PresenceCursor(blockId: rawBlockId, offset: rawOffset),
+  );
 }
 
 Future<void> _pushOperation(
   WebSocketChannel channel,
   Map<String, dynamic> body,
   AuthContext auth,
-  Map<SyncRoomKey, SyncSubscription> subscriptions,
+  RelayPresence presence,
   AppDependencies dependencies,
 ) async {
   final SyncOp op;
@@ -308,7 +371,7 @@ Future<void> _pushOperation(
   // Le projet adressé doit posséder le document : l'opération n'est ni
   // stockée ni diffusée pour un document d'un autre projet.
   final String? projectId =
-      addressedProject ?? _projectOf(subscriptions, docId);
+      addressedProject ?? _projectOf(presence.subscriptions, docId);
   if (projectId == null) {
     await _sendError(
       channel,
@@ -329,7 +392,7 @@ Future<void> _pushOperation(
   }
 
   final SyncRoomKey? room = _roomOf(
-    subscriptions,
+    presence.subscriptions,
     addressedProject: addressedProject,
     docId: docId,
   );
@@ -368,7 +431,7 @@ Future<void> _pushOperation(
     'seq': op.lamport,
     'sent_at': DateTime.now().toUtc().toIso8601String(),
     'payload': record.toJson(),
-  }, except: subscriptions[room]);
+  }, except: presence.subscriptions[room]);
 
   await _send(channel, <String, Object?>{
     'type': 'ack',

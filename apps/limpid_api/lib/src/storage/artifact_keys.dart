@@ -14,4 +14,11 @@ abstract final class ArtifactKeys {
   /// The prefix ends with a slash: two projects whose identifiers begin
   /// with the same characters never share their artefacts.
   static String prefixOfProject(String projectId) => 'exports/$projectId/';
+
+  /// Le préfixe tenant les archives du compte [userId].
+  ///
+  /// L'archive RGPD n'appartient à aucun livre : elle porte le compte
+  /// entier. Le préfixe se termine par une barre oblique, comme celui d'un
+  /// projet, et la purge doit l'effacer avec les autres.
+  static String prefixOfAccount(String userId) => 'account-exports/$userId/';
 }

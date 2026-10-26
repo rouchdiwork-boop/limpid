@@ -25,11 +25,15 @@ final class AiTokenEvent extends AiEvent {
 /// The end of the answer, with its consumption.
 final class AiDoneEvent extends AiEvent {
   /// Creates a done event.
+  ///
+  /// [isTokenCountEstimated] is `true` unless the gateway declares that
+  /// the provider reported its own usage.
   const AiDoneEvent({
     required this.text,
     required this.inputTokens,
     required this.outputTokens,
     required this.estimatedCostUsd,
+    this.isTokenCountEstimated = true,
   });
 
   /// The complete text of the answer.
@@ -43,6 +47,14 @@ final class AiDoneEvent extends AiEvent {
 
   /// The estimated cost of the call, in US dollars.
   final double estimatedCostUsd;
+
+  /// Whether the token counts are an estimate rather than the provider's own
+  /// report.
+  ///
+  /// The default is `true`: a gateway that does not declare its numbers as
+  /// the provider's report is estimating, and an estimate that pretends to
+  /// be exact ends up in the invoice of an author.
+  final bool isTokenCountEstimated;
 }
 
 /// A free generation request.

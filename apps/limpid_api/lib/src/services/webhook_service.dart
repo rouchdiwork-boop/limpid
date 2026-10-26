@@ -6,6 +6,12 @@ import '../errors/app_exception.dart';
 import 'random_secret.dart';
 import 'webhook_url_policy.dart';
 
+/// Le nombre maximal de points de rappel qu'un compte peut declarer.
+///
+/// Chaque point ajoute une attente a chaque evenement livre : un compte
+/// sans limite transformerait le service en prologue.
+const int maxWebhookEndpointsPerAccount = 20;
+
 /// La durée de transition d'un secret de signature.
 ///
 /// La rotation d'un secret ne doit pas casser le destinataire : pendant
@@ -110,6 +116,20 @@ final class WebhookService {
         message: 'Un point de rappel doit s\'abonner à au moins un événement.',
       );
     }
+    // Le nombre de points de rappel est borne : chaque point ajoute une
+    // attente a chaque evenement, et un compte ne doit pas pouvoir noyer
+    // le service.
+    final WebhookPage<WebhookEndpointRecord> existing = await database
+        .listEndpoints(userId: userId, limit: 1, cursor: null);
+    if (existing.total >= maxWebhookEndpointsPerAccount) {
+      throw ValidationException(
+        field: 'url',
+        message:
+            'Un compte ne peut pas avoir plus de '
+            '$maxWebhookEndpointsPerAccount points de rappel.',
+      );
+    }
+
     final String safeUrl = validateCallbackUrl(
       url,
       allowInsecure: allowInsecure,

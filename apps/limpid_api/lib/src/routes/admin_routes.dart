@@ -11,6 +11,7 @@ import '../http/api_response.dart';
 import '../http/json_body.dart';
 import '../http/pagination.dart';
 import '../services/admin_service.dart';
+import '../services/feature_flag_service.dart';
 import '../services/quota_service.dart';
 
 /// Registers the routes of the back-office.
@@ -27,6 +28,7 @@ void registerAdminRoutes(
   AdminDatabase database,
   AppConfig config, {
   QuotaService? quota,
+  FeatureFlagService? flags,
 }) {
   final AdminService service = AdminService(database);
 
@@ -86,6 +88,9 @@ void registerAdminRoutes(
       isEnabled: isEnabled,
       description: description,
     );
+    // L'indicateur change **maintenant** : le cache du service est recharge
+    // dans la seconde, sans attendre la péremption.
+    await flags?.reload();
     return ApiResponse.ok(_flagJson(flag));
   });
 

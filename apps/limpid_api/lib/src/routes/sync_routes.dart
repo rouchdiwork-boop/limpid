@@ -4,8 +4,6 @@ import 'package:shelf_router/shelf_router.dart';
 
 import '../auth/auth_middleware.dart';
 import '../config/app_config.dart';
-import '../db/project_record.dart';
-import '../db/project_store.dart';
 import '../db/quota_database.dart';
 import '../db/sync_op_record.dart';
 import '../db/sync_store.dart';
@@ -14,6 +12,7 @@ import '../errors/app_exception.dart';
 import '../http/api_response.dart';
 import '../http/json_body.dart';
 import '../services/access_control.dart';
+import '../services/account_word_count.dart';
 import '../services/plan_catalog.dart';
 import '../services/quota_service.dart';
 import '../sync/sync_protocol.dart';
@@ -122,7 +121,7 @@ void registerSyncRoutes(
       await quota.ensureGauge(
         userId: auth.userId,
         feature: QuotaFeature.words,
-        current: await _wordCountOf(dependencies, auth, config),
+        current: await _currentWords(dependencies, auth, config),
       );
     }
 
@@ -247,7 +246,7 @@ Map<String, dynamic> _payloadOf(Map<String, dynamic> json) {
 /// le plafond de mots de la formule est **atteignable**. Au-dela, le
 /// plafond est hors d'atteinte en pratique et la reconstruction couterait
 /// plus cher que la limite ne vaut.
-Future<int> _wordCountOf(
+Future<int> _currentWords(
   AppDependencies dependencies,
   AuthContext auth,
   AppConfig config,
@@ -256,27 +255,11 @@ Future<int> _wordCountOf(
   final int? limit = PlanCatalog.limitOf(plan, QuotaFeature.words);
   if (limit == null || limit > reachableWordLimit) return 0;
 
-  int total = 0;
-  String? cursor;
-  do {
-    final ProjectPage page = await dependencies.projects.list(
-      userId: auth.userId,
-      limit: config.maxPageLimit,
-      cursor: cursor,
-    );
-    for (final ProjectRecord project in page.items) {
-      final List<SyncOpRecord> operations = await dependencies.sync.all(
-        projectId: project.id,
-      );
-      for (final DocumentTree tree in TreeBuilder.build(operations)) {
-        for (final BlockNode block in tree.blocks) {
-          total += _wordsOf(block.content);
-        }
-      }
-    }
-    cursor = page.nextCursor;
-  } while (cursor != null);
-  return total;
+  return AccountWordCounter(
+    projects: dependencies.projects,
+    sync: dependencies.sync,
+    pageLimit: config.maxPageLimit,
+  ).countOf(auth.userId);
 }
 
 /// La formule du compte, lue par la base des formules.
@@ -291,14 +274,4 @@ Future<SubscriptionPlan> _planOf(
   if (database == null) return SubscriptionPlan.free;
   final AccountPlan? plan = await database.planOf(userId);
   return plan?.plan ?? SubscriptionPlan.free;
-}
-
-/// Le nombre de mots d'un texte.
-int _wordsOf(String content) {
-  final String trimmed = content.trim();
-  if (trimmed.isEmpty) return 0;
-  return trimmed
-      .split(RegExp(r'\s+'))
-      .where((String word) => word.isNotEmpty)
-      .length;
 }

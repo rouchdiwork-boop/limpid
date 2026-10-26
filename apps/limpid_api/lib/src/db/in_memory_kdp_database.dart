@@ -11,9 +11,9 @@ import 'sync_store.dart';
 /// tests.
 ///
 /// L'implémentation garde les mêmes invariants que les bases SQL : une
-/// publication appartient à un compte, les publications d'un compte sont
-/// rendues les plus récentes d'abord et la trace n'est jamais partagée avec
-/// un autre compte.
+/// publication appartient à un compte, un projet ne porte qu'une fiche, les
+/// publications d'un compte sont rendues les plus récentes d'abord et la
+/// trace n'est jamais partagée avec un autre compte.
 final class InMemoryKdpDatabase implements KdpDatabase {
   /// Crée une base vide.
   ///
@@ -55,8 +55,16 @@ final class InMemoryKdpDatabase implements KdpDatabase {
 
   @override
   Future<KdpPublication> recordPublication(KdpPublication publication) async {
-    _publications[publication.id] = publication;
-    return publication;
+    final KdpPublication? existing = _byProject(publication.projectId);
+    if (existing == null) {
+      _publications[publication.id] = publication;
+      return publication;
+    }
+    // La fiche du projet existe déjà : elle est rafraîchie, jamais
+    // dupliquée. Son identifiant reste le sien.
+    final KdpPublication updated = publication.copyWith(id: existing.id);
+    _publications[existing.id] = updated;
+    return updated;
   }
 
   @override
@@ -84,6 +92,29 @@ final class InMemoryKdpDatabase implements KdpDatabase {
     final KdpPublication? publication = _publications[publicationId];
     if (publication == null || publication.userId != userId) return null;
     return publication;
+  }
+
+  @override
+  Future<KdpPublication?> findPublicationByProject({
+    required String projectId,
+  }) async {
+    return _byProject(projectId);
+  }
+
+  @override
+  Future<KdpPublication?> findPublicationByIsbn({required String isbn}) async {
+    for (final KdpPublication publication in _publications.values) {
+      if (publication.isbn == isbn) return publication;
+    }
+    return null;
+  }
+
+  /// La fiche du projet [projectId], `null` quand il n'en porte pas.
+  KdpPublication? _byProject(String projectId) {
+    for (final KdpPublication publication in _publications.values) {
+      if (publication.projectId == projectId) return publication;
+    }
+    return null;
   }
 
   static int _comparePublications(KdpPublication left, KdpPublication right) {

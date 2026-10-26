@@ -600,6 +600,60 @@ void main() {
       ]);
       expect(publication['issues'], isNotEmpty);
     });
+
+    test('préparer deux fois le livre laisse une fiche', () async {
+      final Answer first = await api.prepare();
+      final Answer second = await api.prepare();
+
+      expect(second.statusCode, 201);
+      expect(second.data['id'], first.data['id']);
+
+      final Answer listed = await api.send('GET', '/v1/publishing/kdp');
+      expect(listed.items, hasLength(1));
+    });
+
+    test('la base refuse une seconde fiche pour le même projet', () async {
+      await api.prepare();
+
+      // L'index unique de la migration 2018 est la regle : la base
+      // refuse la ligne qui porterait un second projet.
+      expect(
+        () => database.run(() {
+          database.connection.execute(
+            'INSERT INTO kdp_publications (id, project_id, user_id, title, '
+            'author, description, keywords, categories, issues, isbn, '
+            'language, publisher, status, word_count, page_count, epub_key, '
+            'pdf_key, epub_bytes, pdf_bytes, manuscript_version, created_at) '
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '
+            '?, ?)',
+            <Object?>[
+              'autre-fiche',
+              'projet-1',
+              'author-1',
+              'La Falaise',
+              'Camille Rivière',
+              'Un roman maritime sur une côte battue par les vents.',
+              '[]',
+              '[]',
+              '[]',
+              '9782264000003',
+              'fr-FR',
+              null,
+              'blocked',
+              0,
+              0,
+              'exports/projet-1/kdp/autre-fiche/livre.epub',
+              'exports/projet-1/kdp/autre-fiche/livre.pdf',
+              0,
+              0,
+              '2026-10-26T00:00:00.000Z',
+              0,
+            ],
+          );
+        }),
+        throwsA(isA<Object>()),
+      );
+    });
   });
 }
 
@@ -610,6 +664,7 @@ Future<void> _applyMigrations(SqliteDatabase database) async {
     'db/migrations/sqlite/0002_project_members.sql',
     'db/migrations/sqlite/0003_sync_ops.sql',
     'db/migrations/sqlite/0013_kdp_publications.sql',
+    'db/migrations/sqlite/2018_kdp_publications_project_unique.sql',
   ];
   const SqlStatementSplitter splitter = SqlStatementSplitter();
   for (final String file in files) {

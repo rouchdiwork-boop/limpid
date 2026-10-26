@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:limpid_api/limpid_api.dart';
+import 'package:limpid_core/limpid_core.dart';
 import 'package:test/test.dart';
 
 import 'helpers/test_server.dart';
@@ -21,8 +22,9 @@ void main() {
     await server.stop();
   });
 
-  Map<String, Object?> body(String plan) => <String, Object?>{
+  Map<String, Object?> body(String plan, {String? period}) => <String, Object?>{
     'plan': plan,
+    'period': ?period,
     'success_url': 'https://app.test/merci',
     'cancel_url': 'https://app.test/abandon',
   };
@@ -43,6 +45,92 @@ void main() {
       expect(data['url'], isA<String>());
     });
 
+    test('porte le cycle demandé dans la commande', () async {
+      final http.Response response = await server.post(
+        '/v1/checkout',
+        headers: auth,
+        body: body('studio', period: 'yearly'),
+      );
+
+      expect(response.statusCode, 200);
+      expect(server.payments.requests, hasLength(1));
+      final CheckoutRequest request = server.payments.requests.single;
+      expect(request.plan, SubscriptionPlan.studio);
+      expect(request.period, BillingPeriod.yearly);
+    });
+
+    test('accepte la formule annuelle nommée studio_yearly', () async {
+      final http.Response response = await server.post(
+        '/v1/checkout',
+        headers: auth,
+        body: body('studio_yearly'),
+      );
+
+      expect(response.statusCode, 200);
+      expect(server.payments.requests.single.period, BillingPeriod.yearly);
+    });
+
+    test('refuse un cycle que la formule ne propose pas', () async {
+      final http.Response response = await server.post(
+        '/v1/checkout',
+        headers: auth,
+        body: body('writer', period: 'yearly'),
+      );
+
+      expect(response.statusCode, 400);
+      final Map<String, dynamic> error =
+          (jsonDecode(response.body) as Map<String, dynamic>)['error']
+              as Map<String, dynamic>;
+      expect(error['message'], contains('period'));
+      expect((error['details'] as Map<String, dynamic>)['field'], 'period');
+      expect(server.payments.requests, isEmpty);
+    });
+
+    test('refuse un cycle inconnu', () async {
+      final http.Response response = await server.post(
+        '/v1/checkout',
+        headers: auth,
+        body: body('studio', period: 'hebdomadaire'),
+      );
+
+      expect(response.statusCode, 400);
+      final Map<String, dynamic> error =
+          (jsonDecode(response.body) as Map<String, dynamic>)['error']
+              as Map<String, dynamic>;
+      expect(error['message'], contains('period'));
+      expect(server.payments.requests, isEmpty);
+    });
+
+    test('refuse la formule gratuite', () async {
+      final http.Response response = await server.post(
+        '/v1/checkout',
+        headers: auth,
+        body: body('free'),
+      );
+
+      expect(response.statusCode, 400);
+      final Map<String, dynamic> error =
+          (jsonDecode(response.body) as Map<String, dynamic>)['error']
+              as Map<String, dynamic>;
+      expect(error['message'], contains('plan'));
+      expect(server.payments.requests, isEmpty);
+    });
+
+    test('refuse une formule inconnue', () async {
+      final http.Response response = await server.post(
+        '/v1/checkout',
+        headers: auth,
+        body: body('enterprise'),
+      );
+
+      expect(response.statusCode, 400);
+      final Map<String, dynamic> error =
+          (jsonDecode(response.body) as Map<String, dynamic>)['error']
+              as Map<String, dynamic>;
+      expect(error['message'], contains('plan'));
+      expect(server.payments.requests, isEmpty);
+    });
+
     test('journalise le changement de plan', () async {
       await server.post('/v1/checkout', headers: auth, body: body('pro'));
 
@@ -52,6 +140,20 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    test('la trace d\'audit nomme le cycle acheté', () async {
+      await server.post(
+        '/v1/checkout',
+        headers: auth,
+        body: body('studio', period: 'yearly'),
+      );
+
+      final AuditEntry entry = server.audit.entries.firstWhere(
+        (AuditEntry entry) => entry.action == 'plan.checkout_started',
+      );
+      expect(entry.metadata['plan'], 'studio');
+      expect(entry.metadata['period'], 'yearly');
     });
 
     test('répond 400 et nomme le champ manquant', () async {

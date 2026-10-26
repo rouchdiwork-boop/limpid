@@ -5,6 +5,7 @@ import '../errors/app_exception.dart';
 import 'sqlite_database.dart';
 import 'sqlite_values.dart';
 import 'team_database.dart';
+import 'team_invitation_record.dart';
 import 'team_record.dart';
 
 /// L'implémentation SQLite des équipes.
@@ -69,6 +70,17 @@ final class SqliteTeamDatabase implements TeamDatabase {
         <Object?>[teamId, userId],
       );
       return result.isEmpty ? null : _readMember(result.first);
+    });
+  }
+
+  @override
+  Future<TeamRecord?> findTeam({required String teamId}) {
+    return _database.run(() {
+      final ResultSet result = _database.connection.select(
+        'SELECT $_teamColumns FROM teams WHERE id = ?',
+        <Object?>[teamId],
+      );
+      return result.isEmpty ? null : _readTeam(result.first);
     });
   }
 
@@ -240,6 +252,74 @@ final class SqliteTeamDatabase implements TeamDatabase {
         teamId,
       ]);
       return _database.connection.updatedRows > 0;
+    });
+  }
+
+  @override
+  Future<InvitationAcceptanceOutcome> acceptInvitation({
+    required String invitationId,
+    required String teamId,
+    required String userId,
+    required TeamRole role,
+    required String invitedBy,
+    required int maxSeats,
+  }) async {
+    return _database.transaction(() {
+      final ResultSet team = _database.connection.select(
+        'SELECT id FROM teams WHERE id = ?',
+        <Object?>[teamId],
+      );
+      if (team.isEmpty) throw const NotFoundException();
+
+      // Le compte ne peut pas entrer deux fois dans l'équipe : l'invitation
+      // porte une adresse, elle ne dit pas que le compte est déjà membre.
+      final ResultSet existing = _database.connection.select(
+        'SELECT user_id FROM team_members WHERE team_id = ? AND user_id = ?',
+        <Object?>[teamId, userId],
+      );
+      if (existing.isNotEmpty) {
+        throw const ConflictException(
+          message: 'Ce compte fait déjà partie de l\'équipe.',
+        );
+      }
+
+      // Les sièges sont vérifiés au moment de l'acceptation : la formule a
+      // pu changer entre l'invitation et la réponse.
+      final ResultSet seats = _database.connection.select(
+        'SELECT count(*) AS total FROM team_members '
+        'WHERE team_id = ? AND role <> ?',
+        <Object?>[teamId, TeamRole.owner.name],
+      );
+      final int used = seats.isEmpty ? 0 : _readTotal(seats.first);
+      if (used >= maxSeats) return InvitationAcceptanceOutcome.noSeat;
+
+      // L'invitation est consommée : la condition sur l'état et sur
+      // l'échéance fait qu'un même jeton ne marche qu'une fois.
+      final int now = SqliteValues.encodeTimestamp(DateTime.now().toUtc());
+      _database.connection.execute(
+        'UPDATE team_invitations '
+        'SET status = ?, accepted_at = ?, accepted_by = ?, user_id = ? '
+        'WHERE id = ? AND status = ? AND expires_at > ?',
+        <Object?>[
+          TeamInvitationStatus.accepted.name,
+          now,
+          userId,
+          userId,
+          invitationId,
+          TeamInvitationStatus.pending.name,
+          now,
+        ],
+      );
+      if (_database.connection.updatedRows == 0) {
+        return InvitationAcceptanceOutcome.alreadyUsed;
+      }
+
+      _database.connection.execute(
+        'INSERT INTO team_members (team_id, user_id, role, created_at) '
+        'VALUES (?, ?, ?, ?)',
+        <Object?>[teamId, userId, role.name, now],
+      );
+      return InvitationAcceptanceOutcome.accepted;
     });
   }
 

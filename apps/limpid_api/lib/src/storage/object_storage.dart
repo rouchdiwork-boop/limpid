@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import 'r2_listing.dart';
 import 'sig_v4.dart';
+import 'stored_object.dart';
 
 /// The storage of the binary artefacts of the platform.
 ///
@@ -21,6 +22,35 @@ abstract interface class ObjectStorage {
 
   /// Builds a temporary download URL for [key].
   Future<String> presignedUrl({required String key, required Duration expires});
+}
+
+/// La lecture des objets d'un stockage.
+///
+/// Le port est le frère de [ObjectStorage] : un stockage qui ne fait
+/// qu'écrire n'a pas à savoir lire, et les storages tenant lieu de service
+/// distant absent refusent déjà l'écriture. L'export des données
+/// personnelles, lui, doit embarquer les artefacts du compte : il les lit
+/// par ce port.
+///
+/// Les implémentations qui savent lire sont [R2ObjectStorage] et
+/// [InMemoryObjectStorage].
+abstract interface class ObjectStorageReader {
+  /// Les clés des objets dont la clé commence par [prefix].
+  ///
+  /// Les clés sont rendues dans un ordre stable : deux lectures du même
+  /// préfixe donnent la même liste, et l'archive qui les embarque est
+  /// reproductible.
+  Future<List<String>> listKeys({required String prefix});
+
+  /// Les objets dont la clé commence par [prefix], avec leur taille.
+  ///
+  /// La taille vient de la liste elle-même : le dialecte S3 la porte dans
+  /// sa réponse. Mesurer le stockage d'un compte ne coûte donc aucune
+  /// lecture d'artefact.
+  Future<List<StoredObject>> listObjects({required String prefix});
+
+  /// Le contenu de l'objet [key], `null` quand l'objet n'existe pas.
+  Future<Uint8List?> readObject({required String key});
 }
 
 /// The erasure of the objects of a storage.
@@ -49,7 +79,8 @@ abstract interface class ObjectStorageDeletion {
 ///
 /// The requests are signed with AWS Signature Version 4, the dialect R2
 /// understands.
-final class R2ObjectStorage implements ObjectStorage, ObjectStorageDeletion {
+final class R2ObjectStorage
+    implements ObjectStorage, ObjectStorageDeletion, ObjectStorageReader {
   /// Creates a storage.
   R2ObjectStorage({
     required this.endpoint,
@@ -145,6 +176,72 @@ final class R2ObjectStorage implements ObjectStorage, ObjectStorageDeletion {
       expires: expires,
     );
     return uri.replace(queryParameters: query).toString();
+  }
+
+  @override
+  Future<List<String>> listKeys({required String prefix}) async {
+    final List<StoredObject> objects = await listObjects(prefix: prefix);
+    return objects
+        .map((StoredObject object) => object.key)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<StoredObject>> listObjects({required String prefix}) async {
+    final List<StoredObject> objects = <StoredObject>[];
+    String? token;
+    var pages = 0;
+    do {
+      final R2ObjectListing listing = await _listObjects(
+        prefix: prefix,
+        continuationToken: token,
+      );
+      objects.addAll(listing.objects);
+      if (listing.isTruncated && listing.continuationToken == null) {
+        throw StateError(
+          'R2 truncated the listing of "$prefix" without giving a token.',
+        );
+      }
+      token = listing.isTruncated ? listing.continuationToken : null;
+      pages++;
+      if (pages > listingPageLimit) {
+        throw StateError(
+          'R2 returned too many pages of objects for the prefix "$prefix".',
+        );
+      }
+    } while (token != null);
+    return List<StoredObject>.unmodifiable(objects);
+  }
+
+  @override
+  Future<Uint8List?> readObject({required String key}) async {
+    final Uri uri = _objectUri(key);
+    final Map<String, String> headers = <String, String>{
+      'host': uri.authority,
+      'x-amz-content-sha256': SigV4.hexSha256(const <int>[]),
+    };
+    final Map<String, String> signed = SigV4.sign(
+      method: 'GET',
+      uri: uri,
+      headers: headers,
+      payload: Uint8List(0),
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
+      region: region,
+      service: service,
+      timestamp: DateTime.now().toUtc(),
+    );
+
+    final http.Response response = await _client
+        .get(uri, headers: signed)
+        .timeout(timeout);
+    if (response.statusCode == HttpStatus.notFound) return null;
+    if (response.statusCode != HttpStatus.ok) {
+      throw StateError(
+        'R2 refused to read the object "$key" (${response.statusCode}).',
+      );
+    }
+    return response.bodyBytes;
   }
 
   Uri _objectUri(String key) {
@@ -299,7 +396,7 @@ final class R2ObjectStorage implements ObjectStorage, ObjectStorageDeletion {
 
 /// An in-memory [ObjectStorage], used by the test suite.
 final class InMemoryObjectStorage
-    implements ObjectStorage, ObjectStorageDeletion {
+    implements ObjectStorage, ObjectStorageDeletion, ObjectStorageReader {
   /// Creates an empty storage.
   InMemoryObjectStorage();
 
@@ -324,6 +421,39 @@ final class InMemoryObjectStorage
   }) async {
     return 'https://storage.test/$key?expires=${expires.inSeconds}';
   }
+
+  @override
+  Future<List<String>> listKeys({required String prefix}) async {
+    final List<String> keys =
+        _objects.keys
+            .where((String key) => key.startsWith(prefix))
+            .toList(growable: false)
+          ..sort();
+    return List<String>.unmodifiable(keys);
+  }
+
+  @override
+  Future<List<StoredObject>> listObjects({required String prefix}) async {
+    final List<StoredObject> objects =
+        _objects.entries
+            .where(
+              (MapEntry<String, Uint8List> entry) =>
+                  entry.key.startsWith(prefix),
+            )
+            .map(
+              (MapEntry<String, Uint8List> entry) =>
+                  StoredObject(key: entry.key, sizeBytes: entry.value.length),
+            )
+            .toList(growable: false)
+          ..sort(
+            (StoredObject left, StoredObject right) =>
+                left.key.compareTo(right.key),
+          );
+    return List<StoredObject>.unmodifiable(objects);
+  }
+
+  @override
+  Future<Uint8List?> readObject({required String key}) async => _objects[key];
 
   @override
   Future<void> delete({required String key}) async {

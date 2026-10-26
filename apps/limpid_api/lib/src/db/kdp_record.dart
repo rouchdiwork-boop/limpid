@@ -163,6 +163,58 @@ final class KdpPublication {
   /// Vrai quand le dossier passe le contrôle de soumission.
   bool get isReady => status == KdpPublicationStatus.ready;
 
+  /// Copie immuable de la publication, avec les champs remplacés.
+  ///
+  /// [id] n'est jamais remplacé : l'identifiant de la fiche est stable,
+  /// il est fixé à la première préparation.
+  KdpPublication copyWith({
+    String? id,
+    String? projectId,
+    String? userId,
+    String? title,
+    String? author,
+    String? description,
+    List<String>? keywords,
+    List<String>? categories,
+    List<KdpIssue>? issues,
+    String? isbn,
+    String? language,
+    String? publisher,
+    KdpPublicationStatus? status,
+    int? wordCount,
+    int? pageCount,
+    String? epubKey,
+    String? pdfKey,
+    int? epubBytes,
+    int? pdfBytes,
+    String? manuscriptVersion,
+    DateTime? createdAt,
+  }) {
+    return KdpPublication(
+      id: id ?? this.id,
+      projectId: projectId ?? this.projectId,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      description: description ?? this.description,
+      keywords: keywords ?? this.keywords,
+      categories: categories ?? this.categories,
+      issues: issues ?? this.issues,
+      isbn: isbn ?? this.isbn,
+      language: language ?? this.language,
+      publisher: publisher ?? this.publisher,
+      status: status ?? this.status,
+      wordCount: wordCount ?? this.wordCount,
+      pageCount: pageCount ?? this.pageCount,
+      epubKey: epubKey ?? this.epubKey,
+      pdfKey: pdfKey ?? this.pdfKey,
+      epubBytes: epubBytes ?? this.epubBytes,
+      pdfBytes: pdfBytes ?? this.pdfBytes,
+      manuscriptVersion: manuscriptVersion ?? this.manuscriptVersion,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   /// La représentation JSON de la publication.
   ///
   /// Les liens de téléchargement sont ajoutés par le service : ils

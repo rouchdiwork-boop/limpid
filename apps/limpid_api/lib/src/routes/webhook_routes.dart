@@ -20,12 +20,12 @@ import '../services/api_key_service.dart';
 import '../services/webhook_dispatcher.dart';
 import '../services/webhook_service.dart';
 
-/// L'en-tête qui porte la clé d'API.
+/// L'en-tête qui porte la clé d'API reste exporté par ici.
 ///
-/// C'est le **seul** en-tête qui porte une clé d'API : l'en-tête
-/// `Authorization` reste réservé au jeton de session, pour que les deux
-/// genres d'identification ne se confondent jamais.
-const String apiKeyHeader = 'x-limpid-api-key';
+/// Il appartient désormais à l'API publique, qui le porte sur ses routes :
+/// le baril du package expose les webhooks, et l'en-tête fait partie de
+/// leur contrat.
+export 'public_api_routes.dart' show apiKeyHeader;
 
 /// Le nombre maximal de caractères du nom d'une clé d'API.
 const int maxApiKeyNameLength = 120;
@@ -37,9 +37,11 @@ const int maxApiKeyNameLength = 120;
 /// sont réservées à la formule Studio (D-15), la seule qui ouvre l'API.
 ///
 /// Les routes `/v1/api` sont l'API publique elle-même : elles s'authentifient
-/// par la clé d'API portée par l'en-tête `X-Limpid-Api-Key`. Le point de
-/// composition doit les exempter du jeton de session — le préfixe
-/// `/v1/api/` passe alors devant l'authentification par jeton.
+/// par la clé d'API portée par l'en-tête `X-Limpid-Api-Key`. Elles vivent
+/// dans `public_api_routes.dart`, pour que l'API publique ne soit pas
+/// partagée entre les webhooks et l'API. Le point de composition doit les
+/// exempter du jeton de session — le préfixe `/v1/api/` passe alors devant
+/// l'authentification par jeton.
 ///
 /// [planOf] lit la formule du compte. Sans cette lecture, aucun compte
 /// n'est tenu d'avoir accès à l'API : le service refuse par défaut.
@@ -180,6 +182,22 @@ void registerWebhookRoutes(
       metadata: <String, Object?>{'name': revoked.name},
     );
     return ApiResponse.ok(revoked.toJson());
+  });
+
+  // -------------------------------------------------------------------
+  // Le catalogue des evenements.
+  // -------------------------------------------------------------------
+
+  // Le catalogue est lisible par le **session** : c'est l'application qui
+  // l'affiche quand l'auteur choisit les evenements d'un point de
+  // reception. La copie de l'API publique (`/v1/api/events`) exige une
+  // cle d'API : elle s'adresse aux programmes, pas a l'auteur.
+  router.get('/v1/webhooks/events', (Request request) async {
+    await _caller(request, guard);
+    return ApiResponse.ok(<Object?>[
+      for (final WebhookEvent event in WebhookEvent.values)
+        <String, Object?>{'key': event.key, 'label': event.label},
+    ]);
   });
 
   // -------------------------------------------------------------------
@@ -406,28 +424,6 @@ void registerWebhookRoutes(
     );
     return ApiResponse.ok(delivery.toJson(includePayload: true));
   });
-
-  // -------------------------------------------------------------------
-  // L'API publique, authentifiée par la clé d'API.
-  // -------------------------------------------------------------------
-
-  router.get('/v1/api/me', (Request request) async {
-    final ApiKeyRecord record = await _requireApiKey(request, keys);
-    _requireScope(record, ApiKeyScope.read);
-    return ApiResponse.ok(<String, Object?>{
-      ...record.toJson(),
-      'user_id': record.userId,
-    });
-  });
-
-  router.get('/v1/api/events', (Request request) async {
-    final ApiKeyRecord record = await _requireApiKey(request, keys);
-    _requireScope(record, ApiKeyScope.read);
-    return ApiResponse.ok(<Object?>[
-      for (final WebhookEvent event in WebhookEvent.values)
-        <String, Object?>{'key': event.key, 'label': event.label},
-    ]);
-  });
 }
 
 /// L'appelant autorisé à se servir de l'API.
@@ -462,40 +458,6 @@ Future<void> _trace(
       metadata: metadata,
       ip: clientIpOf(request),
     ),
-  );
-}
-
-/// La clé d'API portée par la requête, ou une erreur.
-///
-/// Une clé inconnue, falsifiée ou révoquée reçoit exactement le même
-/// refus : l'appelant ne peut pas deviner quelles clés existent.
-Future<ApiKeyRecord> _requireApiKey(
-  Request request,
-  ApiKeyService service,
-) async {
-  final String? presented = request.headers[apiKeyHeader];
-  if (presented == null || presented.trim().isEmpty) {
-    throw const UnauthorizedException(
-      message: 'Une clé d\'API est requise pour accéder à cette ressource.',
-      details: <String, Object?>{'reason': 'missing_api_key'},
-    );
-  }
-  final ApiKeyRecord? record = await service.authenticate(presented);
-  if (record == null) {
-    throw const UnauthorizedException(
-      message: 'Cette clé d\'API est inconnue ou révoquée.',
-      details: <String, Object?>{'reason': 'unknown_api_key'},
-    );
-  }
-  return record;
-}
-
-/// Vérifie que la clé [record] porte le périmètre [scope].
-void _requireScope(ApiKeyRecord record, ApiKeyScope scope) {
-  if (record.scopes.contains(scope.key)) return;
-  throw ForbiddenException(
-    message: 'Cette clé d\'API ne porte pas le périmètre requis.',
-    details: <String, Object?>{'scope': scope.key},
   );
 }
 

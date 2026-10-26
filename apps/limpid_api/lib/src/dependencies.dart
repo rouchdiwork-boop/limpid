@@ -5,10 +5,16 @@ import 'auth/two_factor_guard.dart';
 import 'db/account_purge_store.dart';
 import 'db/admin_database.dart';
 import 'db/audit_log.dart';
+import 'db/book_sale_store.dart';
 import 'db/comment_store.dart';
+import 'db/entitlement_store.dart';
 import 'db/kdp_database.dart';
+import 'db/kdp_deposit_store.dart';
 import 'db/project_store.dart';
+import 'db/promo_code_store.dart';
 import 'db/quota_database.dart';
+import 'db/share_store.dart';
+import 'db/stripe_event_database.dart';
 import 'db/sync_store.dart';
 import 'db/team_database.dart';
 import 'db/two_factor_database.dart';
@@ -17,7 +23,9 @@ import 'errors/app_exception.dart';
 import 'logging/logger.dart';
 import 'redis/key_value_store.dart';
 import 'services/ai_gateway.dart';
+import 'services/feature_flag_service.dart';
 import 'services/idempotency_service.dart';
+import 'services/kdp_gateway.dart';
 import 'services/payment_gateway.dart';
 import 'services/sync_hub.dart';
 import 'services/two_factor_service.dart';
@@ -66,7 +74,15 @@ final class AppDependencies {
     this.admin,
     this.webhooks,
     this.kdp,
+    this.kdpDeposits,
+    this.kdpGateway,
+    this.stripeEvents,
     this.webhookDispatcher,
+    this.featureFlags,
+    this.shares,
+    this.bookSales,
+    this.entitlements,
+    this.promoCodes,
   });
 
   /// The projects of the callers.
@@ -131,8 +147,46 @@ final class AppDependencies {
   /// configured.
   final WebhookDatabase? webhooks;
 
+  /// The read-only shares of the books, when the feature is configured.
+  ///
+  /// The port is optional : a server qui ne partage pas de livre ne sert
+  /// pas les routes de partage, plutot que de les servir en erreur.
+  final ShareStore? shares;
+
+  /// The prices of the books for sale, when the feature is configured.
+  final BookSaleStore? bookSales;
+
+  /// The rights of reading bought by the authors, when the feature is
+  /// configured.
+  final EntitlementStore? entitlements;
+
+  /// The discount codes, when the feature is configured.
+  final PromoCodeStore? promoCodes;
+
   /// The Amazon KDP publications, when the feature is configured.
   final KdpDatabase? kdp;
+
+  /// The traces of the deposits at Amazon KDP, when the feature is
+  /// configured.
+  ///
+  /// The port is optional, like the publications themselves: a server that
+  /// does not distribute on Amazon serves the preparation of a publication
+  /// and nothing more.
+  final KdpDepositStore? kdpDeposits;
+
+  /// The Stripe events already treated, when the feature is configured.
+  ///
+  /// The port is optional: a server without it does not receive the
+  /// callbacks of the payment provider, and no formula is ever attributed
+  /// by a client.
+  final StripeEventDatabase? stripeEvents;
+
+  /// The channel that deposits a package at Amazon KDP.
+  ///
+  /// It is optional, and the implementation that stands for a server
+  /// without Amazon credentials says so instead of pretending that the
+  /// book reached Amazon.
+  final KdpGateway? kdpGateway;
 
   /// The dispatcher of the outgoing webhooks.
   ///
@@ -140,6 +194,13 @@ final class AppDependencies {
   /// export, a plan change — use the same dispatcher, so a delivery is
   /// written in one place.
   final WebhookDispatcher? webhookDispatcher;
+
+  /// The feature flags of the back-office, `null` when the back-office is
+  /// not wired.
+  ///
+  /// A flag whose key is a plan capability is a **kill switch**: it cuts
+  /// that capability for every account, without a redeployment.
+  final FeatureFlagService? featureFlags;
 
   /// The plan of [userId], `null` when the account has none.
   ///

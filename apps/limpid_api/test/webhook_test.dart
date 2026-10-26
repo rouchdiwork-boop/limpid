@@ -803,6 +803,9 @@ final class _Harness {
     final WebhookDispatcher dispatcher = WebhookDispatcher(
       database: webhooks,
       guard: ApiAccessGuard(planOf: (String userId) async => plans[userId]),
+      // Le rappel du test est sur la boucle locale : c'est le profil de
+      // developpement, ou la politique d'hote prive est assouplie.
+      allowPrivateHosts: true,
     );
 
     final TestRsaKeyPair keyPair = generateTestKeyPair(bits: 2048);
@@ -825,6 +828,16 @@ final class _Harness {
       planOf: (String userId) async => plans[userId],
       audit: withAudit ? audit : null,
       dispatcher: dispatcher,
+    );
+    // L'API publique vit dans son propre fichier : elle est enregistrée à
+    // côté des webhooks, sur les mêmes dépendances.
+    registerPublicApiRoutes(
+      router,
+      config,
+      projects: InMemoryProjectStore(),
+      sync: InMemorySyncStore(),
+      webhooks: webhooks,
+      planOf: (String userId) async => plans[userId],
     );
 
     final Handler handler = const Pipeline()

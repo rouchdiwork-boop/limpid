@@ -60,9 +60,10 @@ String _format(AiEvent event) {
       :final inputTokens,
       :final outputTokens,
       :final estimatedCostUsd,
+      :final isTokenCountEstimated,
     ) =>
       'event: done\ndata: '
-          '${jsonEncode(<String, Object?>{'text': text, 'input_tokens': inputTokens, 'output_tokens': outputTokens, 'estimated_cost_usd': estimatedCostUsd})}\n\n',
+          '${jsonEncode(<String, Object?>{'text': text, 'input_tokens': inputTokens, 'output_tokens': outputTokens, 'estimated_cost_usd': estimatedCostUsd, 'tokens_estimated': isTokenCountEstimated})}\n\n',
   };
 }
 

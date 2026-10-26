@@ -10,10 +10,20 @@ import 'ai_gateway.dart';
 /// environment and never reaches the logs.
 final class LimpidAiGateway implements AiGateway {
   /// Creates a gateway on top of [client].
-  const LimpidAiGateway({required this.client});
+  const LimpidAiGateway({
+    required this.client,
+    this.estimator = const HeuristicTokenEstimator(),
+  });
 
   /// The underlying AI client.
   final AiClient client;
+
+  /// The estimator of the tokens, used when the provider does not report
+  /// its own consumption.
+  ///
+  /// The estimate is then marked as an estimate: a count that pretends to
+  /// be exact ends up in the invoice of an author.
+  final TokenEstimator estimator;
 
   /// Builds a gateway talking to Anthropic with [apiKey].
   factory LimpidAiGateway.anthropic({
@@ -46,17 +56,18 @@ final class LimpidAiGateway implements AiGateway {
       temperature: request.temperature,
     );
     return _guard(
-      client
-          .stream(
-            prompt,
-            task: task,
-            options: options,
-            tag: AiCallTag(
-              feature: request.taskKey ?? 'ai_generate',
-              userId: request.userId,
-            ),
-          )
-          .map(_toEvent),
+      _events(
+        client.stream(
+          prompt,
+          task: task,
+          options: options,
+          tag: AiCallTag(
+            feature: request.taskKey ?? 'ai_generate',
+            userId: request.userId,
+          ),
+        ),
+        estimatedInputTokens: estimator.estimate(prompt.plainText),
+      ),
     );
   }
 
@@ -85,18 +96,19 @@ final class LimpidAiGateway implements AiGateway {
     );
 
     return _guard(
-      client
-          .stream(
-            prompt,
-            task: task,
-            options: AiRequestOptions(maxTokens: request.maxTokens),
-            tag: AiCallTag(
-              feature: 'ai_inline',
-              userId: request.userId,
-              taskKey: task.key,
-            ),
-          )
-          .map(_toEvent),
+      _events(
+        client.stream(
+          prompt,
+          task: task,
+          options: AiRequestOptions(maxTokens: request.maxTokens),
+          tag: AiCallTag(
+            feature: 'ai_inline',
+            userId: request.userId,
+            taskKey: task.key,
+          ),
+        ),
+        estimatedInputTokens: estimator.estimate(prompt.plainText),
+      ),
     );
   }
 
@@ -136,33 +148,74 @@ final class LimpidAiGateway implements AiGateway {
       }),
     );
 
-    await for (final AiEvent event
-        in client
-            .stream(
-              prompt,
-              task: task,
-              tag: AiCallTag(
-                feature: 'ai_query',
-                userId: request.userId,
-                taskKey: task.key,
-              ),
-            )
-            .map(_toEvent)) {
+    await for (final AiEvent event in _events(
+      client.stream(
+        prompt,
+        task: task,
+        tag: AiCallTag(
+          feature: 'ai_query',
+          userId: request.userId,
+          taskKey: task.key,
+        ),
+      ),
+      estimatedInputTokens: estimator.estimate(prompt.plainText),
+    )) {
       yield event;
     }
   }
 
-  static AiEvent _toEvent(AiChunk chunk) {
-    if (chunk.isDone) {
-      final AiUsage usage = chunk.usage ?? AiUsage.empty();
+  /// Transforms the fragments of the provider into the events of the API.
+  ///
+  /// The text is accumulated along the stream: the final event carries the
+  /// complete text, and it is what allows the output to be estimated when
+  /// the provider does not say how many tokens it wrote.
+  Stream<AiEvent> _events(
+    Stream<AiChunk> chunks, {
+    required int estimatedInputTokens,
+  }) async* {
+    final StringBuffer text = StringBuffer();
+    await for (final AiChunk chunk in chunks) {
+      if (chunk.isDone) {
+        if (chunk.text.isNotEmpty) text.write(chunk.text);
+        yield _doneEvent(
+          chunk,
+          text: text.toString(),
+          estimatedInputTokens: estimatedInputTokens,
+        );
+        continue;
+      }
+      text.write(chunk.text);
+      yield AiTokenEvent(chunk.text);
+    }
+  }
+
+  /// The final event, with the consumption of the call.
+  ///
+  /// When the provider reported its own consumption, the count is exact.
+  /// Otherwise it is estimated, and marked as an estimate: an estimate
+  /// that pretends to be a reading ends up in the invoice of an author.
+  AiEvent _doneEvent(
+    AiChunk chunk, {
+    required String text,
+    required int estimatedInputTokens,
+  }) {
+    final AiUsage? usage = chunk.usage;
+    if (usage != null && usage.totalTokens > 0) {
       return AiDoneEvent(
-        text: chunk.text,
+        text: text,
         inputTokens: usage.inputTokens,
         outputTokens: usage.outputTokens,
         estimatedCostUsd: usage.estimatedCostUsd,
+        isTokenCountEstimated: false,
       );
     }
-    return AiTokenEvent(chunk.text);
+    return AiDoneEvent(
+      text: text,
+      inputTokens: estimatedInputTokens,
+      outputTokens: estimator.estimate(text),
+      estimatedCostUsd: 0,
+      isTokenCountEstimated: true,
+    );
   }
 
   static Stream<AiEvent> _guard(Stream<AiEvent> events) async* {

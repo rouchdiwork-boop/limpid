@@ -19,6 +19,25 @@ const Set<String> _redactedKeys = <String>{
   'token',
 };
 
+/// The markers of a sensitive field, whatever the name it carries.
+///
+/// The list above ne suffirait pas : `refresh_token` n'est pas `token`,
+/// `client_secret` n'est pas `secret`, `access_token` non plus. Un champ
+/// dont le nom **contient** l'un de ces marqueurs est retiré du journal :
+/// mieux vaut perdre une trace que d'y laisser un secret.
+const List<String> _redactedMarkers = <String>[
+  'apikey',
+  'authorization',
+  'credential',
+  'cookie',
+  'jwt',
+  'passwd',
+  'password',
+  'privatekey',
+  'secret',
+  'token',
+];
+
 /// Maximum length of a free-form value written to the logs.
 const int _maxValueLength = 512;
 
@@ -77,14 +96,30 @@ final class Logger {
   }
 
   /// Removes the sensitive entries of [fields] and truncates long values.
+  ///
+  /// A field is removed when its name is one of the sensitive keys, or
+  /// when its name **contains** one of the sensitive markers : `refresh_token`
+  /// is as secret as `token`.
   static Map<String, Object?> sanitize(Map<String, Object?> fields) {
     final Map<String, Object?> safe = <String, Object?>{};
     for (final MapEntry<String, Object?> entry in fields.entries) {
       final String key = entry.key.toLowerCase();
-      if (_redactedKeys.contains(key)) continue;
+      if (_redactedKeys.contains(key) || _isSensitive(key)) continue;
       safe[entry.key] = _sanitizeValue(entry.value);
     }
     return safe;
+  }
+
+  /// Does the name of a field carry a marker of a secret?
+  ///
+  /// The separators are removed before the comparison : `api_key` and
+  /// `apiKey` carry the same secret, and both are caught by `apikey`.
+  static bool _isSensitive(String key) {
+    final String normalized = key.replaceAll(RegExp(r'[_\-.]'), '');
+    for (final String marker in _redactedMarkers) {
+      if (normalized.contains(marker)) return true;
+    }
+    return false;
   }
 
   static Object? _sanitizeValue(Object? value) {

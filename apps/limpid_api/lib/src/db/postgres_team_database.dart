@@ -3,6 +3,7 @@ import 'package:postgres/postgres.dart';
 
 import '../errors/app_exception.dart';
 import 'team_database.dart';
+import 'team_invitation_record.dart';
 import 'team_record.dart';
 
 /// L'implémentation Postgres des équipes.
@@ -62,6 +63,15 @@ final class PostgresTeamDatabase implements TeamDatabase {
       parameters: <Object?>[teamId, userId],
     );
     return result.isEmpty ? null : _readMember(result.first);
+  }
+
+  @override
+  Future<TeamRecord?> findTeam({required String teamId}) async {
+    final Result result = await _pool.execute(
+      'SELECT $_teamColumns FROM teams WHERE id = \$1',
+      parameters: <Object?>[teamId],
+    );
+    return result.isEmpty ? null : _readTeam(result.first);
   }
 
   @override
@@ -211,6 +221,70 @@ final class PostgresTeamDatabase implements TeamDatabase {
       parameters: <Object?>[teamId],
     );
     return result.isEmpty ? false : true;
+  }
+
+  @override
+  Future<InvitationAcceptanceOutcome> acceptInvitation({
+    required String invitationId,
+    required String teamId,
+    required String userId,
+    required TeamRole role,
+    required String invitedBy,
+    required int maxSeats,
+  }) async {
+    return _pool.runTx((Session session) async {
+      // La ligne de l'équipe est verrouillée : deux acceptations
+      // simultanées ne peuvent pas dépasser la limite de sièges.
+      final Result locked = await session.execute(
+        'SELECT id FROM teams WHERE id = \$1 FOR UPDATE',
+        parameters: <Object?>[teamId],
+      );
+      if (locked.isEmpty) throw const NotFoundException();
+
+      // Le compte ne peut pas entrer deux fois dans l'équipe : l'invitation
+      // porte une adresse, elle ne dit pas que le compte est déjà membre.
+      final Result existing = await session.execute(
+        'SELECT user_id FROM team_members WHERE team_id = \$1 AND user_id = \$2',
+        parameters: <Object?>[teamId, userId],
+      );
+      if (existing.isNotEmpty) {
+        throw const ConflictException(
+          message: 'Ce compte fait déjà partie de l\'équipe.',
+        );
+      }
+
+      // Les sièges sont vérifiés au moment de l'acceptation : la formule a
+      // pu changer entre l'invitation et la réponse.
+      final Result seats = await session.execute(
+        'SELECT count(*) AS total FROM team_members '
+        'WHERE team_id = \$1 AND role <> \$2',
+        parameters: <Object?>[teamId, TeamRole.owner.name],
+      );
+      final int used = seats.isEmpty ? 0 : _readTotal(seats.first);
+      if (used >= maxSeats) return InvitationAcceptanceOutcome.noSeat;
+
+      // L'invitation est consommée : la condition sur l'état et sur
+      // l'échéance fait qu'un même jeton ne marche qu'une fois.
+      final Result accepted = await session.execute(
+        'UPDATE team_invitations '
+        'SET status = \$1, accepted_at = now(), accepted_by = \$2, user_id = \$2 '
+        'WHERE id = \$3 AND status = \$4 AND expires_at > now()',
+        parameters: <Object?>[
+          TeamInvitationStatus.accepted.name,
+          userId,
+          invitationId,
+          TeamInvitationStatus.pending.name,
+        ],
+      );
+      if (accepted.isEmpty) return InvitationAcceptanceOutcome.alreadyUsed;
+
+      await session.execute(
+        'INSERT INTO team_members (team_id, user_id, role, created_at) '
+        'VALUES (\$1, \$2, \$3, now())',
+        parameters: <Object?>[teamId, userId, role.name],
+      );
+      return InvitationAcceptanceOutcome.accepted;
+    });
   }
 
   static TeamRecord _readTeam(ResultRow row) {

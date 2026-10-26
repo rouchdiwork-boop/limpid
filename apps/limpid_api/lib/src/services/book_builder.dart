@@ -4,16 +4,23 @@ import 'package:limpid_export/limpid_export.dart';
 import '../db/project_record.dart';
 import '../sync/tree_builder.dart';
 
-/// Translates the CRDT state of a project into an exportable book.
+/// Traduit l'etat CRDT d'un projet en livre exportable.
 ///
-/// The translation is the boundary between the domain model of `limpid_core`
-/// and the intermediate model of `limpid_export`: one synchronised document
-/// (a scene) becomes one chapter.
+/// La traduction est la frontiere entre le modele de domaine de
+/// `limpid_core` et le modele intermediaire de `limpid_export` : un
+/// document synchronise (une scene) devient un chapitre.
 abstract final class BookBuilder {
-  /// Builds the book of [project] from the reconstructed [trees].
+  /// Construit le livre de [project] a partir des [trees] reconstruits.
+  ///
+  /// [isbn] et [author] sont l'identite bibliographique de l'edition
+  /// imprimee : ils sont poses quand ils sont connus, et laisses vides
+  /// quand ils ne le sont pas. Un ISBN inconnu ne produit jamais de
+  /// code-barres : l'export n'en fabrique aucun.
   static ExportBook build({
     required ProjectRecord project,
     required List<DocumentTree> trees,
+    String? isbn,
+    String? author,
   }) {
     final List<ExportChapter> chapters = <ExportChapter>[];
     var order = 0;
@@ -34,11 +41,15 @@ abstract final class BookBuilder {
       order += 1;
     }
 
+    final String? knownIsbn = _clean(isbn);
+    final String? knownAuthor = _clean(author);
+
     return ExportBook(
       title: project.title,
-      authors: const <String>[],
+      authors: knownAuthor == null ? const <String>[] : <String>[knownAuthor],
       language: project.language,
       metadata: ExportMetadata(
+        isbn: knownIsbn,
         description: project.synopsis.isEmpty ? null : project.synopsis,
         language: project.language,
         // The identifier of the project is the seed of the colour of the
@@ -48,6 +59,13 @@ abstract final class BookBuilder {
       ),
       chapters: chapters,
     );
+  }
+
+  /// La valeur [value] nettoyee, `null` quand elle ne porte rien.
+  static String? _clean(String? value) {
+    if (value == null) return null;
+    final String trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   static List<ExportBlock> _buildBlocks(BlockNode node) {

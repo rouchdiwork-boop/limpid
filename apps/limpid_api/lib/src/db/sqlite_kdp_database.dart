@@ -72,7 +72,27 @@ final class SqliteKdpDatabase implements KdpDatabase {
     return _database.run(() {
       _database.connection.execute(
         'INSERT INTO kdp_publications ($_columns) '
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+        'ON CONFLICT (project_id) DO UPDATE SET '
+        'user_id = excluded.user_id, '
+        'title = excluded.title, '
+        'author = excluded.author, '
+        'description = excluded.description, '
+        'keywords = excluded.keywords, '
+        'categories = excluded.categories, '
+        'issues = excluded.issues, '
+        'isbn = excluded.isbn, '
+        'language = excluded.language, '
+        'publisher = excluded.publisher, '
+        'status = excluded.status, '
+        'word_count = excluded.word_count, '
+        'page_count = excluded.page_count, '
+        'epub_key = excluded.epub_key, '
+        'pdf_key = excluded.pdf_key, '
+        'epub_bytes = excluded.epub_bytes, '
+        'pdf_bytes = excluded.pdf_bytes, '
+        'manuscript_version = excluded.manuscript_version, '
+        'created_at = excluded.created_at',
         <Object?>[
           publication.id,
           publication.projectId,
@@ -97,7 +117,14 @@ final class SqliteKdpDatabase implements KdpDatabase {
           SqliteValues.encodeTimestamp(publication.createdAt),
         ],
       );
-      return publication;
+      // L'identifiant de la fiche est fixe : la ligne relue porte celui
+      // de la premiere preparation, jamais celui d'une preparation
+      // ulterieure.
+      final ResultSet result = _database.connection.select(
+        'SELECT $_columns FROM kdp_publications WHERE project_id = ?',
+        <Object?>[publication.projectId],
+      );
+      return result.isEmpty ? publication : _readPublication(result.first);
     });
   }
 
@@ -129,6 +156,30 @@ final class SqliteKdpDatabase implements KdpDatabase {
         'SELECT $_columns FROM kdp_publications '
         'WHERE id = ? AND user_id = ?',
         <Object?>[publicationId, userId],
+      );
+      return result.isEmpty ? null : _readPublication(result.first);
+    });
+  }
+
+  @override
+  Future<KdpPublication?> findPublicationByProject({
+    required String projectId,
+  }) async {
+    return _database.run(() {
+      final ResultSet result = _database.connection.select(
+        'SELECT $_columns FROM kdp_publications WHERE project_id = ?',
+        <Object?>[projectId],
+      );
+      return result.isEmpty ? null : _readPublication(result.first);
+    });
+  }
+
+  @override
+  Future<KdpPublication?> findPublicationByIsbn({required String isbn}) async {
+    return _database.run(() {
+      final ResultSet result = _database.connection.select(
+        'SELECT $_columns FROM kdp_publications WHERE isbn = ?',
+        <Object?>[isbn],
       );
       return result.isEmpty ? null : _readPublication(result.first);
     });

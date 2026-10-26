@@ -18,6 +18,9 @@ dependencies:
   # Generateurs d'export EPUB / PDF / DOCX / HTML / MD / ODT.
   limpid_export:
     path: ../../packages/limpid_export
+  # Lecteurs d'import DOCX / ODT / EPUB / RTF / MD / TXT.
+  limpid_import:
+    path: ../../packages/limpid_import
 
   # Serveur HTTP et routage.
   shelf: ^1.4.3

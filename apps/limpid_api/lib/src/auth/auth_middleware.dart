@@ -1,6 +1,7 @@
 import 'package:shelf/shelf.dart';
 
 import '../errors/app_exception.dart';
+import '../routes/share_routes.dart';
 import 'auth_context.dart';
 import 'jwt_verifier.dart';
 import 'two_factor_guard.dart';
@@ -89,6 +90,14 @@ const List<String> publicPathPrefixes = <String>['/v1/public/'];
 /// cannot use the rest of the API.
 const List<String> defaultTwoFactorExemptPrefixes = <String>['/v1/me/2fa'];
 
+/// The path of the callback of the payment provider.
+///
+/// The provider calls the API **from the outside**: it has no session token.
+/// The route authenticates itself with the signature of the body it sends,
+/// and it is therefore exempt from the token as well as from the second
+/// factor.
+const String stripeWebhookPath = '/v1/stripe/webhook';
+
 /// Builds the middleware authenticating the calls of the protected routes.
 ///
 /// The routes of [exemptPaths] and of [exemptPrefixes] answer without a
@@ -114,7 +123,8 @@ Middleware authenticationMiddleware({
     return (Request request) async {
       final String path = request.requestedUri.path;
       if (exemptPaths.contains(path) ||
-          exemptPrefixes.any((String prefix) => path.startsWith(prefix))) {
+          exemptPrefixes.any((String prefix) => path.startsWith(prefix)) ||
+          isShareDocumentPath(path)) {
         return innerHandler(request);
       }
       final AuthContext context = await _authenticate(request, verifier);

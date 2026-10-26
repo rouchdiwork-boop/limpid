@@ -61,7 +61,16 @@ Handler buildHandler(AppDependencies dependencies, AppConfig config) {
           twoFactorGuard: twoFactorGuard,
           // L'API publique s'authentifie par sa cle d'API, pas par le
           // jeton de session : elle ne doit donc pas exiger de jeton.
+          // Le rappel du prestataire de paiement non plus : il vient de
+          // l'exterieur et s'authentifie par la signature du corps. Son
+          // chemin est exempté **exactement**, pas par un préfixe : une
+          // route voisine ne doit pas devenir publique par accident.
           exemptPrefixes: <String>[...publicPathPrefixes, '/v1/api/'],
+          exemptPaths: <String>{...publicPaths, stripeWebhookPath},
+          twoFactorExemptPrefixes: <String>[
+            ...defaultTwoFactorExemptPrefixes,
+            stripeWebhookPath,
+          ],
         ),
       )
       .addMiddleware(

@@ -246,6 +246,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  limpid_import:
+    dependency: "direct main"
+    description:
+      path: "../../packages/limpid_import"
+      relative: true
+    source: path
+    version: "0.1.0"
   lints:
     dependency: "direct dev"
     description:

@@ -54,6 +54,10 @@ void main() {
           'team_members',
           'team_invitations',
           'feature_flags',
+          'series',
+          'volumes',
+          'chapters',
+          'scenes',
           'schema_migrations',
         ]),
       );
@@ -156,9 +160,15 @@ void main() {
         'id',
         'team_id',
         'user_id',
+        'email',
         'role',
+        'token_hash',
+        'status',
         'invited_by',
         'created_at',
+        'expires_at',
+        'accepted_at',
+        'accepted_by',
       ]);
       expect(await _columns(database, 'feature_flags'), <String>[
         'flag_key',
@@ -210,6 +220,10 @@ void main() {
       expect(
         await _indexes(database, 'team_invitations'),
         contains('team_invitations_team_idx'),
+      );
+      expect(
+        await _indexes(database, 'team_invitations'),
+        contains('team_invitations_token_idx'),
       );
     });
 

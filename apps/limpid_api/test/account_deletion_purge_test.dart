@@ -366,6 +366,7 @@ final class _FailingPurgeStore implements AccountPurgeStore {
   @override
   Future<AccountPurgeOutcome> purge({
     required String userId,
+    String? email,
     required DateTime requestedAt,
     required DateTime scheduledFor,
     required DateTime purgedAt,
@@ -376,6 +377,7 @@ final class _FailingPurgeStore implements AccountPurgeStore {
     }
     return _delegate.purge(
       userId: userId,
+      email: email,
       requestedAt: requestedAt,
       scheduledFor: scheduledFor,
       purgedAt: purgedAt,

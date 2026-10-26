@@ -98,6 +98,18 @@ enum QuotaFeature {
     QuotaPeriod.month,
   ),
 
+  /// Le nombre de jetons d'IA consommés dans le mois.
+  ///
+  /// C'est la grandeur que le marché vend : la maquette de la page
+  /// tarifaire annonce « 500 k tokens / mois » et « 2 M tokens / mois ».
+  /// Une formule qui ne vend pas de jetons n'a pas de limite ici.
+  aiTokens(
+    'ai_tokens',
+    'Tokens IA',
+    QuotaFeatureKind.counter,
+    QuotaPeriod.month,
+  ),
+
   /// Le stockage occupé par le compte, en octets.
   storageBytes('storage_bytes', 'Stockage', QuotaFeatureKind.gauge, null);
 
@@ -211,6 +223,10 @@ abstract final class PlanCatalog {
         definition.isUnlimitedExports ? null : quota.maxExportsPerMonth,
       QuotaFeature.aiRewrites => quota.dailyAiRewrites,
       QuotaFeature.aiCovers => quota.monthlyAiCovers,
+      // Une formule qui ne vend pas de jetons ne borne pas les jetons :
+      // sa consommation reste encadrée par les autres compteurs.
+      QuotaFeature.aiTokens =>
+        quota.monthlyAiTokens == 0 ? null : quota.monthlyAiTokens,
       QuotaFeature.storageBytes => quota.maxStorageBytes,
     };
   }

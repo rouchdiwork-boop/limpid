@@ -241,6 +241,7 @@ final class AccountPurgeService {
   ) async {
     final AccountPurgeOutcome outcome = await store.purge(
       userId: userId,
+      email: deletion.email,
       requestedAt: deletion.requestedAt,
       scheduledFor: deletion.scheduledFor,
       purgedAt: now,
@@ -276,6 +277,13 @@ final class AccountPurgeService {
     if (state.isComplete) {
       // Une passe précédente a déjà tout effacé : aucun tiers n'est
       // appelé une seconde fois.
+      //
+      // La trace peut however manquer : si l'effacement a abouti mais que
+      // l'écriture de l'audit a échoué après coup, le compte est effacé
+      // et rien ne le prouve. La trace est donc écrite ici quand elle
+      // manque, à partir de l'audit lui-même : c'est lui qui sait ce qu'il
+      // a deja écrit.
+      await _writeMissingTrail(userId, now);
       skipped.add(userId);
       return;
     }
@@ -298,6 +306,7 @@ final class AccountPurgeService {
 
     final AccountPurgeOutcome outcome = await store.purge(
       userId: userId,
+      email: deletion.email,
       requestedAt: deletion.requestedAt,
       scheduledFor: deletion.scheduledFor,
       purgedAt: now,
@@ -330,6 +339,35 @@ final class AccountPurgeService {
     );
   }
 
+  /// Ecrit la trace d'une purge qui a abouti mais dont la trace manque.
+  ///
+  /// Une purge efface des donnees : si la trace ne part pas, l'auteur
+  /// n'a plus de preuve que sa suppression a eu lieu, et l'audit ne peut
+  /// pas dire ce qui a ete efface. La trace est donc ecrite une seconde
+  /// fois quand la premiere a echoue.
+  Future<void> _writeMissingTrail(String userId, DateTime now) async {
+    final List<AuditEntry> existing = await audit.entriesOf(
+      userId: userId,
+      limit: 1,
+      action: accountPurgedAction,
+    );
+    if (existing.isNotEmpty) return;
+    await audit.record(
+      AuditEntry(
+        userId: userId,
+        action: accountPurgedAction,
+        targetType: 'account',
+        targetId: userId,
+        metadata: <String, Object?>{
+          'worker_id': workerId,
+          'purged_at': now.toUtc().toIso8601String(),
+          'trail_recovered': true,
+        },
+        createdAt: now,
+      ),
+    );
+  }
+
   /// The entry of the audit trail describing a purge.
   ///
   /// The trail is what makes the purge auditable: it says what was erased,
@@ -352,6 +390,10 @@ final class AccountPurgeService {
         'operations_deleted': outcome.operationsDeleted,
         'collaborations_deleted': outcome.collaborationsDeleted,
         'messages_deleted': outcome.messagesDeleted,
+        // Le nombre de lignes effacees dans **toutes** les tables
+        // personnelles : la trace dit ce que la purge a reellement efface,
+        // pas seulement ce qui etait visible avant le lot 7.
+        'personal_rows_deleted': outcome.personalRowsDeleted,
         'worker_id': workerId,
         'purged_at': now.toUtc().toIso8601String(),
         'auth_deleted_at': state?.authDeletedAt?.toUtc().toIso8601String(),

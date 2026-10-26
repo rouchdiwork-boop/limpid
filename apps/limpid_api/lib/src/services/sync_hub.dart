@@ -54,6 +54,23 @@ final class SyncHub {
   int subscriberCount(String projectId, String docId) =>
       _rooms[(projectId, docId)]?.length ?? 0;
 
+  /// The accounts present in the room of [projectId] and [docId].
+  ///
+  /// The list holds one entry per account: the two devices of the same
+  /// author are one peer. The relay uses it to tell a newcomer who is
+  /// already there.
+  List<String> peersOf(String projectId, String docId) {
+    final Set<SyncSubscription>? room = _rooms[(projectId, docId)];
+    if (room == null) return const <String>[];
+    final List<String> peers = <String>[];
+    for (final SyncSubscription subscription in room) {
+      if (!peers.contains(subscription.userId)) {
+        peers.add(subscription.userId);
+      }
+    }
+    return List<String>.unmodifiable(peers);
+  }
+
   /// Subscribes a client to the document [docId] of the project [projectId].
   SyncSubscription join({
     required String projectId,

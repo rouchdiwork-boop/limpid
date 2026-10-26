@@ -11,8 +11,11 @@ import '../errors/app_exception.dart';
 import '../http/api_response.dart';
 import '../http/json_body.dart';
 import '../middleware/rate_limiter.dart';
+import '../services/feature_flag_service.dart';
 import '../services/plan_catalog.dart';
+import '../services/quota_gauges.dart';
 import '../services/quota_service.dart';
+import '../services/webhook_dispatcher.dart';
 
 /// Enregistre les routes des formules et des quotas.
 ///
@@ -24,13 +27,28 @@ import '../services/quota_service.dart';
 /// formule **exige** la trace, et la route refuse la demande quand le
 /// journal n'est pas câblé. Le point de composition passe
 /// `audit: dependencies.audit`.
+///
+/// Le dispatcher est, lui, facultatif et silencieux : sans lui, le changement
+/// de formule n'est pas annoncé, mais il reste appliqué.
+///
+/// Les jauges sont mesurées par le port `gauges` : sans lui, la route
+/// publie des jauges à zéro. Le point de composition passe
+/// `gauges: AccountQuotaGauges(...)`.
 void registerQuotaRoutes(
   Router router,
   QuotaDatabase database,
   AppConfig config, {
   AuditLog? audit,
+  WebhookDispatcher? dispatcher,
+  QuotaGaugeReader? gauges,
+  FeatureFlagService? flags,
 }) {
-  final QuotaService quota = QuotaService(database: database);
+  final QuotaService quota = QuotaService(
+    database: database,
+    dispatcher: dispatcher,
+    gauges: gauges,
+    flags: flags,
+  );
 
   router.get('/v1/me/plan', (Request request) async {
     final AuthContext auth = requireAuthContext(request);
@@ -47,10 +65,16 @@ void registerQuotaRoutes(
       'period_started_at': plan.periodStartedAt.toUtc().toIso8601String(),
       'period_ends_at': plan.periodEndsAt?.toUtc().toIso8601String(),
       'seat_count': definition.quota.maxSeats,
-      'capabilities': <String>[
-        for (final PlanCapability capability in PlanCapability.values)
-          if (PlanCatalog.hasCapability(plan.plan, capability)) capability.key,
-      ],
+      // Les capacites annoncees sont celles que le compte peut
+      // effectivement utiliser : une capacite coupee par un indicateur du
+      // back-office disparait de la liste.
+      'capabilities':
+          await flags?.announcedCapabilities(plan.plan) ??
+          <String>[
+            for (final PlanCapability capability in PlanCapability.values)
+              if (PlanCatalog.hasCapability(plan.plan, capability))
+                capability.key,
+          ],
     });
   });
 

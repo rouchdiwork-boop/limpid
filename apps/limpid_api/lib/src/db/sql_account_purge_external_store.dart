@@ -106,12 +106,14 @@ final class SqlAccountPurgeExternalStore implements AccountPurgeExternalStore {
       'SELECT id FROM projects WHERE owner_id = ? ORDER BY id',
       <Object?>[userId],
     );
-    return List<String>.unmodifiable(
-      rows.map(
-        (Map<String, Object?> row) =>
-            ArtifactKeys.prefixOfProject(_text(row, 'id')),
-      ),
-    );
+    return List<String>.unmodifiable(<String>[
+      // L'archive RGPD du compte n'appartient a aucun livre : elle porte
+      // le compte entier. Sans elle, les donnees personnelles survivraient
+      // a la suppression du compte.
+      ArtifactKeys.prefixOfAccount(userId),
+      for (final Map<String, Object?> row in rows)
+        ArtifactKeys.prefixOfProject(_text(row, 'id')),
+    ]);
   }
 
   @override

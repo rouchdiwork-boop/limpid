@@ -130,6 +130,19 @@ const String defaultSqlitePath = '.limpid/limpid.db';
 /// for them again.
 const Duration defaultAccountPurgeInterval = Duration(hours: 1);
 
+/// The delay between two beats of a connection of the real-time relay.
+///
+/// The relay sends a `ping` to the clients that stayed silent, and the
+/// clients answer. The beat keeps the presence of the peers alive
+/// (ARCHITECTURE.md §6.6).
+const Duration defaultRelayHeartbeatInterval = Duration(seconds: 25);
+
+/// The delay after which a silent connection of the relay is purged.
+///
+/// The peer that stopped beating is removed from the room, and the other
+/// peers are told that it is gone.
+const Duration defaultRelayPresenceTimeout = Duration(seconds: 30);
+
 /// Immutable configuration of the API, built from environment variables.
 ///
 /// Every mandatory variable is validated when the configuration is built: a
@@ -161,6 +174,11 @@ final class AppConfig {
     required this.r2Endpoint,
     required this.anthropicApiKey,
     required this.stripeSecretKey,
+    this.amazonClientId,
+    this.amazonClientSecret,
+    this.amazonRefreshToken,
+    this.stripeWebhookSecret,
+    this.stripeWebhookEvents = const <String>[],
     required this.hasRedis,
     required this.hasObjectStorage,
     required this.hasAiProvider,
@@ -178,6 +196,8 @@ final class AppConfig {
     required this.maxPageLimit,
     required this.jwksCacheTtl,
     required this.purgeInterval,
+    this.relayHeartbeatInterval = defaultRelayHeartbeatInterval,
+    this.relayPresenceTimeout = defaultRelayPresenceTimeout,
   });
 
   /// Builds the configuration from an environment map.
@@ -253,6 +273,34 @@ final class AppConfig {
     final String? supabaseServiceRoleKey = strict
         ? _required(environment, 'SUPABASE_SERVICE_ROLE_KEY')
         : _optional(environment, 'SUPABASE_SERVICE_ROLE_KEY');
+    // Les identifiants de l'intégration Amazon sont facultatifs dans les
+    // deux profils : un serveur qui n'en a pas refuse proprement les
+    // dépôts, il ne refuse pas de démarrer.
+    final String? amazonClientId = _optional(
+      environment,
+      'AMAZON_KDP_CLIENT_ID',
+    );
+    final String? amazonClientSecret = _optional(
+      environment,
+      'AMAZON_KDP_CLIENT_SECRET',
+    );
+    final String? amazonRefreshToken = _optional(
+      environment,
+      'AMAZON_KDP_REFRESH_TOKEN',
+    );
+    // Le secret du webhook Stripe est facultatif dans les deux profils :
+    // un serveur qui ne l'a pas refuse proprement les livraisons, il ne
+    // refuse pas de démarrer.
+    final String? stripeWebhookSecret = _optional(
+      environment,
+      'STRIPE_WEBHOOK_SECRET',
+    );
+    // Les identifiants des événements traités par le webhook. La liste est
+    // vide quand la variable est absente : le webhook traite alors tous
+    // les événements de l'abonnement.
+    final List<String> stripeWebhookEvents = _parseList(
+      environment['STRIPE_WEBHOOK_EVENTS'],
+    );
 
     return AppConfig(
       profile: profile,
@@ -277,6 +325,11 @@ final class AppConfig {
       r2Endpoint: r2Endpoint,
       anthropicApiKey: anthropicApiKey ?? devPlaceholderSecret,
       stripeSecretKey: stripeSecretKey ?? devPlaceholderSecret,
+      stripeWebhookSecret: stripeWebhookSecret,
+      stripeWebhookEvents: stripeWebhookEvents,
+      amazonClientId: amazonClientId,
+      amazonClientSecret: amazonClientSecret,
+      amazonRefreshToken: amazonRefreshToken,
       hasRedis: redisUrl != null,
       hasObjectStorage:
           r2AccessKeyId != null &&
@@ -311,6 +364,20 @@ final class AppConfig {
           environment,
           'LIMPID_PURGE_INTERVAL_SECONDS',
           defaultAccountPurgeInterval.inSeconds,
+        ),
+      ),
+      relayHeartbeatInterval: Duration(
+        seconds: _int(
+          environment,
+          'LIMPID_RELAY_HEARTBEAT_SECONDS',
+          defaultRelayHeartbeatInterval.inSeconds,
+        ),
+      ),
+      relayPresenceTimeout: Duration(
+        seconds: _int(
+          environment,
+          'LIMPID_RELAY_PRESENCE_TIMEOUT_SECONDS',
+          defaultRelayPresenceTimeout.inSeconds,
         ),
       ),
     );
@@ -378,6 +445,49 @@ final class AppConfig {
   /// The Stripe secret key used by the checkout route.
   final String stripeSecretKey;
 
+  /// The signing secret of the Stripe webhook endpoint.
+  ///
+  /// The secret is optional in both profiles: a server that does not have
+  /// it refuses the webhook deliveries cleanly, it does not refuse to
+  /// start. The secret is never written in clear and never leaves the
+  /// process.
+  final String? stripeWebhookSecret;
+
+  /// The identifiers of the Stripe events the webhook reacts to.
+  ///
+  /// The list is empty when the variable is absent: the webhook then
+  /// handles every event of the subscription. A value that names no known
+  /// event does not disable the webhook either.
+  final List<String> stripeWebhookEvents;
+
+  /// L'identifiant du client de l'intégration Amazon KDP.
+  ///
+  /// Il est lu dans l'environnement et n'est jamais écrit en clair : il ne
+  /// sert qu'à la demande du jeton d'accès.
+  final String? amazonClientId;
+
+  /// Le secret du client de l'intégration Amazon KDP.
+  ///
+  /// Il n'est jamais journalé et ne quitte jamais le corps de la demande
+  /// d'autorisation.
+  final String? amazonClientSecret;
+
+  /// Le jeton de renouvellement de l'intégration Amazon KDP.
+  ///
+  /// C'est la seule credential qui n'expire pas : le jeton d'accès en est
+  /// dérivé et renouvelé.
+  final String? amazonRefreshToken;
+
+  /// Whether the Amazon KDP distribution is configured.
+  ///
+  /// Les trois identifiants de l'intégration doivent être là : un serveur
+  /// qui n'en a pas répond un refus propre sur la route du dépôt, au lieu
+  /// de faire tomber le serveur.
+  bool get hasKdpDistribution =>
+      amazonClientId != null &&
+      amazonClientSecret != null &&
+      amazonRefreshToken != null;
+
   /// Whether Redis is configured and can be reached.
   final bool hasRedis;
 
@@ -437,6 +547,18 @@ final class AppConfig {
   /// reached its deadline (D-19). A short delay purges sooner, a long one
   /// spares the database.
   final Duration purgeInterval;
+
+  /// The delay between two beats of a connection of the real-time relay.
+  ///
+  /// The relay sends a `ping` to the clients that stayed silent, and the
+  /// clients answer: the beat is what keeps the presence of a peer alive.
+  final Duration relayHeartbeatInterval;
+
+  /// The delay after which a silent connection of the relay is purged.
+  ///
+  /// The peer that stopped beating leaves the room, and the other peers are
+  /// told that it is gone.
+  final Duration relayPresenceTimeout;
 
   /// The issuer every Supabase token must declare.
   String get expectedIssuer => '$supabaseUrl/auth/v1';
@@ -527,6 +649,20 @@ final class AppConfig {
         .where((String value) => value.isNotEmpty)
         .toList(growable: false);
     return List<String>.unmodifiable(origins);
+  }
+
+  /// Reads a list of names, separated by commas.
+  ///
+  /// The list is empty when the value is absent: the caller then applies its
+  /// own default, and a missing variable never stops the server.
+  static List<String> _parseList(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return const <String>[];
+    final List<String> values = raw
+        .split(',')
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toList(growable: false);
+    return List<String>.unmodifiable(values);
   }
 
   static int _int(Map<String, String> environment, String name, int fallback) {

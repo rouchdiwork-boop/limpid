@@ -17,6 +17,8 @@ import '../middleware/rate_limiter.dart';
 import '../services/access_control.dart';
 import '../services/plan_catalog.dart';
 import '../services/quota_service.dart';
+import '../services/webhook_dispatcher.dart';
+import '../services/webhook_service.dart';
 
 /// The maximum length of the title of a project.
 const int maxProjectTitleLength = 200;
@@ -25,12 +27,17 @@ const int maxProjectTitleLength = 200;
 const int maxProjectSynopsisLength = 4000;
 
 /// Registers the routes of the projects.
+///
+/// The dispatcher is taken from the dependencies: it is the one the whole
+/// server shares, and it is the one that writes the deliveries in the
+/// journal.
 void registerProjectRoutes(
   Router router,
   AppDependencies dependencies,
   AppConfig config, {
   QuotaService? quota,
 }) {
+  final WebhookDispatcher? dispatcher = dependencies.webhookDispatcher;
   router.get('/v1/projects', (Request request) async {
     final AuthContext auth = requireAuthContext(request);
     final PageRequest page = PageRequest.fromQuery(
@@ -143,6 +150,15 @@ void registerProjectRoutes(
     );
 
     final ProjectRecord stored = await dependencies.projects.update(updated);
+    if (!access.project.isPublic && stored.isPublic) {
+      await _announcePublication(
+        request: request,
+        dependencies: dependencies,
+        auth: auth,
+        project: stored,
+        dispatcher: dispatcher,
+      );
+    }
     return ApiResponse.ok(stored.toJson());
   });
 
@@ -171,4 +187,33 @@ void registerProjectRoutes(
 
     return ApiResponse.ok(<String, Object?>{'id': projectId, 'deleted': true});
   });
+}
+
+/// Traces the publication of [project] and announces it to the webhooks.
+///
+/// The book leaves the private library: the act is traced in the audit
+/// journal, and the author's own integration is told about it. The event
+/// carries the identifier and the title of the book, never its text.
+Future<void> _announcePublication({
+  required Request request,
+  required AppDependencies dependencies,
+  required AuthContext auth,
+  required ProjectRecord project,
+  required WebhookDispatcher? dispatcher,
+}) async {
+  await dependencies.audit.record(
+    AuditEntry(
+      userId: auth.userId,
+      action: 'project.published',
+      targetType: 'project',
+      targetId: project.id,
+      metadata: <String, Object?>{'title': project.title},
+      ip: clientIpOf(request),
+    ),
+  );
+  dispatcher?.emit(
+    userId: auth.userId,
+    event: WebhookEvent.projectPublished,
+    data: <String, Object?>{'project_id': project.id, 'title': project.title},
+  );
 }

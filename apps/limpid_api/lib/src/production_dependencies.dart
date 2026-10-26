@@ -1,37 +1,59 @@
 import 'package:postgres/postgres.dart';
 
+import 'auth/account_auth_deletion.dart';
 import 'auth/jwks.dart';
 import 'auth/jwt_verifier.dart';
+import 'auth/supabase_account_admin.dart';
 import 'config/app_config.dart';
+import 'db/account_purge_external_store.dart';
 import 'db/account_purge_store.dart';
 import 'db/admin_database.dart';
 import 'db/audit_log.dart';
+import 'db/book_sale_store.dart';
 import 'db/comment_store.dart';
 import 'db/database.dart';
+import 'db/entitlement_store.dart';
 import 'db/kdp_database.dart';
+import 'db/kdp_deposit_store.dart';
 import 'db/migration_runner.dart';
 import 'db/postgres_admin_database.dart';
 import 'db/postgres_audit_log.dart';
+import 'db/postgres_book_sale_store.dart';
+import 'db/postgres_entitlement_store.dart';
 import 'db/postgres_kdp_database.dart';
+import 'db/postgres_kdp_deposit_store.dart';
 import 'db/postgres_project_store.dart';
+import 'db/postgres_promo_code_store.dart';
+import 'db/postgres_share_store.dart';
+import 'db/postgres_stripe_event_database.dart';
 import 'db/postgres_sync_store.dart';
 import 'db/postgres_team_database.dart';
 import 'db/postgres_two_factor_database.dart';
 import 'db/postgres_webhook_database.dart';
 import 'db/project_store.dart';
+import 'db/promo_code_store.dart';
 import 'db/quota_database.dart';
+import 'db/share_store.dart';
+import 'db/sql_account_purge_external_store.dart';
 import 'db/sql_account_purge_store.dart';
 import 'db/sql_quota_database.dart';
 import 'db/sqlite_admin_database.dart';
 import 'db/sqlite_audit_log.dart';
+import 'db/sqlite_book_sale_store.dart';
 import 'db/sqlite_database.dart';
+import 'db/sqlite_entitlement_store.dart';
 import 'db/sqlite_kdp_database.dart';
+import 'db/sqlite_kdp_deposit_store.dart';
 import 'db/sqlite_migration_runner.dart';
 import 'db/sqlite_project_store.dart';
+import 'db/sqlite_promo_code_store.dart';
+import 'db/sqlite_share_store.dart';
+import 'db/sqlite_stripe_event_database.dart';
 import 'db/sqlite_sync_store.dart';
 import 'db/sqlite_team_database.dart';
 import 'db/sqlite_two_factor_database.dart';
 import 'db/sqlite_webhook_database.dart';
+import 'db/stripe_event_database.dart';
 import 'db/sync_store.dart';
 import 'db/team_database.dart';
 import 'db/two_factor_database.dart';
@@ -43,6 +65,10 @@ import 'redis/redis_client.dart';
 import 'services/account_purge.dart';
 import 'services/account_purge_scheduler.dart';
 import 'services/ai_gateway.dart';
+import 'services/amazon_kdp_gateway.dart';
+import 'services/api_access_guard.dart';
+import 'services/feature_flag_service.dart';
+import 'services/kdp_gateway.dart';
 import 'services/limpid_ai_gateway.dart';
 import 'services/payment_gateway.dart';
 import 'services/sync_hub.dart';
@@ -113,6 +139,14 @@ Future<AppDependencies> buildProductionDependencies(
       store: stores.purge,
       audit: stores.audit,
       logger: logger,
+      // La purge ne se contente pas de la base de l'API : le compte doit
+      // disparaitre du service d'authentification et les artefacts du
+      // stockage distant doivent etre effaces. Sans ces deux ports, la
+      // promesse faite a l'auteur (« vos donnees seront effacees ») ne
+      // serait tenue que pour la base.
+      external: stores.purgeExternal,
+      auth: _buildAccountAuthDeletion(config),
+      storage: _buildObjectStorageDeletion(config),
     ),
     interval: config.purgeInterval,
     logger: logger,
@@ -130,8 +164,32 @@ Future<AppDependencies> buildProductionDependencies(
     teams: stores.teams,
     admin: stores.admin,
     webhooks: stores.webhooks,
+    shares: stores.shares,
+    bookSales: stores.bookSales,
+    entitlements: stores.entitlements,
+    promoCodes: stores.promoCodes,
     kdp: stores.kdp,
-    webhookDispatcher: WebhookDispatcher(database: stores.webhooks),
+    kdpDeposits: stores.kdpDeposits,
+    stripeEvents: stores.stripeEvents,
+    kdpGateway: _buildKdpGateway(config),
+    // Le dispatcher est garde par le plan : un compte qui a quitte Studio
+    // ne recoit plus ses livraisons, meme si ses points de rappel sont
+    // toujours enregistres.
+    // Les indicateurs du back-office : un indicateur dont la clef est une
+    // capacite de formule coupe cette capacite pour tout le monde, sans
+    // redéploiement. Le service n'existe que si le back-office est câblé.
+    featureFlags: FeatureFlagService(
+      source: AdminFeatureFlagSource(stores.admin),
+      logger: logger,
+    ),
+    webhookDispatcher: WebhookDispatcher(
+      database: stores.webhooks,
+      guard: ApiAccessGuard(planOf: _planLookupOf(stores.quotas)),
+      // En developpement, l'auteur teste sa livraison contre un rappel
+      // local. En production, un rappel qui se resout vers le reseau du
+      // deploiement est refuse.
+      allowPrivateHosts: !config.profile.isStrict,
+    ),
     ai: _buildAiGateway(config),
     payments: _buildPaymentGateway(config),
     storage: _buildObjectStorage(config),
@@ -156,12 +214,19 @@ final class _Stores {
     required this.audit,
     required this.comments,
     required this.purge,
+    required this.purgeExternal,
     required this.quotas,
     required this.twoFactor,
     required this.teams,
     required this.admin,
     required this.webhooks,
+    required this.shares,
+    required this.bookSales,
+    required this.entitlements,
+    required this.promoCodes,
     required this.kdp,
+    required this.kdpDeposits,
+    required this.stripeEvents,
     required this.probe,
     required this.close,
   });
@@ -171,12 +236,21 @@ final class _Stores {
   final AuditLog audit;
   final CommentStore comments;
   final AccountPurgeStore purge;
+
+  /// The state of the deletions carried out outside the API.
+  final AccountPurgeExternalStore purgeExternal;
   final QuotaDatabase quotas;
   final TwoFactorDatabase twoFactor;
   final TeamDatabase teams;
   final AdminDatabase admin;
   final WebhookDatabase webhooks;
+  final ShareStore shares;
+  final BookSaleStore bookSales;
+  final EntitlementStore entitlements;
+  final PromoCodeStore promoCodes;
   final KdpDatabase kdp;
+  final KdpDepositStore kdpDeposits;
+  final StripeEventDatabase stripeEvents;
   final HealthProbe probe;
   final Future<void> Function() close;
 }
@@ -226,6 +300,9 @@ Future<_Stores> _postgresStores(
     audit: PostgresAuditLog(resolvedPool),
     comments: SqlCommentStore(PostgresCommentDatabase(resolvedPool)),
     purge: SqlAccountPurgeStore(PostgresAccountPurgeDatabase(resolvedPool)),
+    purgeExternal: SqlAccountPurgeExternalStore(
+      PostgresAccountPurgeDatabase(resolvedPool),
+    ),
     quotas: quotas,
     twoFactor: PostgresTwoFactorDatabase(resolvedPool),
     teams: PostgresTeamDatabase(
@@ -234,11 +311,17 @@ Future<_Stores> _postgresStores(
     ),
     admin: PostgresAdminDatabase(resolvedPool),
     webhooks: PostgresWebhookDatabase(resolvedPool),
+    shares: PostgresShareStore(resolvedPool),
+    bookSales: PostgresBookSaleStore(resolvedPool),
+    entitlements: PostgresEntitlementStore(resolvedPool),
+    promoCodes: PostgresPromoCodeStore(resolvedPool),
     kdp: PostgresKdpDatabase(
       resolvedPool,
       planLookup: _planLookupOf(quotas),
       artefacts: _buildObjectStorage(config),
     ),
+    kdpDeposits: PostgresKdpDepositStore(resolvedPool),
+    stripeEvents: PostgresStripeEventDatabase(resolvedPool),
     probe: _PoolHealthProbe(resolvedPool),
     close: () => resolvedPool.close(),
   );
@@ -272,16 +355,25 @@ Future<_Stores> _sqliteStores(
     audit: SqliteAuditLog(resolved),
     comments: SqlCommentStore(SqliteCommentDatabase(resolved)),
     purge: SqlAccountPurgeStore(SqliteAccountPurgeDatabase(resolved)),
+    purgeExternal: SqlAccountPurgeExternalStore(
+      SqliteAccountPurgeDatabase(resolved),
+    ),
     quotas: quotas,
     twoFactor: SqliteTwoFactorDatabase(resolved),
     teams: SqliteTeamDatabase(resolved, planLookup: _planLookupOf(quotas)),
     admin: SqliteAdminDatabase(resolved),
     webhooks: SqliteWebhookDatabase(resolved),
+    shares: SqliteShareStore(resolved),
+    bookSales: SqliteBookSaleStore(resolved),
+    entitlements: SqliteEntitlementStore(resolved),
+    promoCodes: SqlitePromoCodeStore(resolved),
     kdp: SqliteKdpDatabase(
       resolved,
       planLookup: _planLookupOf(quotas),
       artefacts: _buildObjectStorage(config),
     ),
+    kdpDeposits: SqliteKdpDepositStore(resolved),
+    stripeEvents: SqliteStripeEventDatabase(resolved),
     probe: _SqliteHealthProbe(resolved),
     close: resolved.close,
   );
@@ -313,6 +405,70 @@ AiGateway _buildAiGateway(AppConfig config) {
 PaymentGateway _buildPaymentGateway(AppConfig config) {
   if (!config.hasPayments) return const UnavailablePaymentGateway();
   return StripePaymentGateway(secretKey: config.stripeSecretKey);
+}
+
+/// Le canal de distribution chez Amazon KDP.
+///
+/// Sans identifiants Amazon, le dépôt est **impossible** : le port le dit
+/// (`UnavailableKdpGateway`) et la route répond 503 en nommant la raison.
+/// Le serveur ne pretended pas que le livre a atteint Amazon.
+///
+/// Le budget de la chaîne d'appels vient de la requête : la passerelle ne
+/// peut pas la dépasser.
+KdpGateway _buildKdpGateway(AppConfig config) {
+  if (!config.hasKdpDistribution) return const UnavailableKdpGateway();
+  return AmazonKdpGateway(
+    clientId: config.amazonClientId!,
+    clientSecret: config.amazonClientSecret!,
+    refreshToken: config.amazonRefreshToken!,
+    budget: _kdpBudget(config),
+  );
+}
+
+/// La réserve laissée à la passerelle pour écrire la trace du dépôt.
+///
+/// Le middleware du temps de traitement ne coupe pas le gestionnaire : au
+/// pire, il répond à l'auteur pendant que le dépôt continue. La réserve
+/// laisse à la passerelle le temps de consigner l'issue — une issue
+/// inconnue ou un échec — avant que le middleware ne réponde.
+const Duration _kdpBudgetReserve = Duration(seconds: 2);
+
+/// Le temps que la chaîne d'appels auprès d'Amazon peut prendre.
+///
+/// Le budget vient de la requête HTTP : la chaîne entière doit rester dans
+/// le temps de la requête, sinon le dépôt continue en arrière-plan pendant
+/// que l'auteur reçoit un « temps de traitement dépassé » — et qu'il
+/// relance un dossier qu'Amazon a peut-être déjà reçu.
+Duration _kdpBudget(AppConfig config) {
+  final Duration request = config.requestTimeout;
+  if (request <= _kdpBudgetReserve) {
+    // Une requête plus courte que la réserve : la passerelle prend les
+    // deux tiers du temps disponible.
+    return Duration(microseconds: request.inMicroseconds * 2 ~/ 3);
+  }
+  return request - _kdpBudgetReserve;
+}
+
+/// L'effacement du compte dans le service d'authentification.
+///
+/// Le port est absent quand le poste n'a pas de clé de rôle de service :
+/// il n'y a alors aucun compte à effacer de là-bas.
+AccountAuthDeletion? _buildAccountAuthDeletion(AppConfig config) {
+  if (!config.hasAuthAdmin) return null;
+  return SupabaseAccountAdmin(
+    baseUrl: config.supabaseUrl,
+    serviceRoleKey: config.supabaseServiceRoleKey,
+  );
+}
+
+/// L'effacement des artefacts dans le stockage distant.
+///
+/// Seul un stockage qui sait effacer est retenu : sans stockage configuré,
+/// il n'y a rien à effacer, et le port absent le dit.
+ObjectStorageDeletion? _buildObjectStorageDeletion(AppConfig config) {
+  final ObjectStorage storage = _buildObjectStorage(config);
+  if (storage is ObjectStorageDeletion) return storage as ObjectStorageDeletion;
+  return null;
 }
 
 ObjectStorage _buildObjectStorage(AppConfig config) {

@@ -74,14 +74,32 @@ final class StubAiGateway implements AiGateway {
   /// The fragments returned by the gateway.
   final List<String> tokens;
 
-  @override
-  Stream<AiEvent> generate(AiGenerateRequest request) => _answer();
+  /// The number of free generations the gateway answered.
+  int generateCalls = 0;
+
+  /// The number of inline rewritings the gateway answered.
+  int inlineCalls = 0;
+
+  /// The number of questions the gateway answered.
+  int queryCalls = 0;
 
   @override
-  Stream<AiEvent> inline(AiInlineRequest request) => _answer();
+  Stream<AiEvent> generate(AiGenerateRequest request) {
+    generateCalls++;
+    return _answer();
+  }
 
   @override
-  Stream<AiEvent> query(AiQueryRequest request) => _answer();
+  Stream<AiEvent> inline(AiInlineRequest request) {
+    inlineCalls++;
+    return _answer();
+  }
+
+  @override
+  Stream<AiEvent> query(AiQueryRequest request) {
+    queryCalls++;
+    return _answer();
+  }
 
   Stream<AiEvent> _answer() async* {
     final StringBuffer buffer = StringBuffer();
@@ -141,8 +159,17 @@ final class TestServer {
       dependencies.payments as StubPaymentGateway;
 
   /// The storage of the artefacts.
+  ///
+  /// The storage of the test suite holds in memory: a test that injects
+  /// another storage reads [objectStorage] instead.
   InMemoryObjectStorage get storage =>
       dependencies.storage as InMemoryObjectStorage;
+
+  /// The storage of the artefacts, whatever it is.
+  ObjectStorage get objectStorage => dependencies.storage;
+
+  /// The gateway of the model.
+  StubAiGateway get ai => dependencies.ai as StubAiGateway;
 
   /// The key/value store.
   InMemoryKeyValueStore get keyValue =>
@@ -302,9 +329,13 @@ AppConfig testConfig({Map<String, String> overrides = const {}}) {
 }
 
 /// Starts the API on an ephemeral port, with in-memory dependencies.
+///
+/// [storage] replaces the in-memory storage: a test that measures le
+/// stockage du compte peut y annoncer la taille de ses artefacts.
 Future<TestServer> startTestServer({
   Map<String, String> configOverrides = const {},
   int keyBits = 2048,
+  ObjectStorage? storage,
 }) async {
   final TestRsaKeyPair keyPair = generateTestKeyPair(bits: keyBits);
   final TestTokenIssuer issuer = TestTokenIssuer(keyPair);
@@ -343,9 +374,15 @@ Future<TestServer> startTestServer({
       projects: projects,
       sync: sync,
     ),
+    kdpDeposits: InMemoryKdpDepositStore(),
+    stripeEvents: InMemoryStripeEventDatabase(),
+    // Le dépôt chez Amazon n'est pas configuré dans un test : le port le
+    // dit, et la route répond 503 au lieu de prétendre que le livre est
+    // arrivé.
+    kdpGateway: const UnavailableKdpGateway(),
     ai: StubAiGateway(),
     payments: StubPaymentGateway(),
-    storage: InMemoryObjectStorage(),
+    storage: storage ?? InMemoryObjectStorage(),
     keyValue: InMemoryKeyValueStore(),
     jwtVerifier: JwtVerifier(
       jwks: jwks,

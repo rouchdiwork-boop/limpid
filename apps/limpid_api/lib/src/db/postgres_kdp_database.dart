@@ -17,6 +17,9 @@ import 'sync_store.dart';
 /// Chaque requête est paramétrée : aucune valeur n'atteint le serveur par
 /// concaténation. Les colonnes JSON (`keywords`, `categories`, `issues`)
 /// sont écrites en JSONB et relues comme des listes.
+///
+/// Un projet ne porte qu'une fiche : l'enregistrement est une mise à jour
+/// de la fiche existante, jamais une seconde ligne.
 final class PostgresKdpDatabase implements KdpDatabase {
   /// Crée une base sur [pool].
   ///
@@ -63,10 +66,33 @@ final class PostgresKdpDatabase implements KdpDatabase {
 
   @override
   Future<KdpPublication> recordPublication(KdpPublication publication) async {
-    await _pool.execute(
+    final Result result = await _pool.execute(
       'INSERT INTO kdp_publications ($_columns) '
       'VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10, \$11, \$12, '
-      '\$13, \$14, \$15, \$16, \$17, \$18, \$19, \$20, \$21)',
+      '\$13, \$14, \$15, \$16, \$17, \$18, \$19, \$20, \$21) '
+      'ON CONFLICT (project_id) DO UPDATE SET '
+      'user_id = EXCLUDED.user_id, '
+      'title = EXCLUDED.title, '
+      'author = EXCLUDED.author, '
+      'description = EXCLUDED.description, '
+      'keywords = EXCLUDED.keywords, '
+      'categories = EXCLUDED.categories, '
+      'issues = EXCLUDED.issues, '
+      'isbn = EXCLUDED.isbn, '
+      'language = EXCLUDED.language, '
+      'publisher = EXCLUDED.publisher, '
+      'status = EXCLUDED.status, '
+      'word_count = EXCLUDED.word_count, '
+      'page_count = EXCLUDED.page_count, '
+      'epub_key = EXCLUDED.epub_key, '
+      'pdf_key = EXCLUDED.pdf_key, '
+      'epub_bytes = EXCLUDED.epub_bytes, '
+      'pdf_bytes = EXCLUDED.pdf_bytes, '
+      'manuscript_version = EXCLUDED.manuscript_version, '
+      'created_at = EXCLUDED.created_at '
+      // L'identifiant de la fiche est fixe : la ligne relue porte celui
+      // de la premiere preparation.
+      'RETURNING $_columns',
       parameters: <Object?>[
         publication.id,
         publication.projectId,
@@ -91,7 +117,10 @@ final class PostgresKdpDatabase implements KdpDatabase {
         publication.createdAt,
       ],
     );
-    return publication;
+    if (result.isEmpty) {
+      return publication;
+    }
+    return _readPublication(result.first);
   }
 
   @override
@@ -119,6 +148,26 @@ final class PostgresKdpDatabase implements KdpDatabase {
       'SELECT $_columns FROM kdp_publications '
       'WHERE id = \$1 AND user_id = \$2',
       parameters: <Object?>[publicationId, userId],
+    );
+    return result.isEmpty ? null : _readPublication(result.first);
+  }
+
+  @override
+  Future<KdpPublication?> findPublicationByProject({
+    required String projectId,
+  }) async {
+    final Result result = await _pool.execute(
+      'SELECT $_columns FROM kdp_publications WHERE project_id = \$1',
+      parameters: <Object?>[projectId],
+    );
+    return result.isEmpty ? null : _readPublication(result.first);
+  }
+
+  @override
+  Future<KdpPublication?> findPublicationByIsbn({required String isbn}) async {
+    final Result result = await _pool.execute(
+      'SELECT $_columns FROM kdp_publications WHERE isbn = \$1',
+      parameters: <Object?>[isbn],
     );
     return result.isEmpty ? null : _readPublication(result.first);
   }

@@ -21,6 +21,11 @@ import 'plan_catalog.dart';
 /// d'impression, contrôle le dossier et enregistre la trace de ce qui a
 /// été préparé. Le fichier produit ne transite jamais dans une réponse :
 /// la publication renvoie un lien de téléchargement.
+///
+/// Un projet ne porte qu'une fiche : préparer deux fois le même livre
+/// rafraîchit la fiche, il n'en crée pas une seconde. L'identifiant de la
+/// fiche est donc stable, et le dépôt — qui est dédoublonné par
+/// `publication_id` — ne part pas deux fois chez Amazon.
 final class KdpService {
   /// Crée un service.
   ///
@@ -47,6 +52,13 @@ final class KdpService {
   /// La publication est préparée même quand le contrôle relève un
   /// problème : l'auteur reçoit alors le dossier et la liste de ce qu'il
   /// doit corriger.
+  ///
+  /// Préparer deux fois le même livre rafraîchit la fiche du projet : il
+  /// n'en crée pas une seconde, et l'identifiant de la fiche reste le
+  /// sien.
+  ///
+  /// Un ISBN déjà porté par une autre fiche est refusé : le message nomme
+  /// le conflit, l'auteur n'a pas à deviner de quel livre il s'agit.
   Future<KdpPublication> prepare({
     required AuthContext auth,
     required String projectId,
@@ -60,6 +72,11 @@ final class KdpService {
       auth,
     );
 
+    final KdpPublication? existing = await database.findPublicationByProject(
+      projectId: projectId,
+    );
+    await _requireFreeIsbn(metadata.isbn, existing);
+
     final List<SyncOpRecord> operations = await database.sync.all(
       projectId: projectId,
     );
@@ -71,7 +88,12 @@ final class KdpService {
     }
 
     final ExportBook book = _published(
-      BookBuilder.build(project: access.project, trees: trees),
+      BookBuilder.build(
+        project: access.project,
+        trees: trees,
+        isbn: metadata.isbn,
+        author: metadata.author,
+      ),
       metadata,
       access.project,
     );
@@ -95,7 +117,9 @@ final class KdpService {
       printOptions: kdpPrintOptions,
     );
 
-    final String publicationId = _ulid.generate().value;
+    // L'identifiant de la fiche est stable : la seconde préparation
+    // reprend celui de la première, elle n'en fabrique pas un nouveau.
+    final String publicationId = existing?.id ?? _ulid.generate().value;
     // Les fichiers sont écrits sous le préfixe du projet : c'est la
     // convention qui relie un compte à ses artefacts, et elle garantit que
     // la purge du compte les efface avec les autres.
@@ -141,8 +165,17 @@ final class KdpService {
       createdAt: _clock(),
     );
 
-    await database.recordPublication(publication);
-    return publication;
+    try {
+      return await database.recordPublication(publication);
+    } on Object {
+      // L'index unique de l'ISBN peut refuser l'ecriture : c'est la base
+      // qui tranche quand deux preparations concurrentes passent entre le
+      // controle du service et l'ecriture. Le controle est refait ici — si
+      // l'ISBN est desormais porte par une autre fiche, c'est un conflit
+      // d'ISBN, pas une panne ; sinon l'echec remonte tel quel.
+      await _requireFreeIsbn(metadata.isbn, existing);
+      rethrow;
+    }
   }
 
   /// Les publications du compte, les plus récentes d'abord.
@@ -194,6 +227,9 @@ final class KdpService {
   }
 
   /// Applique les métadonnées de l'appelant au livre reconstruit.
+  ///
+  /// L'ISBN et l'auteur ont été posés par [BookBuilder] : ils sont
+  /// conservés tels quels, l'export porte l'identité de l'ouvrage imprimé.
   ExportBook _published(
     ExportBook book,
     KdpMetadata metadata,
@@ -202,16 +238,36 @@ final class KdpService {
     final String language = metadata.language ?? project.language;
     return book.copyWith(
       title: metadata.title,
-      authors: <String>[metadata.author],
       language: language,
       metadata: ExportMetadata(
-        isbn: metadata.isbn,
+        isbn: book.metadata.isbn,
         description: metadata.description.isEmpty ? null : metadata.description,
         publisher: metadata.publisher,
         subjects: metadata.categories,
         language: language,
         identifier: project.id,
       ),
+    );
+  }
+
+  /// Refuse un ISBN déjà porté par une autre fiche.
+  ///
+  /// L'ISBN identifie un ouvrage imprimé : deux fiches qui le portent
+  /// désignent le même livre. La préparation est refusée et le message
+  /// nomme l'ISBN en conflit. La fiche du projet lui-même peut reprendre
+  /// son propre ISBN : c'est la même fiche qui est rafraîchie.
+  Future<void> _requireFreeIsbn(String? isbn, KdpPublication? existing) async {
+    if (isbn == null || isbn.trim().isEmpty) return;
+    final KdpPublication? holder = await database.findPublicationByIsbn(
+      isbn: isbn,
+    );
+    if (holder == null) return;
+    if (existing != null && holder.id == existing.id) return;
+    throw ConflictException(
+      message:
+          "L'ISBN $isbn est déjà utilisé par une autre fiche Amazon KDP : "
+          "un ISBN ne désigne qu'un ouvrage imprimé.",
+      details: <String, Object?>{'isbn': isbn, 'publication_id': holder.id},
     );
   }
 

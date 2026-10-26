@@ -93,7 +93,7 @@ Future<Response> _serveBook(
   final List<SyncOpRecord> operations = await dependencies.sync.all(
     projectId: projectId,
   );
-  final List<PublicScene> scenes = _scenesOf(operations);
+  final List<PublishedScene> scenes = _scenesOf(operations);
   return ApiResponse.ok(<String, Object?>{
     'project': _projectJson(project),
     'chapters': <Map<String, Object?>>[_chapterJson(project, scenes)],
@@ -113,7 +113,7 @@ Future<int> publicWordCountOf(
   final List<SyncOpRecord> operations = await dependencies.sync.all(
     projectId: projectId,
   );
-  final List<PublicScene> scenes = _scenesOf(operations);
+  final List<PublishedScene> scenes = _scenesOf(operations);
   return _totalWords(scenes);
 }
 
@@ -138,7 +138,7 @@ Map<String, Object?> _projectJson(ProjectRecord project) {
 /// chapter, and the scenes of the book are its scenes.
 Map<String, Object?> _chapterJson(
   ProjectRecord project,
-  List<PublicScene> scenes,
+  List<PublishedScene> scenes,
 ) {
   return <String, Object?>{
     'id': project.id,
@@ -149,7 +149,7 @@ Map<String, Object?> _chapterJson(
 }
 
 /// The public part of a scene: its title, its excerpt and its length.
-Map<String, Object?> _sceneJson(PublicScene scene) {
+Map<String, Object?> _sceneJson(PublishedScene scene) {
   return <String, Object?>{
     'id': scene.id,
     'title': scene.title,
@@ -159,18 +159,18 @@ Map<String, Object?> _sceneJson(PublicScene scene) {
 }
 
 /// The number of words the scenes of the book hold.
-int _totalWords(List<PublicScene> scenes) {
+int _totalWords(List<PublishedScene> scenes) {
   var total = 0;
-  for (final PublicScene scene in scenes) {
+  for (final PublishedScene scene in scenes) {
     total += scene.wordCount;
   }
   return total;
 }
 
 /// A scene of a published book, reduced to what a reader may see.
-final class PublicScene {
+final class PublishedScene {
   /// Creates a scene of a published book.
-  const PublicScene({
+  const PublishedScene({
     required this.id,
     required this.title,
     required this.excerpt,
@@ -195,7 +195,7 @@ final class PublicScene {
 /// The document of a scene is the scene itself in version 1 (D-02), so the
 /// journal of the project already holds the scenes of the book. The scenes
 /// keep the order of the journal: a scene appears where it was written.
-List<PublicScene> _scenesOf(List<SyncOpRecord> operations) {
+List<PublishedScene> _scenesOf(List<SyncOpRecord> operations) {
   final Map<String, List<SyncOpRecord>> byDocument =
       <String, List<SyncOpRecord>>{};
   for (final SyncOpRecord operation in operations) {
@@ -204,11 +204,11 @@ List<PublicScene> _scenesOf(List<SyncOpRecord> operations) {
         .add(operation);
   }
 
-  final List<PublicScene> scenes = <PublicScene>[];
+  final List<PublishedScene> scenes = <PublishedScene>[];
   for (final MapEntry<String, List<SyncOpRecord>> entry in byDocument.entries) {
     final CrdtDocument document = _documentOf(entry.key, entry.value);
     scenes.add(
-      PublicScene(
+      PublishedScene(
         id: entry.key,
         title: document.meta['title'] ?? '',
         excerpt: excerptOf(document),
@@ -218,7 +218,7 @@ List<PublicScene> _scenesOf(List<SyncOpRecord> operations) {
       ),
     );
   }
-  return List<PublicScene>.unmodifiable(scenes);
+  return List<PublishedScene>.unmodifiable(scenes);
 }
 
 /// Rebuilds the document of a scene from the operations of the journal.

@@ -2,6 +2,8 @@ import 'package:limpid_core/limpid_core.dart';
 
 import '../errors/app_exception.dart';
 import 'team_database.dart';
+import 'team_invitation_record.dart';
+import 'team_invitation_store.dart';
 import 'team_record.dart';
 
 /// La base des équipes tenue en mémoire, pour la suite de tests.
@@ -13,13 +15,24 @@ final class InMemoryTeamDatabase implements TeamDatabase {
   /// Crée une base vide.
   ///
   /// [planLookup] lit la formule du compte ; à défaut, le compte est traité
-  /// comme « Gratuit ».
-  InMemoryTeamDatabase({PlanLookup? planLookup, UlidGenerator? generator})
-    : _planLookup = planLookup ?? _freePlan,
-      _ulid = generator ?? UlidGenerator();
+  /// comme « Gratuit ». [invitations] porte les invitations en attente : sans
+  /// lui, l'acceptation d'une invitation est impossible.
+  InMemoryTeamDatabase({
+    PlanLookup? planLookup,
+    UlidGenerator? generator,
+    TeamInvitationStore? invitations,
+  }) : _planLookup = planLookup ?? _freePlan,
+       _ulid = generator ?? UlidGenerator(),
+       // Un paramètre nommé ne peut pas commencer par « _ » : la forme que
+       // le lint suggère (`this._invitations`) est interdite par le langage.
+       // ignore: prefer_initializing_formals
+       _invitations = invitations;
 
   final PlanLookup _planLookup;
   final UlidGenerator _ulid;
+
+  /// Les invitations en attente, quand la base en connaît.
+  final TeamInvitationStore? _invitations;
 
   final Map<String, TeamRecord> _teams = <String, TeamRecord>{};
   final Map<String, Map<String, TeamMember>> _members =
@@ -51,6 +64,10 @@ final class InMemoryTeamDatabase implements TeamDatabase {
   }) async {
     return _members[teamId]?[userId];
   }
+
+  @override
+  Future<TeamRecord?> findTeam({required String teamId}) async =>
+      _teams[teamId];
 
   @override
   Future<List<TeamMember>> listMembers({required String teamId}) async {
@@ -160,6 +177,55 @@ final class InMemoryTeamDatabase implements TeamDatabase {
     _teams.remove(teamId);
     _members.remove(teamId);
     return true;
+  }
+
+  @override
+  Future<InvitationAcceptanceOutcome> acceptInvitation({
+    required String invitationId,
+    required String teamId,
+    required String userId,
+    required TeamRole role,
+    required String invitedBy,
+    required int maxSeats,
+  }) async {
+    final Map<String, TeamMember>? members = _members[teamId];
+    if (members == null) {
+      throw const NotFoundException();
+    }
+    if (members.containsKey(userId)) {
+      throw const ConflictException(
+        message: 'Ce compte fait déjà partie de l\'équipe.',
+      );
+    }
+    // Les sièges sont vérifiés au moment de l'acceptation : la formule a pu
+    // changer entre l'invitation et la réponse.
+    if (_countSeats(members) >= maxSeats) {
+      return InvitationAcceptanceOutcome.noSeat;
+    }
+    final TeamInvitationStore? store = _invitations;
+    if (store == null) {
+      throw StateError(
+        'The in-memory team database needs an invitation store to accept '
+        'an invitation.',
+      );
+    }
+    final DateTime now = DateTime.now().toUtc();
+    final bool claimed = await store.markAccepted(
+      id: invitationId,
+      userId: userId,
+      acceptedAt: now,
+    );
+    if (!claimed) {
+      return InvitationAcceptanceOutcome.alreadyUsed;
+    }
+    final TeamMember member = TeamMember(
+      teamId: teamId,
+      userId: userId,
+      role: role,
+      createdAt: now,
+    );
+    _members[teamId] = <String, TeamMember>{...members, userId: member};
+    return InvitationAcceptanceOutcome.accepted;
   }
 
   /// Compte les sièges occupés : le propriétaire n'occupe pas de siège.

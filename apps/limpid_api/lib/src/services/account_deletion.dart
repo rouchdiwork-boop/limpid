@@ -24,6 +24,7 @@ final class AccountDeletion {
   const AccountDeletion({
     required this.requestedAt,
     required this.scheduledFor,
+    this.email = '',
     this.retentionDays = accountDeletionRetentionDays,
   });
 
@@ -32,6 +33,14 @@ final class AccountDeletion {
 
   /// The moment the data is purged for good.
   final DateTime scheduledFor;
+
+  /// The address of the account at the moment of the request.
+  ///
+  /// La purge en a besoin : une invitation d'equipe porte une adresse, et
+  /// elle doit disparaitre avec le compte qui l'a recue. Elle est vide quand
+  /// la demande n'en portait pas — la purge efface alors les lignes que le
+  /// compte possede, et rien de plus.
+  final String email;
 
   /// The number of days between the request and the purge.
   final int retentionDays;
@@ -60,9 +69,13 @@ final class AccountDeletion {
     return AccountDeletion(
       requestedAt: start,
       scheduledFor: end,
+      email: _readText(entry.metadata['email']),
       retentionDays: retentionDays,
     );
   }
+
+  /// Lisible le texte d'une valeur, quand elle en est un.
+  static String _readText(Object? value) => value is String ? value : '';
 
   /// The JSON representation sent to the clients.
   Map<String, Object?> toJson() {
@@ -125,6 +138,7 @@ final class AccountDeletionService {
     final AccountDeletion deletion = AccountDeletion(
       requestedAt: moment,
       scheduledFor: moment.add(Duration(days: retentionDays)),
+      email: email,
       retentionDays: retentionDays,
     );
 
