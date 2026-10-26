@@ -111,7 +111,7 @@ final class PostgresTwoFactorDatabase implements TwoFactorDatabase {
       userId: columns['user_id']! as String,
       secret: columns['secret']! as String,
       isEnabled: columns['is_enabled']! as bool,
-      createdAt: _readDate(columns['created_at']),
+      createdAt: _readRequiredDate(columns['created_at']),
       enabledAt: _readDate(columns['enabled_at']),
     );
   }
@@ -125,9 +125,22 @@ final class PostgresTwoFactorDatabase implements TwoFactorDatabase {
     );
   }
 
-  static DateTime _readDate(Object? value) {
+  /// Lit une date obligatoire.
+  ///
+  /// La colonne est `NOT NULL` : une valeur absente signale une base
+  /// incohérente, pas une date manquante.
+  static DateTime _readRequiredDate(Object? value) {
+    return _readDate(value) ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+  }
+
+  /// Lit une date, `null` quand la colonne est vide.
+  ///
+  /// Une colonne vide est `NULL`, pas l'epoch : une date absente ne doit
+  /// pas se confondre avec le 1er janvier 1970.
+  static DateTime? _readDate(Object? value) {
     if (value is DateTime) return value.toUtc();
     if (value is String) return DateTime.parse(value).toUtc();
-    return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+    return null;
   }
 }

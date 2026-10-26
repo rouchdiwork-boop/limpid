@@ -13,6 +13,10 @@ void main() {
 
   setUp(() async {
     server = await startTestServer();
+    // La formule gratuite n'autorise que deux appels au modele par jour :
+    // les tests de la limitation de debit ont besoin d'une formule qui
+    // laisse passer les appels, pour que ce soit le seau qui morde.
+    await server.givePlan('user-1', SubscriptionPlan.writer);
     auth = <String, String>{
       'authorization': 'Bearer ${server.tokenFor('user-1')}',
     };

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS account_plans (
   plan              TEXT NOT NULL,
   billing_period    TEXT NOT NULL DEFAULT 'monthly',
   trial_ends_at     INTEGER,
+  trial_consumed_at INTEGER,
   period_started_at INTEGER NOT NULL,
   period_ends_at    INTEGER
 );

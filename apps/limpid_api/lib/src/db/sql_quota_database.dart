@@ -44,8 +44,8 @@ abstract class SqlQuotaDatabase implements QuotaDatabase {
 
   /// La requête lisant la formule d'un compte.
   static const String _selectPlan =
-      'SELECT plan, billing_period, trial_ends_at, period_started_at, '
-      'period_ends_at FROM account_plans WHERE user_id = ?';
+      'SELECT plan, billing_period, trial_ends_at, trial_consumed_at, '
+      'period_started_at, period_ends_at FROM account_plans WHERE user_id = ?';
 
   /// L'instruction affectant une formule à un compte.
   ///
@@ -54,12 +54,13 @@ abstract class SqlQuotaDatabase implements QuotaDatabase {
   /// concurrentes.
   static const String _assignPlan =
       'INSERT INTO account_plans (user_id, plan, billing_period, '
-      'trial_ends_at, period_started_at, period_ends_at) '
-      'VALUES (?, ?, ?, ?, ?, ?) '
+      'trial_ends_at, trial_consumed_at, period_started_at, period_ends_at) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT (user_id) DO UPDATE SET '
       'plan = excluded.plan, '
       'billing_period = excluded.billing_period, '
       'trial_ends_at = excluded.trial_ends_at, '
+      'trial_consumed_at = excluded.trial_consumed_at, '
       'period_started_at = excluded.period_started_at, '
       'period_ends_at = excluded.period_ends_at';
 
@@ -96,6 +97,7 @@ abstract class SqlQuotaDatabase implements QuotaDatabase {
       plan.plan.name,
       plan.period.name,
       _port.encodeTimestamp(plan.trialEndsAt),
+      _port.encodeTimestamp(plan.trialConsumedAt),
       _port.encodeTimestamp(plan.periodStartedAt),
       _port.encodeTimestamp(plan.periodEndsAt),
     ]);
@@ -172,6 +174,7 @@ abstract class SqlQuotaDatabase implements QuotaDatabase {
       period: period,
       periodStartedAt: startedAt,
       trialEndsAt: _port.decodeTimestamp(row['trial_ends_at']),
+      trialConsumedAt: _port.decodeTimestamp(row['trial_consumed_at']),
       periodEndsAt: _port.decodeTimestamp(row['period_ends_at']),
     );
   }

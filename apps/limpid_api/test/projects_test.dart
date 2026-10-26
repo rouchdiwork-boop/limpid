@@ -14,6 +14,9 @@ void main() {
 
   setUp(() async {
     server = await startTestServer();
+    // La formule gratuite n'autorise qu'un projet : les tests qui en
+    // creent plusieurs donnent la formule Ecrivain.
+    await server.givePlan('user-1', SubscriptionPlan.writer);
     token = server.tokenFor('user-1');
     auth = <String, String>{'authorization': 'Bearer $token'};
   });

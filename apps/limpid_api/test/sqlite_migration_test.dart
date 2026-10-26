@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:limpid_api/src/db/sqlite_database.dart';
 import 'package:limpid_api/src/db/sqlite_migration_runner.dart';
 import 'package:limpid_api/src/db/sqlite_statement_splitter.dart';
@@ -24,18 +26,7 @@ void main() {
         directory: sqliteMigrationsDirectory,
       ).run();
 
-      expect(applied, <String>[
-        '0001_projects.sql',
-        '0002_project_members.sql',
-        '0003_sync_ops.sql',
-        '0004_audit_log.sql',
-        '0005_comment_threads.sql',
-        '0006_account_purges.sql',
-        '0007_plans.sql',
-        '0008_two_factor.sql',
-        '0009_teams.sql',
-        '0010_feature_flags.sql',
-      ]);
+      expect(applied, _migrationsOfTheRepository());
     });
 
     test('crée les tables du schéma de référence', () async {
@@ -126,6 +117,7 @@ void main() {
         'plan',
         'billing_period',
         'trial_ends_at',
+        'trial_consumed_at',
         'period_started_at',
         'period_ends_at',
       ]);
@@ -254,7 +246,7 @@ void main() {
       final List<String> first = await runner.run();
       final List<String> second = await runner.run();
 
-      expect(first, hasLength(10));
+      expect(first, hasLength(_migrationsOfTheRepository().length));
       expect(second, isEmpty);
     });
 
@@ -345,4 +337,21 @@ Future<List<String>> _indexColumns(SqliteDatabase database, String index) {
     );
     return result.map((Row row) => row['name']! as String).toList();
   });
+}
+
+/// Les migrations du depot, lues depuis le repertoire.
+///
+/// La liste n'est pas ecrite en dur : ajouter une migration ne casse pas
+/// ce test, et le test verifie ce qui compte — que le runner applique
+/// **toutes** les migrations du repertoire, dans l'ordre.
+List<String> _migrationsOfTheRepository() {
+  final List<String> names =
+      Directory(sqliteMigrationsDirectory)
+          .listSync()
+          .whereType<File>()
+          .map((File file) => file.uri.pathSegments.last)
+          .where((String name) => name.endsWith('.sql'))
+          .toList()
+        ..sort();
+  return names;
 }

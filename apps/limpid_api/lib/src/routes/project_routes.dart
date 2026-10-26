@@ -15,6 +15,8 @@ import '../http/json_body.dart';
 import '../http/pagination.dart';
 import '../middleware/rate_limiter.dart';
 import '../services/access_control.dart';
+import '../services/plan_catalog.dart';
+import '../services/quota_service.dart';
 
 /// The maximum length of the title of a project.
 const int maxProjectTitleLength = 200;
@@ -26,8 +28,9 @@ const int maxProjectSynopsisLength = 4000;
 void registerProjectRoutes(
   Router router,
   AppDependencies dependencies,
-  AppConfig config,
-) {
+  AppConfig config, {
+  QuotaService? quota,
+}) {
   router.get('/v1/projects', (Request request) async {
     final AuthContext auth = requireAuthContext(request);
     final PageRequest page = PageRequest.fromQuery(
@@ -69,6 +72,22 @@ void registerProjectRoutes(
     final ManuscriptStatus status = body.has('status')
         ? body.requireEnum('status', ManuscriptStatus.values)
         : ManuscriptStatus.draft;
+
+    // Le nombre de projets est une jauge de la formule : la limite est
+    // verifiee avant la creation, pour que le compte ne depasse jamais son
+    // contrat.
+    if (quota != null) {
+      final ProjectPage page = await dependencies.projects.list(
+        userId: auth.userId,
+        limit: 1,
+        cursor: null,
+      );
+      await quota.ensureGauge(
+        userId: auth.userId,
+        feature: QuotaFeature.projects,
+        current: page.total,
+      );
+    }
 
     final ProjectRecord project = await dependencies.projects.create(
       ownerId: auth.userId,

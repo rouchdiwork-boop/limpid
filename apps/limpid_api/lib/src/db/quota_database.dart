@@ -15,6 +15,7 @@ final class AccountPlan {
     required this.period,
     required this.periodStartedAt,
     this.trialEndsAt,
+    this.trialConsumedAt,
     this.periodEndsAt,
   });
 
@@ -37,8 +38,20 @@ final class AccountPlan {
   /// « Gratuit » quand la date est passée.
   final DateTime? trialEndsAt;
 
+  /// Le moment où le compte a consommé son essai gratuit, `null` s'il n'en
+  /// a jamais consommé.
+  ///
+  /// Le champ ne vaut `null` que pour un compte qui n'a jamais demandé
+  /// d'essai : c'est ce qui rend l'essai **unique**. Un compte qui a
+  /// consommé son essai ne peut pas en demander un second, quelle que soit
+  /// la formule.
+  final DateTime? trialConsumedAt;
+
   /// Le moment où la période de facturation se termine.
   final DateTime? periodEndsAt;
+
+  /// Indique si le compte a déjà consommé son essai gratuit.
+  bool get hasConsumedTrial => trialConsumedAt != null;
 
   /// Indique si l'essai du compte est terminé à [at].
   ///
@@ -62,6 +75,7 @@ final class AccountPlan {
       'plan': plan.name,
       'period': period.name,
       'trial_ends_at': trialEndsAt?.toUtc().toIso8601String(),
+      'trial_consumed_at': trialConsumedAt?.toUtc().toIso8601String(),
       'period_started_at': periodStartedAt.toUtc().toIso8601String(),
       'period_ends_at': periodEndsAt?.toUtc().toIso8601String(),
     };

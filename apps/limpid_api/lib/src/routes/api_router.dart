@@ -41,8 +41,8 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
       : QuotaService(database: quotaDatabase);
 
   registerHealthRoutes(router, dependencies);
-  registerProjectRoutes(router, dependencies, config);
-  registerSyncRoutes(router, dependencies, config);
+  registerProjectRoutes(router, dependencies, config, quota: quota);
+  registerSyncRoutes(router, dependencies, config, quota: quota);
   registerAiRoutes(router, dependencies, config, quota: quota);
   registerExportRoutes(router, dependencies, config, quota: quota);
   registerCheckoutRoutes(router, dependencies, config);
@@ -82,7 +82,7 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
   }
   final AdminDatabase? admin = dependencies.admin;
   if (admin != null) {
-    registerAdminRoutes(router, admin, config);
+    registerAdminRoutes(router, admin, config, quota: quota);
   }
 
   return router;

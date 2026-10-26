@@ -320,12 +320,19 @@ final class QuotaService {
   /// Affecte une nouvelle formule au compte.
   ///
   /// L'essai gratuit est demandé explicitement : une formule qui n'en
-  /// propose pas refuse la demande.
+  /// propose pas refuse la demande. Il ne se demande **qu'une fois** par
+  /// compte.
+  ///
+  /// Une formule payée ne s'obtient pas par une demande du compte : elle
+  /// vient d'un paiement, et [paymentReference] en porte la preuve. Sans
+  /// cette preuve, la demande est refusée — le client ne s'attribue pas
+  /// une formule qu'il n'a pas payée.
   Future<AccountPlan> changePlan({
     required String userId,
     required SubscriptionPlan plan,
     required BillingPeriod period,
     bool startTrial = false,
+    String? paymentReference,
   }) async {
     final DateTime now = _clock().toUtc();
     if (period == BillingPeriod.yearly &&
@@ -337,6 +344,7 @@ final class QuotaService {
             'propose pas de cycle annuel.',
       );
     }
+    final AccountPlan previous = await planOf(userId);
     DateTime? trialEndsAt;
     if (startTrial) {
       final int trialDays = PlanCatalog.trialDaysOf(plan);
@@ -348,7 +356,23 @@ final class QuotaService {
               'propose pas d\'essai gratuit.',
         );
       }
+      if (previous.hasConsumedTrial) {
+        throw const ConflictException(
+          message:
+              'Cet compte a déjà consommé son essai gratuit : il ne peut '
+              'pas en demander un second.',
+        );
+      }
       trialEndsAt = now.add(Duration(days: trialDays));
+    } else if (plan != SubscriptionPlan.free &&
+        !_hasPayment(paymentReference)) {
+      // L'essai est le chemin promotionnel : il ne demande pas de paiement.
+      // Une formule payée, elle, vient d'un paiement.
+      throw const ForbiddenException(
+        message:
+            'Une formule payée est activée par le paiement : elle ne se '
+            'demande pas depuis le compte.',
+      );
     }
 
     final AccountPlan assignment = AccountPlan(
@@ -357,6 +381,9 @@ final class QuotaService {
       period: period,
       periodStartedAt: now,
       trialEndsAt: trialEndsAt,
+      // L'essai est consommé pour toujours : le changer de formule ne le
+      // rend pas.
+      trialConsumedAt: previous.trialConsumedAt ?? (startTrial ? now : null),
       periodEndsAt: now.add(
         Duration(
           days: period == BillingPeriod.yearly
@@ -367,5 +394,11 @@ final class QuotaService {
     );
     await database.assignPlan(assignment);
     return assignment;
+  }
+
+  /// La demande porte-t-elle la preuve d'un paiement.
+  static bool _hasPayment(String? paymentReference) {
+    final String reference = paymentReference?.trim() ?? '';
+    return reference.isNotEmpty;
   }
 }

@@ -8,6 +8,7 @@ import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../auth/auth_context.dart';
+import '../auth/two_factor_guard.dart';
 import '../config/app_config.dart';
 import '../db/sync_op_record.dart';
 import '../dependencies.dart';
@@ -49,6 +50,26 @@ Future<void> _handle(
       },
     });
     return;
+  }
+
+  // Le relais applique le même contrôle de second facteur que les routes
+  // HTTP : une formule qui l'exige ne passe pas par la poignée de main
+  // seule. La preuve voyage dans la chaîne de requête, un navigateur ne
+  // pouvant pas poser d'en-tête sur cette poignée de main.
+  final TwoFactorGuard? guard = dependencies.twoFactorGuard;
+  if (guard != null) {
+    try {
+      await guard.verifySecondFactor(auth, request);
+    } on AppException catch (error) {
+      await _close(channel, <String, Object?>{
+        'type': 'error',
+        'payload': <String, Object?>{
+          'code': error.code,
+          'message': error.message,
+        },
+      });
+      return;
+    }
   }
 
   final Map<SyncRoomKey, SyncSubscription> subscriptions =

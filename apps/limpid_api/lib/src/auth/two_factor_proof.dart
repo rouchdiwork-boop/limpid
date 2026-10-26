@@ -11,6 +11,13 @@ import 'totp.dart';
 /// interroger une table supplémentaire.
 const String twoFactorProofHeader = 'x-limpid-2fa';
 
+/// Le paramètre de requête qui porte la preuve du second facteur.
+///
+/// Un navigateur ne peut pas poser d'en-tête sur la poignée de main d'un
+/// WebSocket : la connexion temps réel porte donc la preuve dans la
+/// chaîne de requête.
+const String twoFactorProofParameter = 'proof';
+
 /// La durée de validité d'une preuve du second facteur.
 const Duration twoFactorProofLifetime = Duration(minutes: 15);
 

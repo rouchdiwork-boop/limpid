@@ -97,6 +97,7 @@ final class TestTokenIssuer {
     String? issuer,
     String? audience,
     String? subject,
+    String? role,
   }) {
     final DateTime now = DateTime.now().toUtc();
     final Map<String, dynamic> header = <String, dynamic>{
@@ -109,7 +110,7 @@ final class TestTokenIssuer {
       'email': email ?? '$userId@example.test',
       'iss': issuer ?? 'https://project.test/auth/v1',
       'aud': audience ?? 'authenticated',
-      'role': 'authenticated',
+      'role': role ?? 'authenticated',
       'iat': now.millisecondsSinceEpoch ~/ 1000,
       'exp':
           (expiresAt ?? now.add(const Duration(hours: 1)))

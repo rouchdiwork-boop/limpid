@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'auth/jwt_verifier.dart';
+import 'auth/two_factor_guard.dart';
 import 'db/account_purge_store.dart';
 import 'db/admin_database.dart';
 import 'db/audit_log.dart';
@@ -17,6 +18,7 @@ import 'services/ai_gateway.dart';
 import 'services/idempotency_service.dart';
 import 'services/payment_gateway.dart';
 import 'services/sync_hub.dart';
+import 'services/two_factor_service.dart';
 import 'storage/object_storage.dart';
 
 /// A probe telling whether a dependency answers.
@@ -128,6 +130,17 @@ final class AppDependencies {
   Future<String?> planOf(String userId) async {
     final AccountPlan? plan = await quotas?.planOf(userId);
     return plan?.plan.name;
+  }
+
+  /// The control of the second factor, `null` when it is not configured.
+  ///
+  /// The guard is built here, and not in the server, so that every entry
+  /// point that authenticates a caller — the HTTP routes **and** the real
+  /// time relay — applies the same control.
+  TwoFactorGuard? get twoFactorGuard {
+    final TwoFactorDatabase? database = twoFactor;
+    if (database == null) return null;
+    return TwoFactorService(database: database, planOf: planOf);
   }
 
   /// The service guarding the calls with a side effect.

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:limpid_api/limpid_api.dart';
+import 'package:limpid_core/limpid_core.dart';
 
 import 'test_keys.dart';
 
@@ -158,6 +159,23 @@ final class TestServer {
     );
   }
 
+  /// Gives [userId] the plan [plan].
+  ///
+  /// A test that creates several projects needs a plan that allows it: the
+  /// free plan allows one.
+  Future<void> givePlan(String userId, SubscriptionPlan plan) async {
+    final InMemoryQuotaDatabase quotas =
+        dependencies.quotas! as InMemoryQuotaDatabase;
+    await quotas.assignPlan(
+      AccountPlan(
+        userId: userId,
+        plan: plan,
+        period: BillingPeriod.monthly,
+        periodStartedAt: DateTime.now().toUtc(),
+      ),
+    );
+  }
+
   /// Active the second factor of [userId] and returns the proof to carry in
   /// the `x-limpid-2fa` header.
   ///
@@ -210,6 +228,19 @@ final class TestServer {
     Map<String, String> headers = const <String, String>{},
   }) {
     return http.post(
+      Uri.parse('$baseUrl$path'),
+      headers: <String, String>{'content-type': 'application/json', ...headers},
+      body: body == null ? null : jsonEncode(body),
+    );
+  }
+
+  /// Performs a PUT request.
+  Future<http.Response> put(
+    String path, {
+    Object? body,
+    Map<String, String> headers = const <String, String>{},
+  }) {
+    return http.put(
       Uri.parse('$baseUrl$path'),
       headers: <String, String>{'content-type': 'application/json', ...headers},
       body: body == null ? null : jsonEncode(body),

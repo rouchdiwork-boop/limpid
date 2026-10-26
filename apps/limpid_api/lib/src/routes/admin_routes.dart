@@ -1,13 +1,17 @@
+import 'package:limpid_core/limpid_core.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import '../config/app_config.dart';
 import '../db/admin_database.dart';
 import '../db/feature_flag.dart';
+import '../db/quota_database.dart';
+import '../errors/app_exception.dart';
 import '../http/api_response.dart';
 import '../http/json_body.dart';
 import '../http/pagination.dart';
 import '../services/admin_service.dart';
+import '../services/quota_service.dart';
 
 /// Registers the routes of the back-office.
 ///
@@ -15,11 +19,15 @@ import '../services/admin_service.dart';
 /// functionality. Every route refuses the caller that is not an
 /// administrator: the check reads the claim of the verified token, never a
 /// role sent by the client.
+///
+/// [quota] carries the plans. It is optional: a server that does not wire it
+/// does not serve the route that grants a paid plan.
 void registerAdminRoutes(
   Router router,
   AdminDatabase database,
-  AppConfig config,
-) {
+  AppConfig config, {
+  QuotaService? quota,
+}) {
   final AdminService service = AdminService(database);
 
   router.get('/v1/admin/users', (Request request) async {
@@ -80,6 +88,65 @@ void registerAdminRoutes(
     );
     return ApiResponse.ok(_flagJson(flag));
   });
+
+  // Attribue une formule payée à un compte, après un paiement.
+  //
+  // La route est réservée à l'administrateur : le compte lui-même ne peut
+  // pas s'attribuer une formule qu'il n'a pas payée.
+  router.put('/v1/admin/plans/<userId>', (
+    Request request,
+    String userId,
+  ) async {
+    AdminService.requireAdmin(request);
+    final QuotaService? service = quota;
+    if (service == null) {
+      throw const ServiceUnavailableException(
+        message: 'Le service des formules n\'est pas configuré sur ce poste.',
+      );
+    }
+    final JsonBody body = await JsonBody.fromRequest(
+      request,
+      maxBytes: config.maxBodyBytes,
+    );
+    final String planKey = body.requireString('plan');
+    final SubscriptionPlan? plan = _readPlan(planKey);
+    if (plan == null) {
+      throw ValidationException(
+        field: 'plan',
+        message:
+            'Le champ « plan » doit valoir '
+            '${SubscriptionPlan.values.map((SubscriptionPlan value) => value.name).join(', ')}.',
+      );
+    }
+    final BillingPeriod period = _readPeriod(
+      body.optionalString('period') ?? BillingPeriod.monthly.name,
+    );
+    final AccountPlan assignment = await service.changePlan(
+      userId: userId,
+      plan: plan,
+      period: period,
+      paymentReference: body.optionalString('payment_reference'),
+    );
+    return ApiResponse.ok(assignment.toJson());
+  });
+}
+
+/// The plan named [raw], `null` when it is unknown.
+SubscriptionPlan? _readPlan(String raw) {
+  final String normalized = raw.trim().toLowerCase();
+  for (final SubscriptionPlan plan in SubscriptionPlan.values) {
+    if (plan.name == normalized) return plan;
+  }
+  return null;
+}
+
+/// The billing period named [raw], the monthly one when it is unknown.
+BillingPeriod _readPeriod(String raw) {
+  final String normalized = raw.trim().toLowerCase();
+  for (final BillingPeriod period in BillingPeriod.values) {
+    if (period.name == normalized) return period;
+  }
+  return BillingPeriod.monthly;
 }
 
 /// The JSON of an account.

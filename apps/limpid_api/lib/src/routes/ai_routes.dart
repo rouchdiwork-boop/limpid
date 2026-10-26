@@ -41,6 +41,17 @@ void registerAiRoutes(
       'prompt',
       maxLength: maxPromptLength,
     );
+
+    // Le garde-fou passe avant l'appel au modèle : une génération refusée
+    // ne coûte rien au fournisseur. Le quota de la formule compte
+    // **toute** appel au modèle, réécriture ou génération.
+    if (quota != null) {
+      await quota.ensureCounter(
+        userId: auth.userId,
+        feature: QuotaFeature.aiRewrites,
+      );
+    }
+
     final AiGenerateRequest aiRequest = AiGenerateRequest(
       userId: auth.userId,
       prompt: prompt,
@@ -51,7 +62,11 @@ void registerAiRoutes(
     );
 
     return sseResponse(
-      dependencies.ai.generate(aiRequest),
+      _counted(
+        dependencies.ai.generate(aiRequest),
+        quota: quota,
+        userId: auth.userId,
+      ),
       logger: dependencies.logger,
     );
   });

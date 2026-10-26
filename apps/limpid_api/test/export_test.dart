@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:limpid_api/limpid_api.dart';
+import 'package:limpid_core/limpid_core.dart';
 import 'package:test/test.dart';
 
 import 'helpers/test_server.dart';
@@ -13,6 +14,9 @@ void main() {
 
   setUp(() async {
     server = await startTestServer();
+    // La formule gratuite n'autorise qu'un projet : les tests qui en
+    // creent plusieurs donnent la formule Ecrivain.
+    await server.givePlan('user-1', SubscriptionPlan.writer);
     auth = <String, String>{
       'authorization': 'Bearer ${server.tokenFor('user-1')}',
     };

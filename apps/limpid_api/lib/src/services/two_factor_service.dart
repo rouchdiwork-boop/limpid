@@ -230,7 +230,7 @@ final class TwoFactorService implements TwoFactorGuard {
       return;
     }
 
-    final String? proof = request.headers[twoFactorProofHeader];
+    final String? proof = _proofOf(request);
     if (proof == null || proof.trim().isEmpty) {
       throw const UnauthorizedException(
         message:
@@ -256,6 +256,24 @@ final class TwoFactorService implements TwoFactorGuard {
         },
       );
     }
+  }
+
+  /// La preuve du second facteur portée par la requête.
+  ///
+  /// La preuve voyage dans l'en-tête `X-Limpid-2FA`. Un navigateur ne peut
+  /// pas poser d'en-tête sur la poignée de main d'un WebSocket : la
+  /// connexion en porte donc la preuve dans la chaîne de requête.
+  static String? _proofOf(Request request) {
+    final String? header = request.headers[twoFactorProofHeader];
+    if (header != null && header.trim().isNotEmpty) {
+      return header;
+    }
+    final String? parameter =
+        request.url.queryParameters[twoFactorProofParameter];
+    if (parameter != null && parameter.trim().isNotEmpty) {
+      return parameter;
+    }
+    return null;
   }
 
   /// Vérifie un code TOTP et renvoie le moyen utilisé.
