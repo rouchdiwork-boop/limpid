@@ -400,5 +400,60 @@
   "revisionResolveFailed": "Le fil n’a pas pu être résolu.",
   "commonWords": "mots",
   "commonMinutes": "min",
-  "settingsExportManuscriptsSubtitle": "Vos manuscrits, au format que vous choisissez."
+  "settingsExportManuscriptsSubtitle": "Vos manuscrits, au format que vous choisissez.",
+  "billingTitle": "Votre abonnement",
+  "billingSubtitle": "Changez de formule à tout moment. La différence est facturée au prorata.",
+  "billingMonthly": "Mensuel",
+  "billingAnnual": "Annuel",
+  "billingAnnualDiscount": "− 20 %",
+  "billingCurrentPlan": "Formule actuelle",
+  "billingChoosePlan": "Choisir cette formule",
+  "billingManagePlan": "Gérer",
+  "billingUsageTitle": "Usage du cycle en cours",
+  "billingWords": "Mots écrits",
+  "billingAiTokens": "Tokens IA",
+  "billingStorage": "Stockage",
+  "billingNextPayment": "Prochain prélèvement",
+  "billingPaymentMethod": "Moyen de paiement",
+  "billingChangePaymentMethod": "Modifier",
+  "billingInvoiceHistory": "Historique des factures",
+  "billingTrialBanner": "Votre essai gratuit se termine le {date}. Il sera converti en abonnement, sauf annulation.",
+  "@@billingTrialBanner": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "billingUnavailable": "Le service de facturation n’est pas configuré sur cet appareil.",
+  "billingQuotaReached": "La formule {plan} ne permet pas cette action.",
+  "@@billingQuotaReached": {
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "billingPerMonth": "par mois",
+  "billingPerYear": "par an",
+  "billingSeats": "{count} sièges",
+  "@@billingSeats": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "billingUsageOf": "{used} / {limit}",
+  "@@billingUsageOf": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "billingCurrentUsage": "Consommation"
 }

@@ -400,5 +400,60 @@
   "revisionResolveFailed": "The thread could not be resolved.",
   "commonWords": "words",
   "commonMinutes": "min",
-  "settingsExportManuscriptsSubtitle": "Your manuscripts, in the format you choose."
+  "settingsExportManuscriptsSubtitle": "Your manuscripts, in the format you choose.",
+  "billingTitle": "Your subscription",
+  "billingSubtitle": "Change plan at any time. The difference is prorated.",
+  "billingMonthly": "Monthly",
+  "billingAnnual": "Annual",
+  "billingAnnualDiscount": "− 20%",
+  "billingCurrentPlan": "Current plan",
+  "billingChoosePlan": "Choose this plan",
+  "billingManagePlan": "Manage",
+  "billingUsageTitle": "Usage of the current cycle",
+  "billingWords": "Words written",
+  "billingAiTokens": "AI tokens",
+  "billingStorage": "Storage",
+  "billingNextPayment": "Next payment",
+  "billingPaymentMethod": "Payment method",
+  "billingChangePaymentMethod": "Change",
+  "billingInvoiceHistory": "Invoice history",
+  "billingTrialBanner": "Your free trial ends on {date}. It will be converted to a subscription unless you cancel.",
+  "@@billingTrialBanner": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "billingUnavailable": "The billing service is not configured on this device.",
+  "billingQuotaReached": "The {plan} plan does not allow this action.",
+  "@@billingQuotaReached": {
+    "placeholders": {
+      "plan": {
+        "type": "String"
+      }
+    }
+  },
+  "billingPerMonth": "per month",
+  "billingPerYear": "per year",
+  "billingSeats": "{count} seats",
+  "@@billingSeats": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "billingUsageOf": "{used} / {limit}",
+  "@@billingUsageOf": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "billingCurrentUsage": "Usage"
 }
