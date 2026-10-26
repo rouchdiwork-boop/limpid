@@ -44,6 +44,17 @@ for pkg in "${PACKAGES[@]}"; do echo "  • $pkg"; done
 FAILED=0
 TOTAL_TESTS=0
 
+# Les clés de traduction doivent être les mêmes dans toutes les langues :
+# une clé absente d'une seule langue disparaît à l'exécution, sans que
+# rien ne le signale à la compilation.
+echo ""
+echo "════════ clés de traduction ════════"
+if python tools/cles_arb.py; then
+  echo "  ✓ mêmes clés partout"
+else
+  FAILED=1
+fi
+
 for dir in "${PACKAGES[@]}"; do
   name=$(basename "$dir")
   echo ""

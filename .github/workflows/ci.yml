@@ -111,6 +111,12 @@ jobs:
             (cd "$dir" && flutter gen-l10n)
           done
 
+      - name: Check the localization keys
+        run: python3 tools/cles_arb.py
+
+      - name: Check the dependency rule
+        run: python3 tools/dependances.py
+
       - name: Analyze every package
         run: |
           set -euo pipefail

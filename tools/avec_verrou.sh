@@ -29,10 +29,18 @@ lock_age() {
 }
 
 # Un compilation Dart tourne-t-elle encore ?
+#
+# Le filtre doit voir **tous** les processus de la chaine Flutter : le
+# testeur (`flutter_tester.exe`), sa machine virtuelle (`dartvm.exe`) et
+# l'instantane compile (`dartaotruntime.exe`). Sans `flutter_tester`, un
+# `flutter test` long passait pour un verrou perime : le verrou etait
+# libere pendant que la suite tournait encore, et deux compilations se
+# partageaient la memoire du poste.
 dart_running() {
   if command -v tasklist >/dev/null 2>&1; then
-    tasklist //FI "IMAGENAME eq dart.exe" //NH 2>/dev/null | grep -qi dart && return 0
-    tasklist //FI "IMAGENAME eq dartaotruntime.exe" //NH 2>/dev/null | grep -qi dart && return 0
+    for image in dart.exe dartaotruntime.exe dartvm.exe flutter_tester.exe; do
+      tasklist //FI "IMAGENAME eq $image" //NH 2>/dev/null | grep -qi "$image" && return 0
+    done
     return 1
   fi
   pgrep -f "dart-sdk/bin/dart" >/dev/null 2>&1
