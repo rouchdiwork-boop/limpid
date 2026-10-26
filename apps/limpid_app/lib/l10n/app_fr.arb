@@ -411,7 +411,7 @@
   "billingManagePlan": "Gérer",
   "billingUsageTitle": "Usage du cycle en cours",
   "billingWords": "Mots écrits",
-  "billingAiTokens": "Tokens IA",
+  "billingAiRewrites": "Réécritures IA",
   "billingStorage": "Stockage",
   "billingNextPayment": "Prochain prélèvement",
   "billingPaymentMethod": "Moyen de paiement",

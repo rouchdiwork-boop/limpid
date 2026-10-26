@@ -40,6 +40,7 @@ Future<void> main() async {
           dependencies.publication,
         ),
         revisionRepositoryProvider.overrideWithValue(dependencies.revision),
+        planRepositoryProvider.overrideWithValue(dependencies.plans),
         localDataEraserProvider.overrideWithValue(dependencies.localDataEraser),
         authorIdProvider.overrideWithValue(dependencies.author),
       ],

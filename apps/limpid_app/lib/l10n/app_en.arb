@@ -411,7 +411,7 @@
   "billingManagePlan": "Manage",
   "billingUsageTitle": "Usage of the current cycle",
   "billingWords": "Words written",
-  "billingAiTokens": "AI tokens",
+  "billingAiRewrites": "AI rewrites",
   "billingStorage": "Storage",
   "billingNextPayment": "Next payment",
   "billingPaymentMethod": "Payment method",

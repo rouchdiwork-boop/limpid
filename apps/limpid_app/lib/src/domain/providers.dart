@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:limpid_app/src/domain/fallbacks.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
+import 'package:limpid_app/src/domain/plan_repository.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_core/limpid_core.dart';
 
@@ -114,6 +115,15 @@ final Provider<AiRepository> aiRepositoryProvider = Provider<AiRepository>((
 /// when nothing was erased.
 final Provider<GdprRepository> gdprRepositoryProvider =
     Provider<GdprRepository>((Ref ref) => const UnavailableGdprRepository());
+
+/// The repository holding the subscription and the quotas of the author.
+///
+/// The composition root overrides it with the implementation of the data
+/// layer. The default refuses to read anything and says why: the billing
+/// screen must never show a plan, a quota or a payment the server did not
+/// answer.
+final Provider<PlanRepository> planRepositoryProvider =
+    Provider<PlanRepository>((Ref ref) => const UnavailablePlanRepository());
 
 /// The author stamping the operations produced by the editor.
 ///

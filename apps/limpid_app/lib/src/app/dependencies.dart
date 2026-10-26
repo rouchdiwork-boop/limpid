@@ -8,6 +8,7 @@ import 'package:limpid_app/src/data/api_ai_repository.dart';
 import 'package:limpid_app/src/data/api_client.dart';
 import 'package:limpid_app/src/data/api_export_repository.dart';
 import 'package:limpid_app/src/data/api_gdpr_repository.dart';
+import 'package:limpid_app/src/data/api_plan_repository.dart';
 import 'package:limpid_app/src/data/api_publication_repository.dart';
 import 'package:limpid_app/src/data/app_database.dart';
 import 'package:limpid_app/src/data/local_manuscript_repository.dart';
@@ -19,6 +20,7 @@ import 'package:limpid_app/src/data/project_identity_store.dart';
 import 'package:limpid_app/src/data/project_ops_transport.dart';
 import 'package:limpid_app/src/domain/fallbacks.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
+import 'package:limpid_app/src/domain/plan_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/publication_repository.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
@@ -54,6 +56,7 @@ final class AppDependencies {
     required this.gdpr,
     required this.publication,
     required this.revision,
+    required this.plans,
     required this.localDataEraser,
     required this.author,
     required this.close,
@@ -82,6 +85,9 @@ final class AppDependencies {
 
   /// The discussions of the projects, held by the review.
   final RevisionRepository revision;
+
+  /// The subscription, the quotas and the payment of the author.
+  final PlanRepository plans;
 
   /// The erasure of the local data of the author (D-19).
   final LocalDataEraser localDataEraser;
@@ -119,6 +125,14 @@ Future<AppDependencies> buildAppDependencies() async {
       ? ApiGdprRepository(client: apiClient)
       : const UnavailableGdprRepository();
 
+  // L'abonnement de l'auteur vit lui aussi sur le serveur. Le paiement ne
+  // s'ouvre que lorsque l'application connaît son adresse publique : c'est
+  // elle que le serveur utilise pour renvoyer l'auteur vers l'écran
+  // d'abonnement après le paiement.
+  final PlanRepository plans = AppBootstrap.isSupabaseConfigured
+      ? ApiPlanRepository(client: apiClient, checkoutOrigin: _publicOrigin())
+      : const UnavailablePlanRepository();
+
   AppDatabase? database;
   try {
     database = await AppDatabase.open();
@@ -143,6 +157,7 @@ Future<AppDependencies> buildAppDependencies() async {
         fallback: LocalPublicationRepository(manuscript: manuscripts),
       ),
       revision: InMemoryRevisionRepository(),
+      plans: plans,
       // Aucune base locale : rien à effacer, l'interface le dit.
       localDataEraser: _refuseTheErasure,
       author: author,
@@ -183,6 +198,7 @@ Future<AppDependencies> buildAppDependencies() async {
       fallback: LocalPublicationRepository(manuscript: manuscripts),
     ),
     revision: LocalRevisionRepository(database: opened),
+    plans: plans,
     localDataEraser: opened.wiper.wipe,
     author: author,
     close: () async {
@@ -197,6 +213,23 @@ Future<AppDependencies> buildAppDependencies() async {
 /// There is nothing to erase: the build has no local database. The port
 /// refuses rather than pretend the data of the author was erased.
 Future<void> _refuseTheErasure() => throw const ServiceUnavailableException();
+
+/// The public origin of the application, when it knows it.
+///
+/// On the web, the address of the current page: the payment sends the author
+/// back to the subscription screen. On the other platforms the application
+/// does not know its public address — the payment service is then not
+/// configured on this device, and the billing screen says so.
+Uri? _publicOrigin() {
+  if (!kIsWeb) return null;
+  final Uri base = Uri.base;
+  if (base.scheme.isEmpty || base.host.isEmpty) return null;
+  return Uri(
+    scheme: base.scheme,
+    host: base.host,
+    port: base.hasPort ? base.port : null,
+  );
+}
 
 /// The bearer token of the current session.
 ///

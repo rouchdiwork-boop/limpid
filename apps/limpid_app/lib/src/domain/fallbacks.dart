@@ -10,6 +10,7 @@
 library;
 
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
+import 'package:limpid_app/src/domain/plan_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/repositories.dart';
 import 'package:limpid_core/limpid_core.dart';
@@ -156,6 +157,41 @@ final class UnavailableGdprRepository
   @override
   Future<AccountDeletion> requestAccountDeletion() async =>
       throw const ServiceUnavailableException();
+}
+
+/// A [PlanRepository] that cannot reach the backend.
+///
+/// The demonstration mode has no remote service: the billing screen says so
+/// instead of showing a plan, a quota or a payment it never read.
+final class UnavailablePlanRepository
+    implements PlanRepository, UnavailableService {
+  /// Creates the repository.
+  const UnavailablePlanRepository();
+
+  @override
+  Future<AccountPlan> currentPlan() async =>
+      throw const ServiceUnavailableException();
+
+  @override
+  Future<List<PlanOffer>> offers() async =>
+      throw const ServiceUnavailableException();
+
+  @override
+  Future<List<QuotaReading>> usage() async =>
+      throw const ServiceUnavailableException();
+
+  @override
+  Future<AccountPlan> changePlan({
+    required SubscriptionPlan plan,
+    required BillingPeriod period,
+  }) async => throw const ServiceUnavailableException();
+
+  @override
+  Future<CheckoutSession> openCheckout({
+    required SubscriptionPlan plan,
+    required BillingPeriod period,
+    required Uri returnTo,
+  }) async => throw const ServiceUnavailableException();
 }
 
 /// The preferences of the author, kept in the memory of the application.

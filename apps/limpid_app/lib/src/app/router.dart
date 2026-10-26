@@ -3,6 +3,8 @@ import 'package:limpid_app/src/auth/auth_repository.dart';
 import 'package:limpid_app/src/auth/session_controller.dart';
 import 'package:limpid_app/src/features/auth/screens/sign_in_screen.dart';
 import 'package:limpid_app/src/features/auth/screens/sign_up_screen.dart';
+import 'package:limpid_app/src/features/billing/billing_routes.dart';
+import 'package:limpid_app/src/features/billing/billing_screen.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_screen.dart';
 import 'package:limpid_app/src/features/library/library_screen.dart';
 import 'package:limpid_app/src/features/onboarding/onboarding_screen.dart';
@@ -53,6 +55,9 @@ abstract final class AppRoutes {
 
   /// The settings.
   static const String settings = '/reglages';
+
+  /// The subscription, the quotas and the invoices.
+  static const String subscription = BillingRoutes.subscription;
 
   /// A single project.
   static String project(String projectId) => '/projets/$projectId';
@@ -161,6 +166,14 @@ GoRouter appRouter(Ref ref) {
               GoRoute(
                 path: AppRoutes.settings,
                 builder: (context, state) => const SettingsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: <RouteBase>[
+              GoRoute(
+                path: AppRoutes.subscription,
+                builder: (context, state) => const BillingScreen(),
               ),
             ],
           ),

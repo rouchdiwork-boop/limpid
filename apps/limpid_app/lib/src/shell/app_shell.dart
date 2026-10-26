@@ -17,7 +17,10 @@ enum ShellDestination {
   writing(LimpidIcons.pen),
 
   /// The account and the settings.
-  account(LimpidIcons.user);
+  account(LimpidIcons.user),
+
+  /// The subscription, the quotas and the invoices.
+  subscription(LimpidIcons.money);
 
   const ShellDestination(this.icon);
 
@@ -49,6 +52,7 @@ class AppShell extends ConsumerWidget {
       _Destination(ShellDestination.library, strings.navLibrary),
       _Destination(ShellDestination.writing, strings.navWrite),
       _Destination(ShellDestination.account, strings.navAccount),
+      _Destination(ShellDestination.subscription, strings.settingsPlan),
     ];
 
     final content = navigationShell;
