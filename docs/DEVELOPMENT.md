@@ -171,6 +171,24 @@ qui enchaînent pour chaque paquet présent :
 Les paquets absents du dépôt sont ignorés proprement : le monorepo reste
 vérifiable pendant la construction des applications.
 
+### 4.1.1 Les fichiers source absents de Git
+
+Un fichier source non versionné ne se voit pas : le poste compile, les tests
+passent, et la CI échoue plus tard sur une cible que personne n'a vue. Avant
+de pousser, on vérifie :
+
+```bash
+python tools/fichiers_non_suivis.py
+```
+
+Le script compare le disque à l'index et sort en code 1 dès qu'un fichier
+`.dart` manque. Il ne se trompe pas sur les fichiers générés
+(`.g.dart`, `.freezed.dart`, `l10n/generated/`), qui se reconstruisent.
+
+C'est ce script qui a révélé le motif `Icon?` du `.gitignore` : la règle
+macOS meant attraper le dossier `icons/` du design system **et** celui des
+icônes de la PWA. Les deux étaient invisibles depuis le poste.
+
 ### 4.2 Un seul paquet
 
 ```bash
