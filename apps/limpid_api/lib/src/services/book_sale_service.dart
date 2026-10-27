@@ -109,6 +109,10 @@ final class BookPurchase {
   /// Le compte qui encaisse la vente.
   final String ownerId;
 
+  /// Le bundle qui a porté l'achat, `null` quand le livre a été acheté
+  /// seul.
+  String? get bundleId => entitlement.bundleId;
+
   /// La représentation JSON de l'achat.
   Map<String, Object?> toJson() {
     return <String, Object?>{
@@ -117,6 +121,46 @@ final class BookPurchase {
       'owner_id': ownerId,
     };
   }
+}
+
+/// La ligne d'une vente : un livre, et la part du montant payé qui lui
+/// revient.
+///
+/// Une vente simple porte **une** ligne, à hauteur du montant entier. Un
+/// bundle en porte une par livre : c'est la part de chaque livre dans le
+/// montant payé qui distingue les lignes, et c'est elle que la ventilation
+/// des droits suit.
+final class SaleLine {
+  /// Crée une ligne.
+  const SaleLine({
+    required this.projectId,
+    required this.amountInCents,
+    required this.authorShare,
+    required this.source,
+  });
+
+  /// Le livre vendu.
+  final String projectId;
+
+  /// La part du montant partagé qui revient à ce livre, en centimes.
+  ///
+  /// La part est celle du livre dans le montant payé : elle vaut le montant
+  /// entier pour une vente simple, et le prorata de la contribution du livre
+  /// pour un bundle.
+  final int amountInCents;
+
+  /// La part de l'auteur de ce livre, en millièmes.
+  ///
+  /// Elle vient de la vente du livre : la règle est la même pour un livre
+  /// vendu seul et pour un livre vendu dans un bundle.
+  final int authorShare;
+
+  /// La commande qui a payé cette ligne.
+  ///
+  /// Une vente simple porte la référence de la commande. Un bundle porte
+  /// une référence **par livre** : la commande est la même, mais chaque
+  /// droit est le sien.
+  final String source;
 }
 
 /// L'URL signée de téléchargement d'un livre acheté.
@@ -281,19 +325,14 @@ final class BookSaleService {
   }) async {
     final BookSaleRecord sale = await _requireSellable(projectId);
 
-    int discount = 0;
-    String? appliedCode;
-    final String? requested = _cleanCode(promoCode);
-    if (requested != null) {
-      final PromoRedemption redemption = await _promos.redeem(
-        code: requested,
-        userId: buyerId,
-        priceInCents: sale.priceInCents,
-        currency: sale.currency,
-      );
-      discount = redemption.discountInCents;
-      appliedCode = redemption.code;
-    }
+    final PromoRedemption? redemption = await redeemPromo(
+      buyerId: buyerId,
+      priceInCents: sale.priceInCents,
+      currency: sale.currency,
+      promoCode: promoCode,
+    );
+    final int discount = redemption?.discountInCents ?? 0;
+    final String? appliedCode = redemption?.code;
 
     final int amount = sale.priceInCents - discount;
     if (amount <= 0) {
@@ -313,19 +352,28 @@ final class BookSaleService {
       );
     }
 
-    final CheckoutSession session = await gateway.createBookSession(
-      BookCheckoutRequest(
-        userId: buyerId,
-        projectId: projectId,
-        title: sale.title,
-        priceInCents: amount,
-        currency: sale.currency,
-        successUrl: successUrl,
-        cancelUrl: cancelUrl,
-        idempotencyKey: idempotencyKey,
-        promoCode: appliedCode,
-      ),
-    );
+    final CheckoutSession session;
+    try {
+      session = await gateway.createBookSession(
+        BookCheckoutRequest(
+          userId: buyerId,
+          projectId: projectId,
+          title: sale.title,
+          priceInCents: amount,
+          currency: sale.currency,
+          successUrl: successUrl,
+          cancelUrl: cancelUrl,
+          idempotencyKey: idempotencyKey,
+          promoCode: appliedCode,
+        ),
+      );
+    } on Object {
+      // La session n'a pas pu etre ouverte : la reservation du code est
+      // rendue. Sans elle, une commande qui echoue epuise le quota d'un
+      // code que l'acheteur n'a jamais utilise.
+      await releasePromo(code: appliedCode, buyerId: buyerId);
+      rethrow;
+    }
 
     return BookOrder(
       projectId: projectId,
@@ -361,32 +409,24 @@ final class BookSaleService {
       return null;
     }
     final int amount = amountInCents ?? sale.priceInCents;
-    final RevenueSplit split = _revenue.split(
-      amountInCents: amount,
-      authorShare: sale.authorShare,
+    final List<EntitlementRecord> granted = await grantSale(
+      buyerId: buyerId,
+      lines: <SaleLine>[
+        SaleLine(
+          projectId: projectId,
+          amountInCents: amount,
+          authorShare: sale.authorShare,
+          source: source,
+        ),
+      ],
+      currency: sale.currency,
+      promoCode: promoCode,
     );
-    final DateTime now = _now();
-    final EntitlementGrant grant = await entitlements.grant(
-      EntitlementRecord(
-        id: _generator.generate().value,
-        userId: buyerId,
-        projectId: projectId,
-        source: source,
-        grantedAt: now,
-        createdAt: now,
-        amountInCents: split.amountInCents,
-        currency: sale.currency,
-        authorShare: split.authorShare,
-        platformShare: split.platformShare,
-        authorAmountInCents: split.authorAmountInCents,
-        platformAmountInCents: split.platformAmountInCents,
-        promoCode: promoCode,
-      ),
-    );
-    if (!grant.isNew) {
+    if (granted.isEmpty) {
       // Le droit existait deja : le paiement a deja ete traite.
       return null;
     }
+    final EntitlementRecord record = granted.first;
     await audit.record(
       AuditEntry(
         userId: buyerId,
@@ -395,11 +435,11 @@ final class BookSaleService {
         targetId: projectId,
         metadata: <String, Object?>{
           'payment_reference': source,
-          'amount_cents': split.amountInCents,
+          'amount_cents': record.amountInCents,
           'currency': sale.currency,
-          'author_share': split.authorShare,
-          'author_amount_cents': split.authorAmountInCents,
-          'platform_amount_cents': split.platformAmountInCents,
+          'author_share': record.authorShare,
+          'author_amount_cents': record.authorAmountInCents,
+          'platform_amount_cents': record.platformAmountInCents,
           'owner_id': sale.ownerId,
           'promo_code': ?promoCode,
         },
@@ -407,6 +447,99 @@ final class BookSaleService {
       ),
     );
     return 'book.purchase_completed';
+  }
+
+  /// Accorde les droits de lecture des lignes [lines] et écrit leur
+  /// ventilation.
+  ///
+  /// C'est le **cœur** de la vente, partagé par la vente d'un livre et par
+  /// la vente d'un bundle : la remise et la ventilation sont écrites ici,
+  /// jamais ailleurs.
+  ///
+  /// L'octroi est **idempotent** ligne par ligne : le même paiement ne
+  /// crée jamais deux fois le même droit, et la ventilation du premier
+  /// paiement est conservée. La ventilation est écrite ici, jamais avant :
+  /// tant que le paiement n'est pas confirmé, l'auteur n'a rien à recevoir.
+  ///
+  /// La part de l'auteur de chaque ligne vient de la ligne : elle est la
+  /// règle de la vente du livre, la même pour un livre vendu seul et pour
+  /// un livre vendu dans un bundle.
+  ///
+  /// Rend les lignes créées : une ligne dont le droit existait déjà n'y est
+  /// pas.
+  Future<List<EntitlementRecord>> grantSale({
+    required String buyerId,
+    required List<SaleLine> lines,
+    required String currency,
+    String? promoCode,
+    String? bundleId,
+  }) async {
+    final List<EntitlementRecord> granted = <EntitlementRecord>[];
+    final DateTime now = _now();
+    for (final SaleLine line in lines) {
+      final RevenueSplit split = _revenue.split(
+        amountInCents: line.amountInCents,
+        authorShare: line.authorShare,
+      );
+      final EntitlementGrant grant = await entitlements.grant(
+        EntitlementRecord(
+          id: _generator.generate().value,
+          userId: buyerId,
+          projectId: line.projectId,
+          source: line.source,
+          grantedAt: now,
+          createdAt: now,
+          amountInCents: split.amountInCents,
+          currency: currency,
+          authorShare: split.authorShare,
+          platformShare: split.platformShare,
+          authorAmountInCents: split.authorAmountInCents,
+          platformAmountInCents: split.platformAmountInCents,
+          promoCode: promoCode,
+          bundleId: bundleId,
+        ),
+      );
+      if (grant.isNew) granted.add(grant.record);
+    }
+    return List<EntitlementRecord>.unmodifiable(granted);
+  }
+
+  /// Applique le code promo [promoCode] au prix [priceInCents].
+  ///
+  /// La remise vient du service des codes promo : un bundle et un livre
+  /// vendu seul l'appliquent de la même façon, et la ventilation se fait
+  /// ensuite sur le montant **après** remise — une remise ne sort jamais de
+  /// la poche de l'auteur.
+  ///
+  /// Rend `null` quand aucun code n'est demandé.
+  Future<PromoRedemption?> redeemPromo({
+    required String buyerId,
+    required int priceInCents,
+    required String currency,
+    String? promoCode,
+  }) async {
+    final String? requested = _cleanCode(promoCode);
+    if (requested == null) return null;
+    return _promos.redeem(
+      code: requested,
+      userId: buyerId,
+      priceInCents: priceInCents,
+      currency: currency,
+    );
+  }
+
+  /// Rend l'usage du code [code] réservé par le compte [buyerId].
+  ///
+  /// La place est rendue quand la commande n'a pas abouti, ou quand la
+  /// session de paiement a expire sans que l'acheteur paie. Elle ne fait
+  /// rien quand aucun code n'a ete demande.
+  Future<void> releasePromo({
+    required String? code,
+    required String buyerId,
+  }) async {
+    final String? requested = _cleanCode(code);
+    if (requested == null) return;
+    await _promos.release(code: requested, userId: buyerId);
   }
 
   /// Les livres achetés par le compte [userId], les plus récents d'abord.

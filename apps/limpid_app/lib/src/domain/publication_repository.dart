@@ -123,7 +123,12 @@ sealed class Publication {
 /// A book that is published: its public page exists.
 final class PublishedBook extends Publication {
   /// Creates a published book.
-  const PublishedBook({required this.project, required this.chapters});
+  const PublishedBook({
+    required this.project,
+    required this.chapters,
+    this.coverUrl = '',
+    this.metadata = const PublicationMetadata(),
+  });
 
   /// The manuscript behind the page.
   final Project project;
@@ -131,11 +136,84 @@ final class PublishedBook extends Publication {
   /// The chapters of the book, in reading order.
   final List<PublicationChapter> chapters;
 
+  /// The address of the cover of the book, empty when the book has none.
+  ///
+  /// The address is the one of the server: the cover is an artefact, and
+  /// the page never draws a broken image in its place.
+  final String coverUrl;
+
+  /// The commercial metadata the author published.
+  final PublicationMetadata metadata;
+
   /// The number of words the chapters of the book hold.
   int get wordCount => chapters.fold<int>(
     0,
     (int total, PublicationChapter chapter) => total + chapter.wordCount,
   );
+}
+
+/// The commercial metadata an author published for a book.
+///
+/// The metadata come from the server: they are the ones that were
+/// published, and they make fi. A metadata the author did not publish has
+/// no line on the page — the page shows what was said, and nothing else.
+@immutable
+final class PublicationMetadata {
+  /// Creates a set of published metadata.
+  const PublicationMetadata({
+    this.isbn = '',
+    this.publisher = '',
+    this.description = '',
+    this.language = '',
+    this.contributors = const <String>[],
+    this.keywords = const <String>[],
+    this.categories = const <String>[],
+    this.priceInCents,
+    this.currency = '',
+    this.publishedAt,
+  });
+
+  /// The ISBN of the published edition.
+  final String isbn;
+
+  /// The publisher of the book.
+  final String publisher;
+
+  /// The public description of the book.
+  final String description;
+
+  /// The language of the book.
+  final String language;
+
+  /// The people who wrote the book.
+  final List<String> contributors;
+
+  /// The keywords of the product page.
+  final List<String> keywords;
+
+  /// The BISAC categories of the product page.
+  final List<String> categories;
+
+  /// The price of the book, in cents, `null` when the book is not for sale.
+  final int? priceInCents;
+
+  /// The currency of the price.
+  final String currency;
+
+  /// The date the book was published.
+  final DateTime? publishedAt;
+
+  /// Whether the book published nothing.
+  bool get isEmpty =>
+      isbn.isEmpty &&
+      publisher.isEmpty &&
+      description.isEmpty &&
+      language.isEmpty &&
+      contributors.isEmpty &&
+      keywords.isEmpty &&
+      categories.isEmpty &&
+      priceInCents == null &&
+      publishedAt == null;
 }
 
 /// A book that exists but is not published yet: it has no public page.

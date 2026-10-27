@@ -7,6 +7,7 @@ import 'package:limpid_app/src/data/api_client.dart';
 import 'package:limpid_app/src/data/api_publication_repository.dart';
 import 'package:limpid_app/src/domain/errors.dart';
 import 'package:limpid_app/src/domain/publication_repository.dart';
+import 'package:limpid_app/src/features/publication/publication_author_books.dart';
 import 'package:limpid_core/limpid_core.dart';
 
 import 'fakes.dart';
@@ -53,6 +54,28 @@ void main() {
       expect(book.chapters.single.scenes, hasLength(1));
       expect(book.chapters.single.scenes.single.excerpt, sceneExcerpt);
       expect(book.chapters.single.scenes.single.wordCount, 120);
+    });
+
+    test('rend la couverture du livre et les métadonnées publiées', () async {
+      final ApiPublicationRepository repository = _repositoryOf(
+        (http.Request request) async => _answer(),
+      );
+
+      final Publication publication = await repository.load(projectId: bookId);
+
+      final PublishedBook book = publication as PublishedBook;
+      expect(
+        book.coverUrl,
+        'https://api.test/v1/public/books/$bookId/cover',
+        reason: 'le serveur adresse la couverture par rapport au livre',
+      );
+      expect(book.metadata.isbn, '9782491503827');
+      expect(book.metadata.language, 'fr-FR');
+      expect(book.metadata.priceInCents, 890);
+      expect(book.metadata.currency, 'eur');
+      expect(book.metadata.contributors, <String>['Aurélien Sandre']);
+      expect(book.metadata.categories, <String>['FICTION / Général']);
+      expect(book.metadata.publishedAt, DateTime.utc(2026, 10, 2));
     });
 
     test('n-emprunte jamais le propriétaire du livre au serveur', () async {
@@ -114,6 +137,26 @@ void main() {
       expect(fallback.calls, 1);
     });
 
+    test(
+      'rend les livres de l’auteur avec leur couverture et leur date',
+      () async {
+        final ApiPublicationRepository repository = _repositoryOf(
+          (http.Request request) async => _authorAnswer(),
+        );
+
+        final List<AuthorBook> books = await repository.listShowcaseBooks(
+          authorId: 'auteur-1',
+        );
+
+        expect(books, hasLength(1));
+        expect(
+          books.single.coverUrl,
+          'https://api.test/v1/public/books/$bookId/cover',
+        );
+        expect(books.single.publishedAt, DateTime.utc(2026, 10, 2));
+      },
+    );
+
     test('refuse une réponse qui n’est pas un livre', () async {
       final ApiPublicationRepository repository = _repositoryOf(
         (http.Request request) async => http.Response(
@@ -169,6 +212,15 @@ http.Response _answer() {
           'synopsis': 'Un synopsis.',
           'language': 'fr-FR',
         },
+        'cover': <String, Object?>{'url': '/v1/public/books/$bookId/cover'},
+        'metadata': <String, Object?>{
+          'isbn': '9782491503827',
+          'language': 'fr-FR',
+          'contributors': <String>['Aurélien Sandre'],
+          'categories': <String>['FICTION / Général'],
+          'price': <String, Object?>{'amount': 890, 'currency': 'eur'},
+          'publishedAt': '2026-10-02T00:00:00.000Z',
+        },
         'chapters': <Object?>[
           <String, Object?>{
             'id': bookId,
@@ -185,6 +237,28 @@ http.Response _answer() {
           },
         ],
         'wordCount': 120,
+      },
+    }),
+    200,
+    headers: <String, String>{'content-type': 'application/json'},
+  );
+}
+
+/// Builds the answer of the page of an author.
+http.Response _authorAnswer() {
+  return http.Response(
+    jsonEncode(<String, Object?>{
+      'data': <String, Object?>{
+        'books': <Object?>[
+          <String, Object?>{
+            'id': bookId,
+            'title': bookTitle,
+            'synopsis': 'Un synopsis.',
+            'wordCount': 120,
+            'coverUrl': '/v1/public/books/$bookId/cover',
+            'publishedAt': '2026-10-02T00:00:00.000Z',
+          },
+        ],
       },
     }),
     200,

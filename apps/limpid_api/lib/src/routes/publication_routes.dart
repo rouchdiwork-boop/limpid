@@ -11,6 +11,8 @@ import '../http/api_response.dart';
 import '../middleware/rate_limiter.dart';
 import '../sync/sync_protocol.dart';
 import 'publication_author_routes.dart';
+import 'publication_cover.dart';
+import 'publication_metadata.dart';
 
 /// The route of the public page of a book.
 const String publicBookRoute = '/v1/public/books/<projectId>';
@@ -33,6 +35,17 @@ const int maxExcerptLength = 320;
 
 /// The character appended to a truncated excerpt.
 const String excerptEllipsis = '…';
+
+/// The metadata that carries the chapter of a scene.
+///
+/// The key is a convention shared with the application
+/// (`apps/limpid_app/lib/src/domain/scene_metadata.dart`): the application
+/// writes it when a scene is born, and the server reads it to rebuild the
+/// hierarchy of the book.
+const String chapterIdMetaKey = 'chapter_id';
+
+/// The metadata that carries the title of the chapter of a scene.
+const String chapterTitleMetaKey = 'chapter_title';
 
 /// Registers the routes of the public showcase.
 ///
@@ -65,6 +78,14 @@ void registerPublicationRoutes(
     );
   });
 
+  // La couverture est un artefact comme la page : elle est servie au même
+  // visiteur, et elle répond le même `404` pour un livre privé.
+  router.get(publicBookCoverRoute, (Request request, String projectId) {
+    return limit(
+      (Request request) => servePublicCover(dependencies, projectId),
+    )(request);
+  });
+
   // La page d'un auteur appartient à la même vitrine : elle est enregistrée
   // ici, parce que le routeur de l'API ne connaît que cette fonction.
   registerPublicationAuthorRoutes(router, dependencies, config);
@@ -94,18 +115,28 @@ Future<Response> _serveBook(
     projectId: projectId,
   );
   final List<PublishedScene> scenes = _scenesOf(operations);
+  final PublishedMetadata metadata = await publishedMetadataOf(
+    dependencies,
+    project.id,
+  );
+
   return ApiResponse.ok(<String, Object?>{
     'project': _projectJson(project),
-    'chapters': <Map<String, Object?>>[_chapterJson(project, scenes)],
+    'cover': <String, Object?>{'url': publicCoverUrlOf(project.id)},
+    if (!metadata.isEmpty) 'metadata': metadata.toJson(),
+    'chapters': <Map<String, Object?>>[
+      for (final PublishedChapter chapter in _chaptersOf(project, scenes))
+        _chapterJson(chapter),
+    ],
     'wordCount': _totalWords(scenes),
   });
 }
 
-/// Le nombre de mots que le livre tient.
+/// The number of words that the book holds.
 ///
-/// Le compte est lu dans le journal du livre, exactement comme la vitrine
-/// d'un livre compte les mots de ses scènes : la page d'un auteur et la
-/// vitrine d'un livre disent la même chose sur la longueur d'un manuscrit.
+/// The count is read in the journal of the book, exactly as the showcase
+/// of a book counts the words of its scenes: the page of an author and the
+/// showcase of a book say the same thing about the length of a manuscript.
 Future<int> publicWordCountOf(
   AppDependencies dependencies,
   String projectId,
@@ -131,20 +162,68 @@ Map<String, Object?> _projectJson(ProjectRecord project) {
   };
 }
 
-/// The chapter the showcase publishes for a book.
+/// The chapters of the book, in reading order.
 ///
-/// The API does not know the chapters of a book yet — the structure routes
-/// of the manuscript are not built — so the book is published as a single
-/// chapter, and the scenes of the book are its scenes.
-Map<String, Object?> _chapterJson(
+/// A scene that names its chapter joins it. The scenes that name no chapter
+/// form the last chapter of the book: a manuscript whose hierarchy did not
+/// travel yet is published as a single chapter, and never as a book of
+/// nothing.
+List<PublishedChapter> _chaptersOf(
   ProjectRecord project,
   List<PublishedScene> scenes,
 ) {
+  final List<String> order = <String>[];
+  final Map<String, List<PublishedScene>> grouped =
+      <String, List<PublishedScene>>{};
+  final Map<String, String> titles = <String, String>{};
+  final List<PublishedScene> loose = <PublishedScene>[];
+
+  for (final PublishedScene scene in scenes) {
+    final String id = scene.chapterId ?? '';
+    if (id.isEmpty) {
+      loose.add(scene);
+      continue;
+    }
+    final List<PublishedScene>? known = grouped[id];
+    if (known == null) {
+      grouped[id] = <PublishedScene>[scene];
+      titles[id] = scene.chapterTitle ?? '';
+      order.add(id);
+      continue;
+    }
+    known.add(scene);
+  }
+
+  final List<PublishedChapter> chapters = <PublishedChapter>[
+    for (final String id in order)
+      PublishedChapter(
+        id: id,
+        title: titles[id] ?? '',
+        synopsis: '',
+        scenes: List<PublishedScene>.unmodifiable(grouped[id]!),
+      ),
+  ];
+  if (loose.isEmpty) {
+    return List<PublishedChapter>.unmodifiable(chapters);
+  }
+  return List<PublishedChapter>.unmodifiable(<PublishedChapter>[
+    ...chapters,
+    PublishedChapter(
+      id: project.id,
+      title: project.title,
+      synopsis: '',
+      scenes: List<PublishedScene>.unmodifiable(loose),
+    ),
+  ]);
+}
+
+/// The chapter the showcase publishes.
+Map<String, Object?> _chapterJson(PublishedChapter chapter) {
   return <String, Object?>{
-    'id': project.id,
-    'title': project.title,
-    'synopsis': '',
-    'scenes': scenes.map(_sceneJson).toList(growable: false),
+    'id': chapter.id,
+    'title': chapter.title,
+    'synopsis': chapter.synopsis,
+    'scenes': chapter.scenes.map(_sceneJson).toList(growable: false),
   };
 }
 
@@ -167,6 +246,29 @@ int _totalWords(List<PublishedScene> scenes) {
   return total;
 }
 
+/// A chapter of a published book, with the scenes a reader may read.
+final class PublishedChapter {
+  /// Creates a chapter of a published book.
+  const PublishedChapter({
+    required this.id,
+    required this.title,
+    required this.synopsis,
+    required this.scenes,
+  });
+
+  /// The identifier of the chapter.
+  final String id;
+
+  /// The title of the chapter.
+  final String title;
+
+  /// The synopsis of the chapter.
+  final String synopsis;
+
+  /// The scenes of the chapter, in reading order.
+  final List<PublishedScene> scenes;
+}
+
 /// A scene of a published book, reduced to what a reader may see.
 final class PublishedScene {
   /// Creates a scene of a published book.
@@ -175,6 +277,8 @@ final class PublishedScene {
     required this.title,
     required this.excerpt,
     required this.wordCount,
+    this.chapterId,
+    this.chapterTitle,
   });
 
   /// The identifier of the scene.
@@ -188,6 +292,14 @@ final class PublishedScene {
 
   /// The number of words the scene holds.
   final int wordCount;
+
+  /// The identifier of the chapter of the scene, `null` when the scene names
+  /// no chapter.
+  final String? chapterId;
+
+  /// The title of the chapter of the scene, `null` when the scene names no
+  /// chapter.
+  final String? chapterTitle;
 }
 
 /// The scenes of a book: one scene per synchronised document.
@@ -215,10 +327,18 @@ List<PublishedScene> _scenesOf(List<SyncOpRecord> operations) {
         wordCount: WordCount.ofBlocks(
           document.blocks.where((Block block) => !block.deleted),
         ),
+        chapterId: _metaOf(document, chapterIdMetaKey),
+        chapterTitle: _metaOf(document, chapterTitleMetaKey),
       ),
     );
   }
   return List<PublishedScene>.unmodifiable(scenes);
+}
+
+/// The value of the metadata [key], `null` when it is absent or empty.
+String? _metaOf(CrdtDocument document, String key) {
+  final String value = document.meta[key]?.trim() ?? '';
+  return value.isEmpty ? null : value;
 }
 
 /// Rebuilds the document of a scene from the operations of the journal.

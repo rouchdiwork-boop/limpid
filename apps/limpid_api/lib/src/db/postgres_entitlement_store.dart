@@ -17,7 +17,7 @@ final class PostgresEntitlementStore implements EntitlementStore {
   static const String _columns =
       'id, user_id, project_id, source, granted_at, created_at, '
       'amount_cents, currency, author_share, platform_share, '
-      'author_amount_cents, platform_amount_cents, promo_code';
+      'author_amount_cents, platform_amount_cents, promo_code, bundle_id';
 
   @override
   Future<EntitlementRecord?> find({
@@ -49,9 +49,9 @@ final class PostgresEntitlementStore implements EntitlementStore {
       'INSERT INTO entitlements '
       '(id, user_id, project_id, source, granted_at, created_at, '
       'amount_cents, currency, author_share, platform_share, '
-      'author_amount_cents, platform_amount_cents, promo_code) '
+      'author_amount_cents, platform_amount_cents, promo_code, bundle_id) '
       'VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8, \$9, \$10, \$11, \$12, '
-      '\$13) ON CONFLICT DO NOTHING',
+      '\$13, \$14) ON CONFLICT DO NOTHING',
       parameters: <Object?>[
         record.id,
         record.userId,
@@ -66,6 +66,7 @@ final class PostgresEntitlementStore implements EntitlementStore {
         record.authorAmountInCents,
         record.platformAmountInCents,
         record.promoCode,
+        record.bundleId,
       ],
     );
     if (inserted.affectedRows > 0) {
@@ -117,6 +118,7 @@ final class PostgresEntitlementStore implements EntitlementStore {
       authorAmountInCents: (columns['author_amount_cents']! as num).toInt(),
       platformAmountInCents: (columns['platform_amount_cents']! as num).toInt(),
       promoCode: columns['promo_code'] as String?,
+      bundleId: columns['bundle_id'] as String?,
     );
   }
 

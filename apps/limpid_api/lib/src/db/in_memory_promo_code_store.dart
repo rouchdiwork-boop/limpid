@@ -55,6 +55,20 @@ final class InMemoryPromoCodeStore implements PromoCodeStore {
   /// La clé du compteur d'usage d'un compte pour un code.
   static String _usageKey(String code, String userId) => '$code::$userId';
 
+  @override
+  Future<void> release({required String code, required String userId}) async {
+    final String key = normalizePromoCode(code);
+    final PromoCodeRecord? record = _codes[key];
+    if (record == null) return;
+    final String usageKey = _usageKey(key, userId);
+    final int used = _usagesByAccount[usageKey] ?? 0;
+    if (used <= 0) return;
+    _usagesByAccount[usageKey] = used - 1;
+    if (record.uses > 0) {
+      _codes[key] = _withUses(record, record.uses - 1);
+    }
+  }
+
   /// Le code, avec un compteur d'utilisations.
   static PromoCodeRecord _withUses(PromoCodeRecord record, int uses) {
     return PromoCodeRecord(

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:limpid_api/limpid_api.dart';
-import 'package:limpid_api/src/routes/ai_routes.dart';
 import 'package:limpid_api/src/routes/export_routes.dart';
 import 'package:limpid_api/src/routes/project_routes.dart';
 import 'package:limpid_core/limpid_core.dart';

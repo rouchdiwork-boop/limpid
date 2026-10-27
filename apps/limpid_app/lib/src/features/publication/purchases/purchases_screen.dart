@@ -144,6 +144,9 @@ class _PurchaseTile extends StatelessWidget {
     final BookFile? downloaded = file;
     final bool isExpired =
         downloaded != null && downloaded.isExpiredAt(DateTime.now());
+    // La provenance de l'achat : un livre achete par un bundle montre le
+    // bundle qui l'a porte.
+    final String? bundleTitle = purchase.bundleTitle;
 
     return LimpidCard(
       key: purchaseTileKey(purchase.projectId),
@@ -162,6 +165,27 @@ class _PurchaseTile extends StatelessWidget {
             strings.purchasesBoughtOn(_dateOf(context, purchase.grantedAt)),
             style: textTheme.bodySmall?.copyWith(color: scope.colors.fgMuted),
           ),
+          if (bundleTitle != null) ...<Widget>[
+            SizedBox(height: scope.spacing.space4),
+            Row(
+              children: <Widget>[
+                Icon(
+                  LimpidIcons.library,
+                  size: 14,
+                  color: scope.colors.fgSubtle,
+                ),
+                SizedBox(width: scope.spacing.space8),
+                Expanded(
+                  child: Text(
+                    bundleTitle,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scope.colors.fgSubtle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (downloaded != null) ...<Widget>[
             SizedBox(height: scope.spacing.space4),
             Text(

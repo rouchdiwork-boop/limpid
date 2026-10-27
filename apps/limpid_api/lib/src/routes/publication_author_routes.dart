@@ -2,12 +2,14 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import '../config/app_config.dart';
+import '../db/book_sale_store.dart';
 import '../db/project_record.dart';
 import '../db/project_store.dart';
 import '../dependencies.dart';
 import '../errors/app_exception.dart';
 import '../http/api_response.dart';
 import '../middleware/rate_limiter.dart';
+import 'publication_cover.dart';
 import 'publication_routes.dart';
 
 /// La route de la page publique d'un auteur.
@@ -82,9 +84,15 @@ Future<Response> _serveAuthor(
     throw const NotFoundException();
   }
 
+  final Map<String, DateTime> publishedAt = await _publicationDates(
+    dependencies,
+    authorId,
+  );
+  final List<ProjectRecord> ordered = _byPublication(books, publishedAt);
+
   final List<Map<String, Object?>> entries = <Map<String, Object?>>[];
-  for (final ProjectRecord book in books) {
-    entries.add(await _bookJson(dependencies, book));
+  for (final ProjectRecord book in ordered) {
+    entries.add(await _bookJson(dependencies, book, publishedAt[book.id]));
   }
 
   return ApiResponse.ok(<String, Object?>{'books': entries});
@@ -119,6 +127,60 @@ Future<List<ProjectRecord>> _publishedBooks(
   return published;
 }
 
+/// Les dates de publication des livres de l'auteur.
+///
+/// La date est celle de la **mise en vente** du livre : c'est l'acte qui
+/// publie le livre, et il ne bouge plus. Une republication garde la première
+/// date : l'ordre de la page ne change pas quand l'auteur repasse son
+/// livre en vente.
+///
+/// Un serveur qui ne tient pas les ventes ne date aucun livre : les livres
+/// viennent alors après les autres, et la page reste lisible.
+Future<Map<String, DateTime>> _publicationDates(
+  AppDependencies dependencies,
+  String authorId,
+) async {
+  final BookSaleStore? sales = dependencies.bookSales;
+  if (sales == null) return const <String, DateTime>{};
+  final List<BookSaleRecord> records = await sales.listByOwner(authorId);
+  final Map<String, DateTime> dates = <String, DateTime>{};
+  for (final BookSaleRecord record in records) {
+    final DateTime? publishedAt = record.publishedAt;
+    if (publishedAt == null) continue;
+    final DateTime? known = dates[record.projectId];
+    if (known == null || publishedAt.isBefore(known)) {
+      dates[record.projectId] = publishedAt;
+    }
+  }
+  return dates;
+}
+
+/// Les livres de l'auteur, du plus récemment publié au plus ancien.
+///
+/// L'ordre est celui de la **publication** : un livre publié plus tard passe
+/// devant un livre publié plus tôt, et un livre qui n'a jamais été publié
+/// vient après les autres. Modifier un livre ne change pas cet ordre : c'est
+/// la publication qui place le livre.
+List<ProjectRecord> _byPublication(
+  List<ProjectRecord> books,
+  Map<String, DateTime> publishedAt,
+) {
+  final List<ProjectRecord> ordered = List<ProjectRecord>.of(books);
+  ordered.sort((ProjectRecord left, ProjectRecord right) {
+    final DateTime? leftDate = publishedAt[left.id];
+    final DateTime? rightDate = publishedAt[right.id];
+    if (leftDate != null && rightDate != null) {
+      final int byDate = rightDate.compareTo(leftDate);
+      if (byDate != 0) return byDate;
+      return left.id.compareTo(right.id);
+    }
+    if (leftDate != null) return -1;
+    if (rightDate != null) return 1;
+    return left.id.compareTo(right.id);
+  });
+  return List<ProjectRecord>.unmodifiable(ordered);
+}
+
 /// La partie publique d'un livre : son titre, son résumé et sa longueur.
 ///
 /// Le propriétaire, les membres, l'étape du manuscrit et le texte des scènes
@@ -127,6 +189,7 @@ Future<List<ProjectRecord>> _publishedBooks(
 Future<Map<String, Object?>> _bookJson(
   AppDependencies dependencies,
   ProjectRecord book,
+  DateTime? publishedAt,
 ) async {
   final int words = await publicWordCountOf(dependencies, book.id);
   return <String, Object?>{
@@ -134,5 +197,8 @@ Future<Map<String, Object?>> _bookJson(
     'title': book.title,
     'synopsis': book.synopsis,
     'wordCount': words,
+    'coverUrl': publicCoverUrlOf(book.id),
+    if (publishedAt != null)
+      'publishedAt': publishedAt.toUtc().toIso8601String(),
   };
 }

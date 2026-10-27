@@ -84,6 +84,9 @@ final class StubAiGateway implements AiGateway {
   int queryCalls = 0;
 
   @override
+  Future<void> ensureConsent({required String userId}) async {}
+
+  @override
   Stream<AiEvent> generate(AiGenerateRequest request) {
     generateCalls++;
     return _answer();

@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'package:limpid_ai/limpid_ai.dart' hide AiInlineRequest, AiQueryRequest;
 
 import '../errors/app_exception.dart';
+import 'ai_consent_service.dart';
 import 'ai_gateway.dart';
 
 /// The [AiGateway] backed by the multi-provider gateway of `limpid_ai`.
@@ -10,9 +11,15 @@ import 'ai_gateway.dart';
 /// environment and never reaches the logs.
 final class LimpidAiGateway implements AiGateway {
   /// Creates a gateway on top of [client].
+  ///
+  /// [consents] porte le consentement de l'auteur : sans lui, la passerelle
+  /// refuse tout appel, car elle ne peut pas dire si le texte de l'auteur a
+  /// le droit de partir chez un tiers (D-08).
   const LimpidAiGateway({
     required this.client,
     this.estimator = const HeuristicTokenEstimator(),
+    this.consents,
+    this.provider = 'anthropic',
   });
 
   /// The underlying AI client.
@@ -25,9 +32,26 @@ final class LimpidAiGateway implements AiGateway {
   /// be exact ends up in the invoice of an author.
   final TokenEstimator estimator;
 
+  /// Le service du consentement de l'auteur, `null` quand il n'est pas
+  /// configuré.
+  ///
+  /// Une passerelle sans ce service ne demande rien à personne, et refuse
+  /// donc tout appel : mieux vaut un assistant indisponible qu'un texte
+  /// parti sans l'accord de son auteur.
+  final AiConsentService? consents;
+
+  /// Le fournisseur que la passerelle interroge vraiment.
+  ///
+  /// C'est ce nom que la garde du consentement regarde : la decision de
+  /// l'auteur porte sur le fournisseur qui recoit son texte, pas sur celui
+  /// que le service de consentement croit configure. Les deux doivent
+  /// dire la meme chose.
+  final String provider;
+
   /// Builds a gateway talking to Anthropic with [apiKey].
   factory LimpidAiGateway.anthropic({
     required String apiKey,
+    AiConsentService? consents,
     http.Client? httpClient,
   }) {
     final InMemoryCredentialStore credentials = InMemoryCredentialStore();
@@ -40,7 +64,25 @@ final class LimpidAiGateway implements AiGateway {
       client: AiClient.withProviders(<AiProviderKind, LlmProvider>{
         AiProviderKind.anthropic: provider,
       }),
+      consents: consents,
     );
+  }
+
+  /// Vérifie que l'auteur a autorisé l'envoi de son texte.
+  ///
+  /// La vérification est **avant** l'appel : elle lève une exception, et ni
+  /// la fournisseur n'est appelée ni le flux ouvert.
+  @override
+  Future<void> ensureConsent({required String userId}) async {
+    final AiConsentService? service = consents;
+    if (service == null) {
+      throw const ServiceUnavailableException(
+        message:
+            "Le contrôle du consentement à l'IA n'est pas configuré sur ce "
+            "poste : l'assistant est indisponible.",
+      );
+    }
+    await service.ensureAllowed(userId: userId, provider: provider);
   }
 
   @override

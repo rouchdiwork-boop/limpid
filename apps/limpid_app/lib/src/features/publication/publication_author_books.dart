@@ -14,6 +14,8 @@ final class AuthorBook {
     required this.title,
     required this.synopsis,
     required this.wordCount,
+    this.coverUrl = '',
+    this.publishedAt,
   });
 
   /// L'identifiant du livre.
@@ -27,6 +29,15 @@ final class AuthorBook {
 
   /// Le nombre de mots du livre.
   final int wordCount;
+
+  /// L'adresse de la couverture du livre, vide quand le livre n'en a pas.
+  ///
+  /// L'adresse est celle du serveur : la page montre l'artefact quand il
+  /// existe, et le fond de l'écran sinon.
+  final String coverUrl;
+
+  /// La date de publication du livre, `null` quand il n'en a pas.
+  final DateTime? publishedAt;
 }
 
 /// La capacité dont la page d'un auteur a besoin.

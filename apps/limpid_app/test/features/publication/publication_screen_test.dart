@@ -385,6 +385,79 @@ void main() {
       expect(publications.calls, 1);
     });
 
+    testWidgets('shows the metadata the author published', (tester) async {
+      useSurface(tester, const Size(1440, 1100));
+      final FakePublicationPageRepository publications =
+          FakePublicationPageRepository(
+            publication: const PublishedBook(
+              project: Project(
+                id: ProjectId('heures'),
+                ownerId: kPublicBookAuthorId,
+                title: 'Les Heures de Cendre',
+                synopsis: bookSynopsis,
+                status: ManuscriptStatus.published,
+                order: OrderKey.initial,
+              ),
+              chapters: <PublicationChapter>[],
+              metadata: PublicationMetadata(
+                isbn: '9782491503827',
+                language: 'fr-FR',
+                priceInCents: 890,
+                currency: 'eur',
+                contributors: <String>['Aurélien Sandre'],
+                categories: <String>['FICTION / Général'],
+              ),
+            ),
+          );
+
+      await tester.pumpWidget(
+        harness(
+          child: const PublicationScreen(projectId: 'heures'),
+          publications: publications,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final AppLocalizations strings = stringsOf(tester);
+      expect(find.byKey(publicationMetadataKey), findsOneWidget);
+      expect(find.text(strings.projectMetadataTitle), findsOneWidget);
+      expect(find.text(strings.projectMetadataIsbn), findsOneWidget);
+      expect(find.text('9782491503827'), findsOneWidget);
+      expect(find.text(strings.projectMetadataPrice), findsOneWidget);
+      expect(find.text('Aurélien Sandre'), findsOneWidget);
+      expect(find.text('FICTION / Général'), findsOneWidget);
+    });
+
+    testWidgets('shows no metadata card when the book published none', (
+      tester,
+    ) async {
+      useSurface(tester, const Size(1440, 1100));
+      final FakePublicationPageRepository publications =
+          FakePublicationPageRepository(
+            publication: const PublishedBook(
+              project: Project(
+                id: ProjectId('heures'),
+                ownerId: kPublicBookAuthorId,
+                title: 'Les Heures de Cendre',
+                synopsis: bookSynopsis,
+                status: ManuscriptStatus.published,
+                order: OrderKey.initial,
+              ),
+              chapters: <PublicationChapter>[],
+            ),
+          );
+
+      await tester.pumpWidget(
+        harness(
+          child: const PublicationScreen(projectId: 'heures'),
+          publications: publications,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(publicationMetadataKey), findsNothing);
+    });
+
     testWidgets('falls back to the local page when the server is down', (
       tester,
     ) async {

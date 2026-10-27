@@ -45,6 +45,26 @@ void main() {
       expect(data['url'], isA<String>());
     });
 
+    test(
+      'une adresse de retour hors des origines autorisées est refusée',
+      () async {
+        final http.Response response = await server.post(
+          '/v1/checkout',
+          headers: auth,
+          body: <String, Object?>{
+            'plan': 'studio',
+            'success_url': 'https://site-tiers.test/merci',
+            'cancel_url': 'https://site-tiers.test/abandon',
+          },
+        );
+
+        // L'adresse de retour est une surface d'hameçonnage : elle doit
+        // viser la plateforme, et une session n'a pas ete ouverte.
+        expect(response.statusCode, 400);
+        expect(server.payments.requests, isEmpty);
+      },
+    );
+
     test('porte le cycle demandé dans la commande', () async {
       final http.Response response = await server.post(
         '/v1/checkout',

@@ -95,6 +95,38 @@ void main() {
       expect(publications.calls, 1);
     });
 
+    testWidgets('montre la couverture que le serveur publie', (tester) async {
+      useSurface(tester, const Size(1440, 1100));
+      final FakeAuthorBooksRepository publications = FakeAuthorBooksRepository(
+        books: <AuthorBook>[
+          const AuthorBook(
+            id: 'heures',
+            title: firstTitle,
+            synopsis: firstSynopsis,
+            wordCount: 4300,
+            coverUrl: '/v1/public/books/heures/cover',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        harness(
+          child: const PublicationAuthorScreen(authorId: 'auteur-1'),
+          publications: publications,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(authorBookCoverKeyOf('heures')), findsOneWidget);
+      expect(
+        find.byType(ProjectCover),
+        findsOneWidget,
+        reason:
+            'le serveur ne rend pas la couverture dans un test : '
+            'la page montre son propre fond',
+      );
+    });
+
     testWidgets('ouvre la vitrine du livre', (tester) async {
       useSurface(tester, const Size(1440, 1100));
       final FakeAuthorBooksRepository publications = FakeAuthorBooksRepository(

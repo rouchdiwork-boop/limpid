@@ -385,6 +385,16 @@ Future<void> _seedAuthor(SqliteDatabase database, String userId) async {
     'status': 'succeeded',
     'created_at': _stamp,
   });
+  await _insert(database, 'bundles', <String, Object?>{
+    'id': 'bundle-$userId',
+    'owner_id': userId,
+    'title': 'Les deux livres',
+    'project_ids': '[]',
+    'price_cents': 1500,
+    'currency': 'eur',
+    'is_published': 1,
+    'created_at': _stamp,
+  });
   await _insert(database, 'comment_threads', <String, Object?>{
     'id': 'thread-$userId',
     'project_id': book,
@@ -455,6 +465,13 @@ Future<void> _seedAuthor(SqliteDatabase database, String userId) async {
     'secret': 'JBSWY3DPEHPK3PXP',
     'is_enabled': 1,
     'created_at': _stamp,
+  });
+  await _insert(database, 'ai_consents', <String, Object?>{
+    'user_id': userId,
+    'scope': 'text_to_third_party',
+    'provider': 'anthropic',
+    'is_granted': 1,
+    'granted_at': _stamp,
   });
   await _insert(database, 'two_factor_recovery_codes', <String, Object?>{
     'user_id': userId,
@@ -633,6 +650,11 @@ void _seedInMemory(InMemoryAccountPurgeStore store, String userId) {
     owners: <String>{userId},
   );
   store.addRow(
+    table: 'bundles',
+    rowId: 'bundle-$userId',
+    owners: <String>{userId},
+  );
+  store.addRow(
     table: 'comment_threads',
     rowId: 'thread-$userId',
     owners: <String>{},
@@ -691,6 +713,11 @@ void _seedInMemory(InMemoryAccountPurgeStore store, String userId) {
   store.addRow(
     table: 'project_shares',
     rowId: 'share-$userId',
+    owners: <String>{userId},
+  );
+  store.addRow(
+    table: 'ai_consents',
+    rowId: 'consent-$userId',
     owners: <String>{userId},
   );
   store.addRow(

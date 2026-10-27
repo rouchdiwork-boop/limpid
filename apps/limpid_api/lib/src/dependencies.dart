@@ -6,6 +6,7 @@ import 'db/account_purge_store.dart';
 import 'db/admin_database.dart';
 import 'db/audit_log.dart';
 import 'db/book_sale_store.dart';
+import 'db/bundle_record.dart';
 import 'db/comment_store.dart';
 import 'db/entitlement_store.dart';
 import 'db/export_job_store.dart';
@@ -23,6 +24,7 @@ import 'db/webhook_database.dart';
 import 'errors/app_exception.dart';
 import 'logging/logger.dart';
 import 'redis/key_value_store.dart';
+import 'services/ai_consent_service.dart';
 import 'services/ai_gateway.dart';
 import 'services/feature_flag_service.dart';
 import 'services/idempotency_service.dart';
@@ -85,6 +87,8 @@ final class AppDependencies {
     this.entitlements,
     this.promoCodes,
     this.exportJobs,
+    this.aiConsents,
+    this.bundles,
   });
 
   /// The projects of the callers.
@@ -170,6 +174,15 @@ final class AppDependencies {
   /// The port is optional : a server qui n'exporte pas de livre ne sert
   /// pas les routes d'export, plutot que de les servir en erreur.
   final ExportJobStore? exportJobs;
+
+  /// The bundles of the books, when the feature is configured.
+  final BundleStore? bundles;
+
+  /// The consent of the accounts to send their text to a third party.
+  ///
+  /// The service is optional : un serveur qui ne controle pas l'envoi
+  /// refuse l'assistant plutot que de laisser partir le texte.
+  final AiConsentService? aiConsents;
 
   /// The Amazon KDP publications, when the feature is configured.
   final KdpDatabase? kdp;
@@ -281,6 +294,13 @@ final class DisabledKeyValueStore implements KeyValueStore {
 final class UnavailableAiGateway implements AiGateway {
   /// Creates a gateway.
   const UnavailableAiGateway();
+
+  @override
+  Future<void> ensureConsent({required String userId}) async {
+    // Aucun fournisseur n'est configure : il n'y a rien a envoyer, et
+    // l'appel est refuse de toute facon.
+    throw _notConfigured();
+  }
 
   @override
   Stream<AiEvent> generate(AiGenerateRequest request) => throw _notConfigured();

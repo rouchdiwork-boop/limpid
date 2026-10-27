@@ -49,6 +49,9 @@ abstract final class ErrorCodes {
   /// The AI provider is unavailable or saturated.
   static const String aiProviderUnavailable = 'ai_provider_unavailable';
 
+  /// L'auteur n'a pas autorisé l'envoi de son texte à un tiers.
+  static const String aiConsentRequired = 'ai_consent_required';
+
   /// The export generator failed; the operation can be retried.
   static const String exportFailed = 'export_failed';
 
@@ -254,6 +257,22 @@ final class AiProviderUnavailableException extends AppException {
     super.details = const <String, Object?>{},
     super.cause,
   }) : super(code: ErrorCodes.aiProviderUnavailable, statusCode: 503);
+}
+
+/// L'auteur n'a pas autorisé l'envoi de son texte à un tiers.
+///
+/// Le refus dit ce qu'il faut faire, et il ne dit rien du compte : le
+/// message ne divulgue ni l'identifiant du compte, ni son adresse, ni ce
+/// qu'il a écrit.
+final class AiConsentRequiredException extends AppException {
+  /// Crée un refus de consentement.
+  const AiConsentRequiredException({
+    super.message =
+        "L'envoi de votre texte à un fournisseur externe n'est pas "
+        'autorisé. Activez cette option dans vos réglages pour utiliser '
+        "l'assistant.",
+    super.details = const <String, Object?>{},
+  }) : super(code: ErrorCodes.aiConsentRequired, statusCode: 403);
 }
 
 /// The export generator failed; the operation can be retried.

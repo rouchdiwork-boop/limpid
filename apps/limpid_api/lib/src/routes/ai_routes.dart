@@ -41,6 +41,10 @@ const Set<String> aiCoverTaskKeys = <String>{'cover', AiTaskKeys.generateCover};
 /// quota mensuel de la formule sont vérifiés avant l'appel au fournisseur,
 /// et les jetons consommés ne sont comptés qu'une fois la réponse
 /// aboutie.
+///
+/// Le consentement de l'auteur (D-08) est demandé avant tout appel : la
+/// passerelle qui exige le consentement le vérifie, et la demande est
+/// refusée **avant** l'appel à la fournisseur et avant l'ouverture du flux.
 void registerAiRoutes(
   Router router,
   AppDependencies dependencies,
@@ -53,6 +57,7 @@ void registerAiRoutes(
 
   router.post('/v1/ai/generate', (Request request) async {
     final AuthContext auth = requireAuthContext(request);
+    await _ensureConsent(dependencies.ai, auth.userId);
     final JsonBody body = await JsonBody.fromRequest(
       request,
       maxBytes: config.maxBodyBytes,
@@ -123,6 +128,7 @@ void registerAiRoutes(
 
   router.post('/v1/ai/inline', (Request request) async {
     final AuthContext auth = requireAuthContext(request);
+    await _ensureConsent(dependencies.ai, auth.userId);
     final JsonBody body = await JsonBody.fromRequest(
       request,
       maxBytes: config.maxBodyBytes,
@@ -192,6 +198,7 @@ void registerAiRoutes(
 
   router.post('/v1/ai/query', (Request request) async {
     final AuthContext auth = requireAuthContext(request);
+    await _ensureConsent(dependencies.ai, auth.userId);
     final JsonBody body = await JsonBody.fromRequest(
       request,
       maxBytes: config.maxBodyBytes,
@@ -256,6 +263,19 @@ void registerAiRoutes(
       logger: dependencies.logger,
     );
   });
+}
+
+/// Demande le consentement de l'auteur, avant tout appel à la fournisseur.
+///
+/// La garde est **avant** l'appel : une demande refusée ne coûte rien à la
+/// fournisseur, et le flux de la réponse n'est jamais ouvert.
+///
+/// La garde fait partie du contrat de la passerelle (D-08) : celle qui
+/// interroge un tiers exige le consentement de l'auteur et répond `403`
+/// quand il manque ; celle qui n'a personne en face — un poste sans
+/// fournisseur configuré — refuse l'appel de toute façon.
+Future<void> _ensureConsent(AiGateway gateway, String userId) async {
+  await gateway.ensureConsent(userId: userId);
 }
 
 /// Applique les deux gardes des jetons, avant l'appel à la fournisseur.

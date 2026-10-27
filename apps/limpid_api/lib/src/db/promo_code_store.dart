@@ -179,4 +179,16 @@ abstract interface class PromoCodeStore {
     required String userId,
     required DateTime at,
   });
+
+  /// Rend une utilisation du code [code] réservée par le compte [userId].
+  ///
+  /// La libération rend au code la place qu'une réservation avait prise : le
+  /// quota global et l'usage du compte sont décomptés ensemble. Elle sert
+  /// quand la commande n'a pas abouti — la session de paiement n'a pas pu
+  /// être ouverte, ou elle a expiré sans que l'acheteur paie. Sans elle, un
+  /// code s'épuise sous des commandes abandonnées.
+  ///
+  /// La libération est **idempotente** : rendre une place qui n'a pas été
+  /// prise ne fait rien, et le compteur ne descend jamais sous zéro.
+  Future<void> release({required String code, required String userId});
 }

@@ -129,6 +129,8 @@ final class BookPurchase {
     required this.grantedAt,
     required this.amountInCents,
     required this.currency,
+    this.bundleId,
+    this.bundleTitle,
   });
 
   /// Le livre acheté.
@@ -145,6 +147,16 @@ final class BookPurchase {
 
   /// La devise du montant.
   final String currency;
+
+  /// Le bundle qui a porté l'achat, `null` quand le livre a été acheté
+  /// seul.
+  ///
+  /// C'est la **provenance** de l'achat : l'écran des achats la montre.
+  final String? bundleId;
+
+  /// Le titre du bundle qui a porté l'achat, `null` quand le livre a été
+  /// acheté seul.
+  final String? bundleTitle;
 }
 
 /// Le fichier d'un livre acheté.

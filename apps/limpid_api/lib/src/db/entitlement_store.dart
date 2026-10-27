@@ -22,6 +22,7 @@ final class EntitlementRecord {
     this.authorAmountInCents = 0,
     this.platformAmountInCents = 0,
     this.promoCode,
+    this.bundleId,
   });
 
   /// L'identifiant du droit.
@@ -70,6 +71,13 @@ final class EntitlementRecord {
   /// Le code promo utilisé pour l'achat, `null` quand il n'y en a pas.
   final String? promoCode;
 
+  /// Le bundle qui a porté le droit, `null` quand le livre a été acheté
+  /// seul.
+  ///
+  /// C'est la **provenance** de l'achat : un livre acheté par un bundle
+  /// montre le bundle qui l'a donné, et l'acheteur sait d'où il vient.
+  final String? bundleId;
+
   /// La représentation JSON du droit, envoyée aux clients.
   Map<String, Object?> toJson() {
     return <String, Object?>{
@@ -84,6 +92,7 @@ final class EntitlementRecord {
       'author_amount_cents': authorAmountInCents,
       'platform_amount_cents': platformAmountInCents,
       'promo_code': promoCode,
+      'bundle_id': bundleId,
     };
   }
 }

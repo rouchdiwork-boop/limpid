@@ -178,6 +178,20 @@ final class PromoCodeService {
     };
   }
 
+  /// Rend l'usage du code [code] réservé par le compte [userId].
+  ///
+  /// La libération rend au code la place prise par la réservation : elle
+  /// sert quand la commande n'a pas abouti — la session de paiement n'a pas
+  /// pu être ouverte, ou elle a expiré sans que l'acheteur paie. Sans elle,
+  /// le quota d'un code s'épuise sous des commandes abandonnées, et le code
+  /// devient inutilisable pour les acheteurs qui, eux, paient.
+  ///
+  /// La libération est **idempotente** : rendre une place qui n'a pas été
+  /// prise ne fait rien.
+  Future<void> release({required String code, required String userId}) async {
+    await store.release(code: code, userId: userId);
+  }
+
   /// La remise du code [granted] sur le prix [priceInCents].
   PromoRedemption _apply(
     PromoCodeRecord granted,

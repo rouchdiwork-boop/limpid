@@ -20,6 +20,12 @@ const String yearlyPlanSuffix = '_yearly';
 /// quelle commande il a affaire.
 const String bookPaymentKind = 'book';
 
+/// La marque qui distingue l'achat d'un bundle de l'achat d'un livre.
+///
+/// Comme la marque du livre, elle est écrite par le serveur : le client ne
+/// peut pas la forger.
+const String bundlePaymentKind = 'bundle';
+
 /// Une session de paiement Stripe.
 final class CheckoutSession {
   /// Crée une session.
@@ -275,7 +281,56 @@ final class BookCheckoutRequest {
   final String? promoCode;
 }
 
-/// La capacité de paiement d'un livre.
+/// La demande de session de paiement d'un bundle.
+///
+/// Un bundle se paie **une fois**, comme un livre : la demande ne porte
+/// ni formule ni cycle, mais un bundle, un montant et une devise. Le
+/// montant est celui que le serveur a lu dans sa base : le client ne peut
+/// pas le changer.
+final class BundleCheckoutRequest {
+  /// Crée une demande.
+  const BundleCheckoutRequest({
+    required this.userId,
+    required this.bundleId,
+    required this.title,
+    required this.priceInCents,
+    required this.currency,
+    required this.successUrl,
+    required this.cancelUrl,
+    this.idempotencyKey,
+    this.promoCode,
+  });
+
+  /// Le compte qui achète le bundle.
+  final String userId;
+
+  /// Le bundle acheté.
+  final String bundleId;
+
+  /// Le titre du bundle, porté par la ligne de commande.
+  final String title;
+
+  /// Le montant à payer, en centimes.
+  final int priceInCents;
+
+  /// La devise du montant.
+  final String currency;
+
+  /// L'adresse sur laquelle l'acheteur arrive après un paiement réussi.
+  final String successUrl;
+
+  /// L'adresse sur laquelle l'acheteur arrive quand il abandonne le
+  /// paiement.
+  final String cancelUrl;
+
+  /// La clé d'idempotence de l'appel, quand le client en a envoyé une.
+  final String? idempotencyKey;
+
+  /// Le code promo appliqué, `null` quand il n'y en a pas.
+  final String? promoCode;
+}
+
+/// La capacité de paiement d'une vente : un livre ou un bundle.
 ///
 /// Elle est un **frère** de [PaymentGateway] et non une partie : une
 /// passerelle qui ne sait pas vendre un livre — un serveur de test, une
@@ -285,6 +340,9 @@ final class BookCheckoutRequest {
 abstract interface class BookPaymentGateway {
   /// Ouvre une session de paiement unique pour un livre.
   Future<CheckoutSession> createBookSession(BookCheckoutRequest request);
+
+  /// Ouvre une session de paiement unique pour un bundle.
+  Future<CheckoutSession> createBundleSession(BundleCheckoutRequest request);
 }
 
 /// La passerelle de paiement d'un livre, quand la passerelle du serveur
@@ -406,6 +464,10 @@ final class StripePaymentGateway implements PaymentGateway, BookPaymentGateway {
       'metadata[user_id]': request.userId,
       'metadata[kind]': bookPaymentKind,
       'metadata[project_id]': request.projectId,
+      // Le montant que le serveur a calcule — prix moins remise — est ecrit
+      // dans la session : c'est lui que la ventilation doit reproduire,
+      // meme si le rappel ne porte pas le montant encaisse.
+      'metadata[amount_cents]': '${request.priceInCents}',
       if (request.promoCode != null) 'metadata[promo_code]': request.promoCode!,
       'line_items[0][quantity]': '1',
       'line_items[0][price_data][currency]': request.currency,
@@ -418,6 +480,66 @@ final class StripePaymentGateway implements PaymentGateway, BookPaymentGateway {
       'content-type': 'application/x-www-form-urlencoded',
       if (request.idempotencyKey != null)
         'idempotency-key': _bookIdempotencyKey(request),
+    };
+
+    final http.Response response = await _client
+        .post(
+          Uri.parse('$baseUrl/checkout/sessions'),
+          headers: headers,
+          body: body,
+        )
+        .timeout(timeout);
+
+    final Map<String, dynamic> payload = _decode(response);
+    final Object? id = payload['id'];
+    final Object? url = payload['url'];
+    if (id is! String || url is! String) {
+      throw const PaymentException(
+        message:
+            "Le service de paiement n'a pas renvoyé de session exploitable.",
+      );
+    }
+    return CheckoutSession(
+      id: id,
+      url: url,
+      ownerId: request.userId,
+      status: payload['status'] is String
+          ? payload['status']! as String
+          : 'open',
+    );
+  }
+
+  @override
+  Future<CheckoutSession> createBundleSession(
+    BundleCheckoutRequest request,
+  ) async {
+    // Le montant vient du bundle : le serveur l'a lu dans sa base, et le
+    // client ne peut pas le changer. La session est ouverte en mode
+    // `payment` : un bundle se paie une fois, il ne s'abonne pas.
+    final Map<String, String> body = <String, String>{
+      'mode': 'payment',
+      'success_url': request.successUrl,
+      'cancel_url': request.cancelUrl,
+      'client_reference_id': request.userId,
+      'metadata[user_id]': request.userId,
+      'metadata[kind]': bundlePaymentKind,
+      'metadata[bundle_id]': request.bundleId,
+      // Le montant que le serveur a calcule — prix moins remise — est ecrit
+      // dans la session : c'est lui que la ventilation doit reproduire,
+      // meme si le rappel ne porte pas le montant encaisse.
+      'metadata[amount_cents]': '${request.priceInCents}',
+      if (request.promoCode != null) 'metadata[promo_code]': request.promoCode!,
+      'line_items[0][quantity]': '1',
+      'line_items[0][price_data][currency]': request.currency,
+      'line_items[0][price_data][unit_amount]': '${request.priceInCents}',
+      'line_items[0][price_data][product_data][name]': request.title,
+    };
+
+    final Map<String, String> headers = <String, String>{
+      'authorization': 'Bearer $secretKey',
+      'content-type': 'application/x-www-form-urlencoded',
+      if (request.idempotencyKey != null)
+        'idempotency-key': _bundleIdempotencyKey(request),
     };
 
     final http.Response response = await _client
@@ -509,6 +631,16 @@ final class StripePaymentGateway implements PaymentGateway, BookPaymentGateway {
     return sha256.convert(utf8.encode(raw)).toString();
   }
 
+  /// La clé d'idempotence envoyée à Stripe pour l'achat d'un bundle.
+  ///
+  /// La clé est liée au compte **et** au bundle : un même client qui
+  /// commande deux bundles différents ne confond jamais les deux sessions.
+  static String _bundleIdempotencyKey(BundleCheckoutRequest request) {
+    final String raw =
+        '${request.userId}:${request.bundleId}:${request.idempotencyKey}';
+    return sha256.convert(utf8.encode(raw)).toString();
+  }
+
   Map<String, dynamic> _decode(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw PaymentException(
@@ -533,11 +665,27 @@ final class StubPaymentGateway implements PaymentGateway, BookPaymentGateway {
 
   final List<CheckoutRequest> requests = <CheckoutRequest>[];
   final List<BookCheckoutRequest> bookRequests = <BookCheckoutRequest>[];
+  final List<BundleCheckoutRequest> bundleRequests = <BundleCheckoutRequest>[];
   final Map<String, CheckoutSession> _sessions = <String, CheckoutSession>{};
+
+  /// L'erreur que la prochaine session leve, `null` quand tout va bien.
+  ///
+  /// Le double permet d'epreouver le chemin de l'echec : une commande dont
+  /// la session ne s'ouvre pas doit rendre ce qu'elle avait reserve.
+  Object? nextError;
+
+  /// Leve l'erreur.preparee, s'il y en a une.
+  void _throwPrepared() {
+    final Object? error = nextError;
+    if (error == null) return;
+    nextError = null;
+    throw error;
+  }
 
   @override
   Future<CheckoutSession> createSession(CheckoutRequest request) async {
     requests.add(request);
+    _throwPrepared();
     final CheckoutSession session = CheckoutSession(
       id: 'cs_test_${requests.length}',
       url: 'https://checkout.test/session/${requests.length}',
@@ -550,9 +698,25 @@ final class StubPaymentGateway implements PaymentGateway, BookPaymentGateway {
   @override
   Future<CheckoutSession> createBookSession(BookCheckoutRequest request) async {
     bookRequests.add(request);
+    _throwPrepared();
     final CheckoutSession session = CheckoutSession(
       id: 'cs_book_test_${bookRequests.length}',
       url: 'https://checkout.test/book/${bookRequests.length}',
+      ownerId: request.userId,
+    );
+    _sessions[session.id] = session;
+    return session;
+  }
+
+  @override
+  Future<CheckoutSession> createBundleSession(
+    BundleCheckoutRequest request,
+  ) async {
+    bundleRequests.add(request);
+    _throwPrepared();
+    final CheckoutSession session = CheckoutSession(
+      id: 'cs_bundle_test_${bundleRequests.length}',
+      url: 'https://checkout.test/bundle/${bundleRequests.length}',
       ownerId: request.userId,
     );
     _sessions[session.id] = session;

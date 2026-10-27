@@ -171,6 +171,17 @@ final class AiQueryRequest {
 /// The routes depend on this interface only, which lets the test suite run
 /// without any provider.
 abstract interface class AiGateway {
+  /// Vérifie que le compte [userId] a autorisé l'envoi de son texte.
+  ///
+  /// La vérification est **avant** l'appel : elle lève une exception, et
+  /// l'appel n'a pas lieu. Le flux de la réponse n'est jamais ouvert.
+  ///
+  /// La garde fait partie du **contrat** de la passerelle, et non d'une
+  /// interface séparée : une passerelle qui interroge un tiers ne peut
+  /// pas l'oublier, et une passerelle qui n'a personne en face refuse
+  /// l'appel de toute façon.
+  Future<void> ensureConsent({required String userId});
+
   /// Streams the answer of a free generation.
   Stream<AiEvent> generate(AiGenerateRequest request);
 

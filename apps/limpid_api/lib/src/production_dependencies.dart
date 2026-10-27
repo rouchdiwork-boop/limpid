@@ -8,8 +8,10 @@ import 'config/app_config.dart';
 import 'db/account_purge_external_store.dart';
 import 'db/account_purge_store.dart';
 import 'db/admin_database.dart';
+import 'db/ai_consent_store.dart';
 import 'db/audit_log.dart';
 import 'db/book_sale_store.dart';
+import 'db/bundle_record.dart';
 import 'db/comment_store.dart';
 import 'db/database.dart';
 import 'db/entitlement_store.dart';
@@ -18,8 +20,10 @@ import 'db/kdp_database.dart';
 import 'db/kdp_deposit_store.dart';
 import 'db/migration_runner.dart';
 import 'db/postgres_admin_database.dart';
+import 'db/postgres_ai_consent_store.dart';
 import 'db/postgres_audit_log.dart';
 import 'db/postgres_book_sale_store.dart';
+import 'db/postgres_bundle_store.dart';
 import 'db/postgres_entitlement_store.dart';
 import 'db/postgres_export_job_store.dart';
 import 'db/postgres_kdp_database.dart';
@@ -40,8 +44,10 @@ import 'db/sql_account_purge_external_store.dart';
 import 'db/sql_account_purge_store.dart';
 import 'db/sql_quota_database.dart';
 import 'db/sqlite_admin_database.dart';
+import 'db/sqlite_ai_consent_store.dart';
 import 'db/sqlite_audit_log.dart';
 import 'db/sqlite_book_sale_store.dart';
+import 'db/sqlite_bundle_store.dart';
 import 'db/sqlite_database.dart';
 import 'db/sqlite_entitlement_store.dart';
 import 'db/sqlite_export_job_store.dart';
@@ -67,6 +73,7 @@ import 'redis/key_value_store.dart';
 import 'redis/redis_client.dart';
 import 'services/account_purge.dart';
 import 'services/account_purge_scheduler.dart';
+import 'services/ai_consent_service.dart';
 import 'services/ai_gateway.dart';
 import 'services/amazon_kdp_gateway.dart';
 import 'services/api_access_guard.dart';
@@ -162,6 +169,11 @@ Future<AppDependencies> buildProductionDependencies(
   // la boucle le trouve apres un redemarrage.
   late final ExportWorkerLoop exportWorker;
 
+  // Le consentement a l'IA : l'auteur doit avoir accepte que son texte
+  // parte chez le fournisseur. Le service est construit avant la passerelle,
+  // qui le tient pour verifier chaque appel.
+  final AiConsentService consents = AiConsentService(store: stores.aiConsents);
+
   final AppDependencies dependencies = AppDependencies(
     projects: stores.projects,
     sync: stores.sync,
@@ -177,6 +189,9 @@ Future<AppDependencies> buildProductionDependencies(
     bookSales: stores.bookSales,
     entitlements: stores.entitlements,
     promoCodes: stores.promoCodes,
+    exportJobs: stores.exportJobs,
+    aiConsents: consents,
+    bundles: stores.bundles,
     kdp: stores.kdp,
     kdpDeposits: stores.kdpDeposits,
     stripeEvents: stores.stripeEvents,
@@ -199,7 +214,7 @@ Future<AppDependencies> buildProductionDependencies(
       // deploiement est refuse.
       allowPrivateHosts: !config.profile.isStrict,
     ),
-    ai: _buildAiGateway(config),
+    ai: _buildAiGateway(config, consents),
     payments: _buildPaymentGateway(config),
     storage: _buildObjectStorage(config),
     keyValue: keyValue,
@@ -240,6 +255,8 @@ final class _Stores {
     required this.entitlements,
     required this.promoCodes,
     required this.exportJobs,
+    required this.aiConsents,
+    required this.bundles,
     required this.kdp,
     required this.kdpDeposits,
     required this.stripeEvents,
@@ -265,6 +282,8 @@ final class _Stores {
   final EntitlementStore entitlements;
   final PromoCodeStore promoCodes;
   final ExportJobStore exportJobs;
+  final AiConsentStore aiConsents;
+  final BundleStore bundles;
   final KdpDatabase kdp;
   final KdpDepositStore kdpDeposits;
   final StripeEventDatabase stripeEvents;
@@ -333,6 +352,8 @@ Future<_Stores> _postgresStores(
     entitlements: PostgresEntitlementStore(resolvedPool),
     promoCodes: PostgresPromoCodeStore(resolvedPool),
     exportJobs: PostgresExportJobStore(resolvedPool),
+    aiConsents: PostgresAiConsentStore(resolvedPool),
+    bundles: PostgresBundleStore(resolvedPool),
     kdp: PostgresKdpDatabase(
       resolvedPool,
       planLookup: _planLookupOf(quotas),
@@ -386,6 +407,8 @@ Future<_Stores> _sqliteStores(
     entitlements: SqliteEntitlementStore(resolved),
     promoCodes: SqlitePromoCodeStore(resolved),
     exportJobs: SqliteExportJobStore(resolved),
+    aiConsents: SqliteAiConsentStore(resolved),
+    bundles: SqliteBundleStore(resolved),
     kdp: SqliteKdpDatabase(
       resolved,
       planLookup: _planLookupOf(quotas),
@@ -416,9 +439,14 @@ Future<RedisClient?> _connectRedis(AppConfig config, Logger logger) async {
   }
 }
 
-AiGateway _buildAiGateway(AppConfig config) {
+AiGateway _buildAiGateway(AppConfig config, AiConsentService consents) {
   if (!config.hasAiProvider) return const UnavailableAiGateway();
-  return LimpidAiGateway.anthropic(apiKey: config.anthropicApiKey);
+  // Le consentement est obligatoire : une passerelle sans service refuse
+  // tout, plutot que de laisser partir le texte de l'auteur.
+  return LimpidAiGateway.anthropic(
+    apiKey: config.anthropicApiKey,
+    consents: consents,
+  );
 }
 
 PaymentGateway _buildPaymentGateway(AppConfig config) {

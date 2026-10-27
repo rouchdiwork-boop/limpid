@@ -68,6 +68,79 @@ final class ApiPublicationRepository
       chapters: List<PublicationChapter>.unmodifiable(
         _chaptersOf(payload['chapters']),
       ),
+      coverUrl: _coverUrlOf(payload['cover']),
+      metadata: _metadataOf(payload['metadata']),
+    );
+  }
+
+  /// The address of the cover of the book, empty when it carries none.
+  ///
+  /// The server answers a relative address — the cover belongs to the page
+  /// of the book. The application resolves it against the address of the
+  /// API : the page never draws a broken image, and a book without cover
+  /// keeps its own background.
+  String _coverUrlOf(Object? raw) {
+    if (raw is! Map<String, Object?>) return '';
+    final Object? url = raw['url'];
+    if (url is! String || url.isEmpty) return '';
+    return _absoluteOf(url).toString();
+  }
+
+  /// The absolute address of [path] on the API.
+  Uri _absoluteOf(String path) {
+    final Uri base = client.baseUrl;
+    final String prefix = base.path.endsWith('/')
+        ? base.path.substring(0, base.path.length - 1)
+        : base.path;
+    return base.replace(path: '$prefix$path');
+  }
+
+  /// The commercial metadata the server published.
+  PublicationMetadata _metadataOf(Object? raw) {
+    if (raw is! Map<String, Object?>) return const PublicationMetadata();
+    return PublicationMetadata(
+      isbn: _textOf(raw, 'isbn'),
+      publisher: _textOf(raw, 'publisher'),
+      description: _textOf(raw, 'description'),
+      language: _textOf(raw, 'language'),
+      contributors: _stringsOf(raw, 'contributors'),
+      keywords: _stringsOf(raw, 'keywords'),
+      categories: _stringsOf(raw, 'categories'),
+      priceInCents: _priceOf(raw['price']),
+      currency: _currencyOf(raw['price']),
+      publishedAt: _dateOf(raw, 'publishedAt'),
+    );
+  }
+
+  /// The price published by the server, `null` when it carries none.
+  int? _priceOf(Object? raw) {
+    if (raw is! Map<String, Object?>) return null;
+    final Object? amount = raw['amount'];
+    if (amount is int) return amount;
+    if (amount is num) return amount.toInt();
+    return null;
+  }
+
+  /// The currency of the published price.
+  String _currencyOf(Object? raw) {
+    if (raw is! Map<String, Object?>) return '';
+    final Object? currency = raw['currency'];
+    return currency is String ? currency : '';
+  }
+
+  /// The date published by the server, `null` when it carries none.
+  DateTime? _dateOf(Map<String, Object?> json, String field) {
+    final Object? value = json[field];
+    if (value is! String || value.isEmpty) return null;
+    return DateTime.tryParse(value);
+  }
+
+  /// The list of strings published by the server.
+  List<String> _stringsOf(Map<String, Object?> json, String field) {
+    final Object? value = json[field];
+    if (value is! List<Object?>) return const <String>[];
+    return List<String>.unmodifiable(
+      value.whereType<String>().where((String item) => item.isNotEmpty),
     );
   }
 
@@ -177,7 +250,16 @@ final class ApiPublicationRepository
       title: _textOf(raw, 'title'),
       synopsis: _textOf(raw, 'synopsis'),
       wordCount: _wordCountOf(raw),
+      coverUrl: _absoluteCoverUrlOf(raw, 'coverUrl'),
+      publishedAt: _dateOf(raw, 'publishedAt'),
     );
+  }
+
+  /// The absolute address of the cover carried by [field].
+  String _absoluteCoverUrlOf(Map<String, Object?> json, String field) {
+    final String value = _textOf(json, field);
+    if (value.isEmpty) return '';
+    return _absoluteOf(value).toString();
   }
 
   /// Reads a JSON object, or refuses the answer.

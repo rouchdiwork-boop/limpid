@@ -4,6 +4,7 @@ import 'package:shelf_router/shelf_router.dart';
 import '../config/app_config.dart';
 import '../db/admin_database.dart';
 import '../db/book_sale_store.dart';
+import '../db/bundle_record.dart';
 import '../db/entitlement_store.dart';
 import '../db/kdp_database.dart';
 import '../db/kdp_deposit_store.dart';
@@ -17,7 +18,9 @@ import '../db/webhook_database.dart';
 import '../dependencies.dart';
 import '../errors/app_exception.dart';
 import '../http/api_response.dart';
+import '../services/ai_consent_service.dart';
 import '../services/book_sale_service.dart';
+import '../services/bundle_service.dart';
 import '../services/kdp_gateway.dart';
 import '../services/kdp_publishing_service.dart';
 import '../services/quota_gauges.dart';
@@ -25,8 +28,10 @@ import '../services/quota_service.dart';
 import '../services/stripe_webhook_service.dart';
 import 'account_routes.dart';
 import 'admin_routes.dart';
+import 'ai_consent_routes.dart';
 import 'ai_routes.dart';
 import 'book_sale_routes.dart';
+import 'bundle_routes.dart';
 import 'checkout_routes.dart';
 import 'comment_routes.dart';
 import 'export_routes.dart';
@@ -70,6 +75,12 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
   registerProjectRoutes(router, dependencies, config, quota: quota);
   registerSyncRoutes(router, dependencies, config, quota: quota);
   registerAiRoutes(router, dependencies, config, quota: quota);
+  // Le consentement a l'IA : la route existe quand le service est cable.
+  // Sans lui, l'assistant refuse tout (la passerelle est fail-closed).
+  final AiConsentService? consents = dependencies.aiConsents;
+  if (consents != null) {
+    registerAiConsentRoutes(router, dependencies, config, consents: consents);
+  }
   registerExportRoutes(
     router,
     dependencies,
@@ -137,6 +148,26 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
       router,
       dependencies,
       config,
+      sales: bookSales,
+      entitlements: entitlements,
+      promoCodes: promoCodes,
+      bundles: dependencies.bundles,
+    );
+  }
+
+  // Les bundles : plusieurs livres vendus ensemble. Le magasin est exige,
+  // comme celui de la vente : un serveur qui ne vend pas de bundle ne sert
+  // pas ces routes plutot que de les servir en erreur.
+  final BundleStore? bundles = dependencies.bundles;
+  if (bundles != null &&
+      bookSales != null &&
+      entitlements != null &&
+      promoCodes != null) {
+    registerBundleRoutes(
+      router,
+      dependencies,
+      config,
+      bundles: bundles,
       sales: bookSales,
       entitlements: entitlements,
       promoCodes: promoCodes,
@@ -227,6 +258,7 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
     final BookSaleStore? sales = dependencies.bookSales;
     final EntitlementStore? entitlements = dependencies.entitlements;
     final PromoCodeStore? promoCodes = dependencies.promoCodes;
+    BundleService? bundleService;
     if (sales != null && entitlements != null && promoCodes != null) {
       bookSalesService = BookSaleService(
         sales: sales,
@@ -236,6 +268,14 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
         storage: dependencies.storage,
         audit: dependencies.audit,
       );
+      final BundleStore? bundles = dependencies.bundles;
+      if (bundles != null) {
+        bundleService = BundleService(
+          bundles: bundles,
+          books: bookSalesService,
+          audit: dependencies.audit,
+        );
+      }
     }
     registerStripeWebhookRoutes(
       router,
@@ -247,6 +287,7 @@ Router buildRouter(AppDependencies dependencies, AppConfig config) {
         logger: dependencies.logger,
         handledEvents: config.stripeWebhookEvents,
         bookSales: bookSalesService,
+        bundles: bundleService,
       ),
       config,
     );

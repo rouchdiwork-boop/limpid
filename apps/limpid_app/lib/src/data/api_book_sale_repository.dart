@@ -209,6 +209,10 @@ final class ApiBookSaleRepository implements BookSaleRepository {
       grantedAt: _momentOf(data['granted_at']) ?? DateTime.now().toUtc(),
       amountInCents: _intOf(data['amount_cents']) ?? 0,
       currency: _stringOf(data['currency']) ?? 'eur',
+      // La provenance de l'achat : un livre acheté par un bundle montre le
+      // bundle qui l'a donné.
+      bundleId: _stringOf(data['bundle_id']),
+      bundleTitle: _stringOf(data['bundle_title']),
     );
   }
 

@@ -12,6 +12,7 @@ import 'package:limpid_app/src/features/security/two_factor_challenge.dart';
 import 'package:limpid_app/src/features/settings/local_data_erasure.dart';
 import 'package:limpid_app/src/features/settings/settings_data_section.dart';
 import 'package:limpid_app/src/features/settings/settings_dialogs.dart';
+import 'package:limpid_app/src/features/settings/settings_privacy_section.dart';
 import 'package:limpid_app/src/features/settings/settings_providers.dart';
 import 'package:limpid_app/src/features/settings/settings_sections.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
@@ -60,6 +61,8 @@ class SettingsScreen extends ConsumerWidget {
           _buildSync(context, ref, status, pending, syncAction),
           SizedBox(height: scope.spacing.space16),
           _buildSecurity(context, strings),
+          SizedBox(height: scope.spacing.space16),
+          const SettingsPrivacySection(),
           SizedBox(height: scope.spacing.space16),
           _buildDevices(context),
           SizedBox(height: scope.spacing.space16),

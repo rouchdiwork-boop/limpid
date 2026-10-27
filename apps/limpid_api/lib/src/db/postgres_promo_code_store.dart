@@ -114,6 +114,24 @@ final class PostgresPromoCodeStore implements PromoCodeStore {
     return PromoReservationGranted(updated);
   }
 
+  @override
+  Future<void> release({required String code, required String userId}) async {
+    final String key = normalizePromoCode(code);
+    // L'usage du compte est rendu d'abord : sans lui, le quota global
+    // serait decremente pour une place qui n'existe pas.
+    final Result usage = await _pool.execute(
+      'DELETE FROM promo_code_usages WHERE id = ('
+      'SELECT id FROM promo_code_usages WHERE code = \$1 AND user_id = \$2 '
+      'ORDER BY used_at DESC, id DESC LIMIT 1)',
+      parameters: <Object?>[key, userId],
+    );
+    if (usage.affectedRows == 0) return;
+    await _pool.execute(
+      'UPDATE promo_codes SET uses = uses - 1 WHERE code = \$1 AND uses > 0',
+      parameters: <Object?>[key],
+    );
+  }
+
   /// Lit un code depuis une ligne.
   static PromoCodeRecord _read(ResultRow row) {
     final Map<String, dynamic> columns = row.toColumnMap();

@@ -51,9 +51,9 @@
 | 1 | Structure narrative, éditeur par blocs, sauvegarde locale | O1 à O10, O12, E1 à E7, E10, E15, E16, P1 à P7 | 85 points | Lot 0 | **Codé** — éditeur de scène branché, base SQLite locale, plan et compteurs réels |
 | 2 | CRDT, transport de synchronisation, multi-appareils | T4, T5, E11 | 62 points | Lot 1 | **Codé** — file d'attente durable, transport REST et WebSocket, fuzz de convergence |
 | 3 | Révision, commentaires, présence, rôles | E17, C1 à C7 | 34 points | Lot 2 | **Partiel** — le panneau de relecture est livré : fils ancrés sur le texte, rôles de collaboration, résolution d'un fil ; la persistance des discussions est branchée ; la présence (C2) reste |
-| 4 | IA : inline, plan, personnages, RAG, cohérence | A1 à A8, A13 | 56 points | Lots 2, 3 | **Partiel** — passerelle et action inline branchées, le plan et la cohérence restent |
+| 4 | IA : inline, plan, personnages, RAG, cohérence | A1 à A8, A13 | 56 points | Lots 2, 3 | **Partiel** — passerelle et action inline branchées, le consentement de l'auteur est enregistré et contrôlé avant tout envoi ; le plan, les personnages et la cohérence restent |
 | 5 | Exports EPUB, PDF, DOCX, couverture IA | E12, E13, E14, A11, B4 | 47 points | Lots 1, 4 | **Partiel** — les six formats sont générés, la couverture SVG est générée puis attachée aux exports ; le code-barres (B4) attend l'ISBN, le PDF n'embarque pas encore la couverture |
-| 6 | Vitrine publique, Stripe, KDP | B1, B2, B3, B5, B6, B7, B8, B12 | 52 points | Lots 1, 5 | **Partiel** — le paiement est branché, la vitrine publique est servie (route publique sans jeton, page du livre, page de lecture et page de l'auteur) et l'auteur publie son livre depuis l'écran du projet (D-33) ; le dossier de dépôt KDP est préparé (EPUB, PDF d'impression, métadonnées validées, contrôle de soumission nominatif), le dépôt lui-même chez Amazon reste |
+| 6 | Vitrine publique, Stripe, KDP | B1, B2, B3, B5, B6, B7, B8, B12 | 52 points | Lots 1, 5 | **Partiel** — le paiement est branché, la vitrine publique est servie (route publique sans jeton, page du livre avec couverture, chapitres et métadonnées, page de lecture et page de l'auteur triée par date de publication) et l'auteur publie son livre depuis l'écran du projet (D-33) ; le **bundle** vend plusieurs livres et ventile les droits ; le dossier de dépôt KDP est préparé (EPUB, PDF d'impression, métadonnées validées, contrôle de soumission nominatif), le dépôt lui-même chez Amazon reste |
 | 7 | Plans, quotas, administration, 2FA, RGPD | T2, T7, T8, T9, T10, T11 | 50 points | Lots 4, 6 | **Partiel** — l'export des données personnelles est une **archive ZIP** signée, la suppression du compte, la purge locale et le worker de purge serveur sont livrés ; les formules et les quotas (D-15) sont mesurés et bornés, la double authentification TOTP passe par la fenêtre de code — **y compris pour les lectures** —, les rôles d'équipe et les sièges, le back-office (dont les **indicateurs vivants**), l'API publique et les **webhooks sortants** (cinq émetteurs) sont livrés et câblés ; la purge efface aussi le compte chez Supabase Auth et les artefacts du stockage |
 | — | **Total v1** | **68 fonctions** | **423 points** | — | |
 
@@ -232,8 +232,8 @@ le PDF print-ready aux plans Pro et Studio.
 - [ ] Le contrôle de cohérence signale les divergences de noms, de chronologie et de contradictions, avec un lien vers la scène fautive.
 - [ ] L'analyse de lisibilité renvoie un score Coleman-Liau et une indication de phrase longue.
 - [ ] Chaque appel est compté, plafonné par le quota du plan et par une garde de jetons par requête et par jour.
-- [ ] Aucun texte d'utilisateur n'atteint un fournisseur tiers sans consentement explicite enregistré dans les réglages.
-- [ ] Le quota atteint renvoie `429 quota_exceeded` avec la date de réinitialisation, avant tout appel fournisseur.
+- [x] Aucun texte d'utilisateur n'atteint un fournisseur tiers sans consentement explicite enregistré dans les réglages.
+- [x] Le quota atteint renvoie `429 quota_exceeded` avec la date de réinitialisation, avant tout appel fournisseur.
 
 **Risques et parades.**
 
@@ -299,12 +299,12 @@ le PDF print-ready aux plans Pro et Studio.
 
 **Critères d'acceptation.**
 
-- [ ] La page publique du livre affiche le titre, la couverture, le résumé, les chapitres publiés et les métadonnées commerciales.
-- [ ] La page auteur liste ses livres, triés par date de publication.
+- [x] La page publique du livre affiche le titre, la couverture, le résumé, les chapitres publiés et les métadonnées commerciales.
+- [x] La page auteur liste ses livres, triés par date de publication.
 - [ ] Les métadonnées ISBN, BISAC, contributeurs et droits sont saisies et validées au format avant publication.
 - [ ] Un achat de bout en bout fonctionne en mode bac à sable Stripe : page de vente, paiement, réception du webhook, page de téléchargement.
-- [ ] Le partage des revenus est par défaut à 90/10 et configurable.
-- [ ] Un code promo, un livre gratuit et un bundle appliquent la remise correcte et la ventilation des droits.
+- [x] Le partage des revenus est par défaut à 90/10 et configurable.
+- [x] Un code promo, un livre gratuit et un bundle appliquent la remise correcte et la ventilation des droits.
 - [x] La soumission KDP met à jour une précommande existante sans dupliquer la fiche.
 - [ ] La page de vente sert une URL de téléchargement stable, expirant après 24 heures ; les pages publiques sont indexables et les pages privées ne le sont pas.
 
@@ -492,12 +492,17 @@ visible.
 
 **Où en est le dépôt.** Le tableau est le verdict de l'audit, à sa date : il
 ne bouge pas quand une correction arrive. Ce qui bouge, c'est le compte des
-**cases cochées** : les lots 8 et 9 en ont coché **25 sur 68**. Les 15 que
-l'audit avait vérifiés s'y ajoutent, sauf ceux du lot 7 qu'il avait déjà
-comptés — soit **33 des 68 critères** vérifiés sur preuve aujourd'hui. Les
-35 restants sont répartis par l'audit entre *partiel* et *non vérifié*, et
-la section « Ce qui n'est pas encore tenu » de chaque lot dit ce qui
-manque.
+**cases cochées** : les lots 8, 9, 10 et 11 en ont coché **31 sur 68**. Les
+15 que l'audit avait vérifiés s'y ajoutent, sauf ceux du lot 7 qu'il avait
+déjà comptés — soit **39 des 68 critères** vérifiés sur preuve
+aujourd'hui. Les 29 restants sont répartis par l'audit entre *partiel* et
+*non vérifié*, et la section « Ce qui n'est pas encore tenu » de chaque lot
+dit ce qui manque.
+
+L'audit a revu ses neuf écarts et les onze des lots 0 à 3 : **dix-neuf
+sont fermés** depuis, et trois restent partiels. Ce qui reste ouvert est
+désormais écrit **dans** les lignes fermées — la réserve qui va avec
+« fermé » fait partie de la fermeture.
 
 Le témoin du design system est un **double** : un témoin **structurel**
 (l'arbre de rendu, ses textes, ses couleurs, ses rayons, ses espacements)
@@ -518,33 +523,41 @@ contient **aucun golden**.
 L'audit ne cherche pas des bugs : il cherche des **promesses que le dépôt
 ne tient pas**. Il en a trouvé neuf, classées par importance.
 
+Les fermetures notées dans le tableau sont **postérieures à l'audit** :
+elles disent ce que les vagues suivantes ont corrigé, et la réserve qui va
+avec fait partie de la fermeture.
+
 | # | L'écart | Critères touchés |
 |---|---|---|
-| 1 | ~~**La vente d'un livre n'existe pas.**~~ **Fermé** : le prix du livre, la commande en paiement unique, le droit de lecture, la ventilation 90/10 et le code promo sont livrés. Restent l'**écran** de vente, le **bundle** et la vérification en bac à sable Stripe. | 6.4, 6.5, 6.6, 6.8 |
-| 2 | **Le consentement à l'IA n'existe pas.** Aucun réglage, aucune table, aucun contrôle avant l'envoi : le texte de l'auteur part chez le fournisseur sans opt-in, alors que D-08 l'exige. | 4.8 |
-| 3 | **Les quatorze tâches du registre IA sont du code mort.** `AiClient` n'applique jamais le `systemPrompt` d'une tâche ; seules la réécriture et l'interrogation sont rendues. Le menu slash propose « Résumer la scène » et « contrôle de cohérence » : les entrées sont cliquables et ne font rien. | 4.2, 4.3, 4.5, 4.6 |
-| 4 | **L'import n'existe pas.** Aucun des six formats n'est lu, alors que la matrice des fonctionnalités annonce « natif & complet » pour E12. | 5.1 |
-| 5 | **Les polices ne sont pas embarquées.** Le PDF retombe sur les polices de base et translittère la typographie française (`’` devient `'`). | 5.3 |
-| 6 | **L'export est synchrone.** Le livre est reconstruit et sérialisé dans la requête HTTP ; il n'y a ni file, ni worker, ni job rejouable. | 5.5, 5.8 |
-| 7 | **Le PDF n'imprime jamais de code-barres** : l'ISBN n'arrive pas à l'export, et la maquette complète (dos, tranche) n'est produite que par les tests. **Partiellement fermé** : l'ISBN et l'auteur atteignent l'export, le code-barres est imprimé sur la couverture, et la maquette complète est exposée par la route (`cover: "full"`) ; il reste à caler le code-barres sur le **dos** de la maquette, et à garantir l'unicité de l'ISBN par un index. | 5.7 |
+| 1 | ~~**La vente d'un livre n'existe pas.**~~ **Fermé** : le prix du livre, la commande en paiement unique, le droit de lecture, la ventilation 90/10 et le code promo sont livrés. L'**écran** de vente et le **bundle** sont là aussi (le bundle ventile au prorata du prix de chaque livre, et la remise s'applique avant la ventilation). Reste la vérification en bac à sable Stripe. | 6.4, 6.5, 6.6, 6.8 |
+| 2 | ~~**Le consentement à l'IA n'existe pas.** Aucun réglage, aucune table, aucun contrôle avant l'envoi : le texte de l'auteur part chez le fournisseur sans opt-in, alors que D-08 l'exige.~~ **Fermé** : la décision de l'auteur est enregistrée (table `ai_consents`), elle se donne et se retire dans les réglages, et la **passerelle** refuse tout envoi sans accord — avant l'ouverture du flux. La garde est *fail-closed* : une passerelle sans service de consentement refuse tout. | 4.8 |
+| 3 | **Les quatorze tâches du registre IA sont du code mort.** Le registre existe (quinze tâches, `packages/limpid_ai/lib/src/tasks/ai_task_registry.dart`) et la route `/v1/ai/generate` accepte une clé de tâche, mais la **passerelle n'en applique pas le `systemPrompt`** : elle ne construit le prompt qu'avec ce que le client envoie, et une clé inconnue n'est pas refusée. Côté application, le menu slash propose « Résumer la scène » et « Signaler une incohérence », mais l'écran ne passe **jamais** `onAiCommand` à l'éditeur : les entrées sont cliquables et ne font rien. | 4.2, 4.3, 4.5, 4.6 |
+| 4 | **L'import n'existe pas.** Aucun des six formats n'est lu, alors que la matrice des fonctionnalités annonce « natif & complet » pour E12. **Partiellement fermé** : les six formats sont **lus** — `packages/limpid_import` a un lecteur par format, la route `POST /v1/projects/<projectId>/import` les accepte et le service construit la hiérarchie — mais l'application n'a **aucun écran** : rien ne permet à l'auteur d'importer un manuscrit. | 5.1 |
+| 5 | **Les polices ne sont pas embarquées.** Le PDF retombe sur les polices de base et translittère la typographie française (`’` devient `'`). **Fermé pour les fichiers, ouvert pour la preuve** : les seize fichiers OFL sont dans le dépôt, le PDF les embarque (`/FontFile2`), et la translittération a disparu ; il manque le test qui prouve qu'un PDF produit porte la police **et** la typographie française. | 5.3 |
+| 6 | ~~**L'export est synchrone.** Le livre est reconstruit et sérialisé dans la requête HTTP ; il n'y a ni file, ni worker, ni job rejouable.~~ **Fermé** : la commande répond `202` avec un travail, la table `exports` porte la file, le worker reprend les travaux en attente après un redémarrage, et l'application suit le travail sans bloquer. | 5.5, 5.8 |
+| 7 | **Le PDF n'imprime jamais de code-barres** : l'ISBN n'arrive pas à l'export, et la maquette complète (dos, tranche) n'est produite que par les tests. **Partiellement fermé** : l'ISBN et l'auteur atteignent l'export, le code-barres est imprimé sur la couverture, la maquette complète est exposée par la route (`cover: "full"`), et l'unicité de l'ISBN est **garantie par un index** unique dans les deux dialectes ; il reste à caler le code-barres sur le **dos** de la maquette. | 5.7 |
 | 8 | ~~**Le KDP duplique la fiche.**~~ **Fermé** : une fiche KDP par projet, la préparation reprend l'identifiant de la fiche existante, et les trois bases font un vrai upsert ; un ISBN déjà porté par une autre fiche est refusé. | 6.7 |
-| 9 | **La page publique ne montre ni couverture ni métadonnées commerciales**, et la page auteur est triée par dernière modification, pas par date de publication. | 6.1, 6.2, 6.3 |
+| 9 | ~~**La page publique ne montre ni couverture ni métadonnées commerciales**, et la page auteur est triée par dernière modification, pas par date de publication.~~ **Fermé pour la couverture, les chapitres et le tri** : la page publique montre la **couverture** (rendue par le serveur, jamais une adresse de stockage nue), le résumé, les **chapitres** avec leurs scènes, et les métadonnées ; la page de l'auteur est triée par **date de publication**, et la modification d'un livre ne change plus l'ordre. Reste la **validation des métadonnées avant publication** (6.3) : les métadonnées publiées viennent de la fiche Amazon préparée, et rien n'en contrôle le format. | 6.1, 6.2, 6.3 |
 
 ### 14.3 Ce que l'audit des lots 0 à 3 a trouvé
 
 Onze critères ne sont pas vérifiés, et quinze ne le sont qu'à moitié. Les
 écarts qui **portent** un lot entier :
 
+Les fermetures notées dans le tableau sont **postérieures à l'audit** : la
+plupart des écarts des lots 0 à 3 ont été corrigés par les vagues 8 à 11
+sans que le tableau le dise.
+
 | # | L'écart | Critères touchés |
 |---|---|---|
-| 1 | **Le relais temps réel n'est branché dans l'application.** `ProjectOpsTransport.connect` renvoie un flux vide et `WebSocketSyncTransport` n'est importé nulle part : la frappe distante, la présence et le p95 de 300 ms sont hors d'atteinte. Le serveur, lui, relaie et teste. | 2.8, 3.3, 3.4 |
-| 2 | **La recherche plein texte n'existe pas.** Aucun index FTS5, aucune requête, aucun écran : le mot n'apparaît que dans la documentation. | 1.7 |
-| 3 | **Le dépôt ne contient aucun golden.** Le design system a 58 widgets et 4 thèmes ; `matchesGoldenFile` n'apparaît nulle part. « Les 4 thèmes rendent les écrans de référence sans retouche » n'a donc aucun témoin. | 0.3, 0.4 |
-| 4 | **Les polices ne sont pas embarquées.** Le design system nomme les quatre familles ; les fichiers ne sont pas là, et le PDF translittère la typographie française. | 0.8, 5.3 |
-| 5 | **Ni série ni tome ne sont persistés**, et l'interface ne sait pas créer un chapitre ni une scène : le test de bout en bout écrit la hiérarchie à la main. | 1.1 |
-| 6 | **La compaction du journal n'existe pas.** L'instantané stocke tout le journal, sans seuil : il croît sans borne. | 2.6 |
-| 7 | **Aucun historique de versions.** Le seul diff du dépôt compare deux textes pour la suggestion IA, pas deux révisions de blocs. | 2.9 |
-| 8 | **Aucune invitation par courriel.** L'invitation vise un compte existant, s'applique immédiatement, et n'a ni date d'expiration ni jeton : il n'y a rien qui puisse expirer. | 3.8 |
+| 1 | ~~**Le relais temps réel n'est pas branché dans l'application.** `ProjectOpsTransport.connect` renvoie un flux vide et `WebSocketSyncTransport` n'est importé nulle part : la frappe distante, la présence et le p95 de 300 ms sont hors d'atteinte. Le serveur, lui, relaie et teste.~~ **Fermé** : l'application instancie le relais (`WebSocketRelayChannel`), la racine de composition le donne au dépôt de synchronisation, et la présence s'affiche dans la barre d'état et le panneau de relecture. `ProjectOpsTransport.connect` reste le chemin REST, et le dit. | 2.8, 3.3, 3.4 |
+| 2 | ~~**La recherche plein texte n'existe pas.** Aucun index FTS5, aucune requête, aucun écran : le mot n'apparaît que dans la documentation.~~ **Fermé** : l'index FTS5 est dans la base locale, la recherche classe par BM25, l'écran est branché et routé, et le budget de 120 ms est mesuré sur 100 000 mots. | 1.7 |
+| 3 | ~~**Le dépôt ne contient aucun golden.** Le design system a 58 widgets et 4 thèmes ; `matchesGoldenFile` n'apparaît nulle part. « Les 4 thèmes rendent les écrans de référence sans retouche » n'a donc aucun témoin.~~ **Fermé** : le dépôt porte un témoin **structurel** (l'arbre de rendu, ses textes, ses couleurs) qui tourne partout, CI comprise, et un témoin **d'image** (les PNG des cinq écrans et des widgets, sur les quatre thèmes) que le poste garde pour lui. | 0.3, 0.4 |
+| 4 | ~~**Les polices ne sont pas embarquées.** Le design system nomme les quatre familles ; les fichiers ne sont pas là, et le PDF translittère la typographie française.~~ **Fermé** : les seize fichiers OFL sont dans le dépôt de l'application et dans celui du moteur d'export, le `pubspec.yaml` les déclare, et le PDF les embarque. Il manque le test qui vérifie que la déclaration et les fichiers vont ensemble. | 0.8, 5.3 |
+| 5 | ~~**Ni série ni tome ne sont persistés**, et l'interface ne sait pas créer un chapitre ni une scène : le test de bout en bout écrit la hiérarchie à la main.~~ **Fermé** : la hiérarchie série → tome → chapitre → scène est dans la base locale, le plan et l'écran du projet savent créer les quatre niveaux, et la création d'un chapitre a son propre test de régression. | 1.1 |
+| 6 | ~~**La compaction du journal n'existe pas.** L'instantané stocke tout le journal, sans seuil : il croît sans borne.~~ **Fermé** : le compacteur remplace le journal par l'état au-delà d'un seuil, sans jamais purger une opération non synchronisée. Nuance : les écritures locales ne compactent qu'au tour de synchronisation, et le serveur ne compacte pas. | 2.6 |
+| 7 | ~~**Aucun historique de versions.** Le seul diff du dépôt compare deux textes pour la suggestion IA, pas deux révisions de blocs.~~ **Fermé** : le dépôt compare deux révisions **bloc par bloc**, et l'écran d'historique montre ce qui a été ajouté, modifié, supprimé et déplacé, avec l'avant et l'après. Il n'y a pas encore d'action « restaurer ». | 2.9 |
+| 8 | **Aucune invitation par courriel.** L'invitation vise un compte existant, s'applique immédiatement, et n'a ni date d'expiration ni jeton : il n'y a rien qui puisse expirer. **Partiellement fermé** : le modèle est complet — adresse, empreinte du jeton, état, date d'expiration —, la route d'acceptation est là, la base ne garde que l'empreinte, et l'application propose l'invitation par courriel ; mais le **serveur de production n'envoie aucun courriel** : il journalise le lien. L'envoi réel reste à vérifier en conditions réelles. | 3.8 |
 | 9 | ~~**L'ancre de commentaire ne suit pas le texte réécrit** : la plage de la marque est réutilisée telle quelle quand le contenu change.~~ **Fermé** : la marque porte le Lamport de sa pose, et la plage est **recalculée** sur le contenu effectif à travers le diff de Myers déjà présent (`packages/limpid_core/lib/src/sync/internal/text_diff.dart`). Une réécriture avant décale la plage, une réécriture après ne la bouge pas, une réécriture au milieu la tronque. | 3.1 |
 | 10 | ~~**Les fils de discussion ne se répondent ni ne se rouvrent** : il n'y a pas de champ de saisie, et un fil résolu ne se rouvre pas.~~ **Fermé** : le panneau de relecture a un champ de réponse, un bouton **Répondre**, un bouton **Résoudre le fil** et un bouton **Rouvrir le fil** ; la réponse, la résolution et la réouverture sont écrites et relues après rechargement. | 3.2 |
 | 11 | ~~**La règle de dépendance n'est pas vérifiée automatiquement** : l'invariant tient, mais rien ne le contrôle.~~ **Fermé** : `tools/dependances.py` lit les imports de chaque paquet et **échoue la CI** quand la règle de PROMPT §5 est violée (D-42). Le contrôle est un script, pas une règle de l'analyseur : la différence est notée en 14.4. | 0.2 |
@@ -556,6 +569,10 @@ texte » manque alors que le fuzz produit les deux (2.5), et la série de
 jours d'écriture est calculée sur la date de modification de la scène —
 donc le compteur de mots de plusieurs semaines est imputé au dernier jour
 (1.9).
+
+Le `409 schema_version_unsupported` est **fermé** : le client reconnaît le
+refus, tire l'arbre du projet, remplace son état local, rejoue les
+opérations non acceptées, et ne retente qu'une fois.
 
 Le test dédié (2.5) est **fermé** : `packages/limpid_sync/test/conflict/
 move_and_text_test.dart` prouve qu'un déplacement concurrent et une

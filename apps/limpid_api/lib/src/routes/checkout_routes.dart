@@ -17,6 +17,7 @@ import '../middleware/rate_limiter.dart';
 import '../services/book_sale_service.dart';
 import '../services/idempotency_service.dart';
 import '../services/payment_gateway.dart';
+import '../services/redirect_url_policy.dart';
 
 /// Le nombre de sessions de paiement qu'un appelant peut ouvrir d'un coup.
 const int checkoutRateLimitCapacity = 5;
@@ -142,8 +143,17 @@ Future<Response> _createBookCheckout(
 
   final String projectId = body.requireString('project_id');
   final String? promoCode = body.optionalString('promo_code');
-  final String successUrl = body.requireString('success_url');
-  final String cancelUrl = body.requireString('cancel_url');
+  // L'adresse de retour n'est pas choisie par l'appelant : elle doit
+  // viser une origine de la plateforme, sinon le prestataire renverrait
+  // l'acheteur vers un site tiers.
+  final String successUrl = validateRedirectUrl(
+    body.requireString('success_url'),
+    allowedOrigins: config.allowedOrigins,
+  );
+  final String cancelUrl = validateRedirectUrl(
+    body.requireString('cancel_url'),
+    allowedOrigins: config.allowedOrigins,
+  );
 
   final BookPaymentGateway? gateway = bookGatewayOf(dependencies.payments);
   if (gateway == null) {
@@ -231,8 +241,17 @@ Future<Response> _createCheckout(
 
   final String planKey = body.requireString('plan');
   final BillingPeriod? period = _readPeriod(body);
-  final String successUrl = body.requireString('success_url');
-  final String cancelUrl = body.requireString('cancel_url');
+  // L'adresse de retour n'est pas choisie par l'appelant : elle doit
+  // viser une origine de la plateforme, sinon le prestataire renverrait
+  // l'acheteur vers un site tiers.
+  final String successUrl = validateRedirectUrl(
+    body.requireString('success_url'),
+    allowedOrigins: config.allowedOrigins,
+  );
+  final String cancelUrl = validateRedirectUrl(
+    body.requireString('cancel_url'),
+    allowedOrigins: config.allowedOrigins,
+  );
 
   // La commande est résolue avant d'atteindre le prestataire de paiement :
   // une formule qui n'existe pas, la formule gratuite ou un cycle que la

@@ -257,6 +257,11 @@ final class LocalManuscriptRepository
     // La scene nait avec son titre dans son document : elle est une vraie
     // scene, elle se retrouve apres le redemarrage et elle se synchronise
     // comme tout le reste de l'ecriture.
+    //
+    // Elle nait aussi avec son chapitre : le serveur reconstruit la
+    // hierarchie du livre avec cette metadata, et la page publique montre
+    // les chapitres du livre plutot qu'un seul.
+    final Chapter? chapter = await database.manuscripts.findChapter(chapterId);
     await applyOperations(<SyncOp>[
       SetMetaOp(
         doc: documentId,
@@ -265,6 +270,21 @@ final class LocalManuscriptRepository
         key: sceneTitleMetaKey,
         value: title,
       ),
+      SetMetaOp(
+        doc: documentId,
+        lamport: await _nextLamport(documentId),
+        author: _currentAuthor(),
+        key: sceneChapterIdMetaKey,
+        value: chapterId,
+      ),
+      if (chapter != null && chapter.title.trim().isNotEmpty)
+        SetMetaOp(
+          doc: documentId,
+          lamport: await _nextLamport(documentId),
+          author: _currentAuthor(),
+          key: sceneChapterTitleMetaKey,
+          value: chapter.title.trim(),
+        ),
     ]);
     return scene;
   }

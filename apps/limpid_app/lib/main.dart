@@ -4,7 +4,9 @@ import 'package:limpid_app/src/app/dependencies.dart';
 import 'package:limpid_app/src/app/limpid_app.dart';
 import 'package:limpid_app/src/bootstrap/app_bootstrap.dart';
 import 'package:limpid_app/src/domain/admin_repository.dart';
+import 'package:limpid_app/src/domain/ai_consent_repository.dart';
 import 'package:limpid_app/src/domain/book_sale_repository.dart';
+import 'package:limpid_app/src/domain/bundle_repository.dart';
 import 'package:limpid_app/src/domain/kdp_repository.dart';
 import 'package:limpid_app/src/domain/providers.dart';
 import 'package:limpid_app/src/domain/publication_repository.dart';
@@ -55,6 +57,8 @@ Future<void> main() async {
         shareRepositoryProvider.overrideWithValue(dependencies.shares),
         kdpRepositoryProvider.overrideWithValue(dependencies.kdp),
         bookSaleRepositoryProvider.overrideWithValue(dependencies.sales),
+        aiConsentRepositoryProvider.overrideWithValue(dependencies.aiConsents),
+        bundleRepositoryProvider.overrideWithValue(dependencies.bundles),
         webhookRepositoryProvider.overrideWithValue(dependencies.webhooks),
         localDataEraserProvider.overrideWithValue(dependencies.localDataEraser),
         authorIdProvider.overrideWithValue(dependencies.author),

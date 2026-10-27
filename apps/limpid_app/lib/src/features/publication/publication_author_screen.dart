@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:limpid_app/l10n/generated/app_localizations.dart';
 import 'package:limpid_app/src/features/projects/formatters.dart';
-import 'package:limpid_app/src/features/projects/project_cover.dart';
 import 'package:limpid_app/src/features/projects/project_metrics.dart';
 import 'package:limpid_app/src/features/publication/publication_author_books.dart';
 import 'package:limpid_app/src/features/publication/publication_author_providers.dart';
+import 'package:limpid_app/src/features/publication/publication_cover.dart';
 import 'package:limpid_app/src/features/publication/publication_routes.dart';
 import 'package:limpid_app/src/features/publication/publication_states.dart';
 import 'package:limpid_design_system/limpid_design_system.dart';
@@ -140,11 +140,12 @@ class _AuthorBookTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          ProjectCover(
+          PublicationCover(
             key: authorBookCoverKeyOf(book.id),
             title: book.title,
             author: '',
             seed: coverSeedOf(book.id),
+            url: book.coverUrl,
             width: authorBookCoverWidth,
           ),
           SizedBox(width: scope.spacing.space16),

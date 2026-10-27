@@ -11,6 +11,12 @@ enum StripeEventType {
   /// Le paiement d'une session à paiement différé est confirmé.
   checkoutAsyncPaymentSucceeded('checkout.session.async_payment_succeeded'),
 
+  /// La session de paiement a expiré sans que l'acheteur paye.
+  ///
+  /// L'événement ne rend aucun droit : il rend la place qu'une commande
+  /// avait prise sur un code promo.
+  checkoutExpired('checkout.session.expired'),
+
   /// L'abonnement du compte a changé.
   subscriptionUpdated('customer.subscription.updated'),
 
@@ -176,6 +182,20 @@ final class StripeEvent {
   /// jamais cette marque, et un achat de livre ne porte jamais de formule.
   bool get isBookPayment => metadata['kind'] == bookPaymentKind;
 
+  /// La commande est-elle l'achat d'un bundle ?
+  ///
+  /// Comme la marque du livre, celle-ci est écrite par le serveur : le
+  /// client ne peut pas la forger.
+  bool get isBundlePayment => metadata['kind'] == bundlePaymentKind;
+
+  /// Le bundle acheté, `null` quand l'événement n'est pas un achat de
+  /// bundle.
+  String? get bundleId {
+    final Object? value = metadata['bundle_id'];
+    if (value is String && value.trim().isNotEmpty) return value.trim();
+    return null;
+  }
+
   /// Le livre acheté, `null` quand l'événement n'est pas un achat de livre.
   String? get projectId {
     final Object? value = metadata['project_id'];
@@ -198,6 +218,19 @@ final class StripeEvent {
   int? get amountTotal {
     final Object? value = object['amount_total'];
     if (value is num) return value.toInt();
+    return null;
+  }
+
+  /// Le montant que le serveur a demande, en centimes.
+  ///
+  /// Le montant est ecrit par le serveur dans les metadonnees de la session
+  /// : c'est le prix moins la remise. Il sert de repli quand le rappel ne
+  /// porte pas le montant encaisse — la ventilation se fait alors sur le
+  /// montant que l'acheteur a Paye, et non sur le prix plein.
+  int? get chargedAmount {
+    final Object? value = metadata['amount_cents'];
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
     return null;
   }
 

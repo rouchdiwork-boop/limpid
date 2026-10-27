@@ -285,6 +285,9 @@ final class _CountingAiGateway implements AiGateway {
   bool isTokenCountEstimated = false;
 
   @override
+  Future<void> ensureConsent({required String userId}) async {}
+
+  @override
   Stream<AiEvent> generate(AiGenerateRequest request) {
     calls += 1;
     return _answer();

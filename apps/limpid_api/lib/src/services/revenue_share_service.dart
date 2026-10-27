@@ -57,6 +57,26 @@ final class RevenueSplit {
   }
 }
 
+/// La part d'un livre dans un montant partagé.
+///
+/// Une vente simple porte **une** ligne : le livre entier. Un bundle en
+/// porte une par livre, et le poids de la ligne est le prix du livre : le
+/// livre le plus cher contribue plus au prix du bundle.
+final class RevenueLine {
+  /// Crée une ligne.
+  const RevenueLine({required this.weight, required this.authorShare});
+
+  /// Le poids de la ligne : la contribution du livre au prix.
+  ///
+  /// Un poids nul est possible : un livre gratuit ne contribue rien au
+  /// prix. La part du montant est alors partagée à parts égales entre les
+  /// lignes.
+  final int weight;
+
+  /// La part de l'auteur de cette ligne, en millièmes.
+  final int authorShare;
+}
+
 /// Le service qui ventile un montant payé.
 ///
 /// Le service ne lit aucune base et n'écrit rien : il porte la règle, et la
@@ -101,5 +121,103 @@ final class RevenueShareService {
       authorAmountInCents: authorAmount,
       platformAmountInCents: amountInCents - authorAmount,
     );
+  }
+
+  /// La ventilation du montant [amountInCents] entre les lignes [lines].
+  ///
+  /// Chaque ligne reçoit la part du montant qui correspond à son poids :
+  /// c'est le **prorata** de ce que chaque livre contribue au prix. La part
+  /// de l'auteur de la ligne s'y applique ensuite comme dans une vente
+  /// simple : la règle est la même, seule la partage change.
+  ///
+  /// La somme des parts vaut **exactement** le montant partagé. Le centime
+  /// qui ne tombe pas juste va à la ligne dont le reste est le plus grand,
+  /// et le reste de l'arrondi part du côté de la plateforme, comme dans une
+  /// vente simple.
+  ///
+  /// Un montant nul ne ventile rien : c'est le cas du livre gratuit, dont
+  /// le droit est accordé sans que la plateforme ne reçoive rien.
+  List<RevenueSplit> splitAmong({
+    required int amountInCents,
+    required List<RevenueLine> lines,
+  }) {
+    if (amountInCents < 0) {
+      throw ArgumentError.value(
+        amountInCents,
+        'amountInCents',
+        'Un montant partagé ne peut pas être négatif.',
+      );
+    }
+    if (lines.isEmpty) return const <RevenueSplit>[];
+    final List<int> weights = _weightsOf(lines);
+    final int weightSum = weights.fold(
+      0,
+      (int sum, int weight) => sum + weight,
+    );
+    final List<int> amounts = <int>[];
+    final List<int> remainders = <int>[];
+    int shared = 0;
+    for (final int weight in weights) {
+      final int product = amountInCents * weight;
+      final int amount = product ~/ weightSum;
+      amounts.add(amount);
+      remainders.add(product % weightSum);
+      shared += amount;
+    }
+    _distributeRemainder(
+      amounts: amounts,
+      remainders: remainders,
+      leftover: amountInCents - shared,
+    );
+    return List<RevenueSplit>.unmodifiable(
+      List<RevenueSplit>.generate(
+        lines.length,
+        (int index) => split(
+          amountInCents: amounts[index],
+          authorShare: lines[index].authorShare,
+        ),
+      ),
+    );
+  }
+
+  /// Les poids des lignes, tous égaux quand aucun livre ne contribue.
+  ///
+  /// Un bundle dont tous les livres sont gratuits n'a pas de poids total :
+  /// le montant se partage alors à parts égales entre les livres.
+  static List<int> _weightsOf(List<RevenueLine> lines) {
+    final int total = lines.fold(
+      0,
+      (int sum, RevenueLine line) => sum + line.weight,
+    );
+    if (total > 0) {
+      return List<int>.unmodifiable(
+        lines.map((RevenueLine line) => line.weight).toList(growable: false),
+      );
+    }
+    return List<int>.unmodifiable(
+      List<int>.filled(lines.length, 1, growable: false),
+    );
+  }
+
+  /// Répartit les centimes qui ne tombent pas juste.
+  ///
+  /// Le centime va à la ligne dont le reste est le plus grand : c'est elle
+  /// qui a été la plus mal servie par l'arrondi. Les ex aequo sont départagés
+  /// par l'ordre des lignes, pour que la répartition soit la même partout.
+  static void _distributeRemainder({
+    required List<int> amounts,
+    required List<int> remainders,
+    required int leftover,
+  }) {
+    if (leftover <= 0) return;
+    final List<int> order = List<int>.generate(amounts.length, (int i) => i)
+      ..sort((int left, int right) {
+        final int byRest = remainders[right].compareTo(remainders[left]);
+        if (byRest != 0) return byRest;
+        return left.compareTo(right);
+      });
+    for (int index = 0; index < leftover; index++) {
+      amounts[order[index % order.length]] += 1;
+    }
   }
 }

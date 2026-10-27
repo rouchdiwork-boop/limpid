@@ -3,6 +3,7 @@ import '../db/stripe_event_database.dart';
 import '../errors/app_exception.dart';
 import '../logging/logger.dart';
 import 'book_sale_service.dart';
+import 'bundle_service.dart';
 import 'quota_service.dart';
 import 'stripe_event.dart';
 import 'stripe_plan_attribution.dart';
@@ -77,6 +78,7 @@ final class StripeWebhookService {
     this.secret,
     this.logger,
     this.bookSales,
+    this.bundles,
     DateTime Function()? clock,
     this.tolerance = defaultStripeSignatureTolerance,
     List<String> handledEvents = const <String>[],
@@ -114,6 +116,14 @@ final class StripeWebhookService {
   /// le paiement d'un livre : il accorde le droit de lecture et écrit la
   /// ventilation des revenus.
   final BookSaleService? bookSales;
+
+  /// Le service des bundles, quand le serveur vend des bundles.
+  ///
+  /// Il est facultatif : un serveur qui ne vend pas de bundle attribue des
+  /// formules et rien d'autre. Quand il est là, le webhook traite **aussi**
+  /// le paiement d'un bundle : il accorde le droit de lecture sur chaque
+  /// livre du bundle et écrit la ventilation des revenus.
+  final BundleService? bundles;
 
   /// La tolérance de l'horodatage de la signature.
   final Duration tolerance;
@@ -238,17 +248,44 @@ final class StripeWebhookService {
         event,
         ip: ip,
       ),
+      StripeEventType.checkoutExpired => _releaseExpiredCheckout(event),
     };
+  }
+
+  /// Rend la place qu'une commande abandonnée avait prise.
+  ///
+  /// Une session de paiement qui expire sans que l'acheteur paie ne rend
+  /// aucun droit : elle rend l'usage d'un code promo. Sans cette libération,
+  /// le quota d'un code s'épuise sous des commandes abandonnées, et le code
+  /// devient inutilisable pour les acheteurs qui, eux, paient.
+  ///
+  /// La libération est idempotente : Stripe peut livrer l'événement
+  /// plusieurs fois, et la place ne peut rendre deux fois.
+  Future<String?> _releaseExpiredCheckout(StripeEvent event) async {
+    final BookSaleService? sales = bookSales;
+    final String? userId = event.userId;
+    final String? code = event.promoCode;
+    if (sales == null || userId == null || code == null) {
+      // Sans code promo, la session expiree ne prend aucune place : il n'y a
+      // rien a rendre.
+      return null;
+    }
+    await sales.releasePromo(code: code, buyerId: userId);
+    _log('stripe.webhook.checkout_expired', event);
+    return null;
   }
 
   /// Applique l'effet d'un paiement de session de paiement.
   ///
-  /// Deux commandes portent le même événement : l'abonnement d'une formule
-  /// et l'achat d'un livre. Le serveur les distingue par la marque qu'il
-  /// écrit lui-même dans les métadonnées de la session. Un paiement de
-  /// livre n'attribue aucune formule : il accorde un droit de lecture et
-  /// écrit la ventilation des revenus.
+  /// Trois commandes portent le même événement : l'abonnement d'une formule,
+  /// l'achat d'un livre et l'achat d'un bundle. Le serveur les distingue par
+  /// la marque qu'il écrit lui-même dans les métadonnées de la session. Un
+  /// paiement de livre ou de bundle n'attribue aucune formule : il accorde
+  /// un droit de lecture et écrit la ventilation des revenus.
   Future<String?> _applyCheckout(StripeEvent event, {String? ip}) async {
+    if (event.isBundlePayment) {
+      return _applyBundleCheckout(event, ip: ip);
+    }
     if (!event.isBookPayment) {
       return _attribution.applyPayment(event, ip: ip);
     }
@@ -282,10 +319,70 @@ final class StripeWebhookService {
       buyerId: userId,
       projectId: projectId,
       source: reference,
-      amountInCents: event.amountTotal,
+      amountInCents: _amountOf(event),
       promoCode: event.promoCode,
       ip: ip,
     );
+  }
+
+  /// Applique l'effet d'un paiement de bundle.
+  ///
+  /// Le paiement d'un bundle accorde le droit de lecture sur **chaque**
+  /// livre du bundle, et la ventilation se fait sur le montant encaissé :
+  /// la remise d'un code promo ne sort jamais de la poche de l'auteur.
+  Future<String?> _applyBundleCheckout(StripeEvent event, {String? ip}) async {
+    final BundleService? bundles = this.bundles;
+    if (bundles == null) {
+      logger?.warning('stripe.webhook.bundles_absent', <String, Object?>{
+        'event_id': event.id,
+        'event_type': event.type,
+      });
+      return null;
+    }
+    if (event.paymentStatus != 'paid') {
+      logger?.info('stripe.webhook.payment_not_confirmed', <String, Object?>{
+        'event_id': event.id,
+        'event_type': event.type,
+        'payment_status': event.paymentStatus,
+      });
+      return null;
+    }
+    final String? userId = event.userId;
+    final String? bundleId = event.bundleId;
+    final String? reference = event.reference;
+    if (userId == null || bundleId == null || reference == null) {
+      logger?.warning(
+        'stripe.webhook.bundle_payment_unresolved',
+        <String, Object?>{'event_id': event.id, 'event_type': event.type},
+      );
+      return null;
+    }
+    return bundles.applyPayment(
+      buyerId: userId,
+      bundleId: bundleId,
+      source: reference,
+      amountInCents: _amountOf(event),
+      promoCode: event.promoCode,
+      ip: ip,
+    );
+  }
+
+  /// Le montant que la ventilation doit reproduire.
+  ///
+  /// Le montant est celui que le prestataire a encaissé ; quand le rappel ne
+  /// le porte pas, c'est celui que le serveur avait demandé, écrit dans les
+  /// métadonnées de la session. Quand les deux manquent, l'anomalie est
+  /// dite : la ventilation se rabattra sur le prix affiché, qui est le
+  /// dernier recours.
+  int? _amountOf(StripeEvent event) {
+    final int? amount = event.amountTotal ?? event.chargedAmount;
+    if (amount == null) {
+      logger?.warning('stripe.webhook.amount_unknown', <String, Object?>{
+        'event_id': event.id,
+        'event_type': event.type,
+      });
+    }
+    return amount;
   }
 
   /// Trace le traitement d'un événement.

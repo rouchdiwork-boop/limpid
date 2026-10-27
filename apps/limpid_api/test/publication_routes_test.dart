@@ -30,6 +30,8 @@ const String otherExcerpt = "C'était écrit dans le registre municipal.";
 void main() {
   late InMemoryProjectStore projects;
   late CountingSyncStore sync;
+  late InMemoryBookSaleStore sales;
+  late InMemoryKdpDatabase kdp;
   late HttpServer server;
   late String baseUrl;
 
@@ -54,6 +56,8 @@ void main() {
       databaseProbe: const AlwaysHealthyProbe(),
       syncHub: SyncHub(),
       shutdown: () async {},
+      bookSales: sales,
+      kdp: kdp,
     );
   }
 
@@ -73,11 +77,40 @@ void main() {
     baseUrl = 'http://127.0.0.1:${server.port}';
   }
 
+  /// The operations that publish the chapter of a scene.
+  List<SyncOpRecord> chapterOps({
+    required String projectId,
+    required String docId,
+    required (String, String)? chapter,
+    required String ownerId,
+  }) {
+    if (chapter == null) return const <SyncOpRecord>[];
+    return <SyncOpRecord>[
+      _meta(
+        projectId: projectId,
+        docId: docId,
+        lamport: 10,
+        key: 'chapter_id',
+        value: chapter.$1,
+        authorId: ownerId,
+      ),
+      _meta(
+        projectId: projectId,
+        docId: docId,
+        lamport: 11,
+        key: 'chapter_title',
+        value: chapter.$2,
+        authorId: ownerId,
+      ),
+    ];
+  }
+
   /// Creates a project and writes two scenes in its journal.
   Future<String> publishBook({
     ManuscriptStatus status = ManuscriptStatus.published,
     bool isPublic = true,
     String ownerId = 'user-1',
+    Map<String, (String, String)> chapters = const <String, (String, String)>{},
   }) async {
     final ProjectRecord created = await projects.create(
       ownerId: ownerId,
@@ -121,14 +154,86 @@ void main() {
           content: otherExcerpt,
           authorId: ownerId,
         ),
+        ...chapterOps(
+          projectId: project.id,
+          docId: 'scene-1',
+          chapter: chapters['scene-1'],
+          ownerId: ownerId,
+        ),
+        ...chapterOps(
+          projectId: project.id,
+          docId: 'scene-2',
+          chapter: chapters['scene-2'],
+          ownerId: ownerId,
+        ),
       ],
     );
     return project.id;
   }
 
+  /// Publishes the commercial metadata of the book [projectId].
+  ///
+  /// The metadata comes from the publication the author prepared and from
+  /// the sale that puts the book on sale: the page shows what was
+  /// published.
+  Future<void> publishMetadata(String projectId) async {
+    await kdp.recordPublication(
+      KdpPublication(
+        id: 'publication-$projectId',
+        projectId: projectId,
+        userId: 'user-1',
+        title: bookTitle,
+        author: 'Aurélien Sandre',
+        description: 'Dans un village de pêcheurs.',
+        keywords: const <String>['pêche', 'cendre'],
+        categories: const <String>['FICTION / Général'],
+        issues: const <KdpIssue>[],
+        isbn: '9782491503827',
+        language: 'fr-FR',
+        publisher: 'Éditions du Nord',
+        status: KdpPublicationStatus.ready,
+        wordCount: 22,
+        pageCount: 12,
+        epubKey: 'exports/$projectId/livre.epub',
+        pdfKey: 'exports/$projectId/livre.pdf',
+        epubBytes: 1024,
+        pdfBytes: 2048,
+        manuscriptVersion: '1',
+        createdAt: DateTime.utc(2026, 10, 1),
+      ),
+    );
+    await sales.save(
+      BookSaleRecord(
+        projectId: projectId,
+        ownerId: 'user-1',
+        title: bookTitle,
+        priceInCents: 890,
+        currency: 'eur',
+        status: BookSaleStatus.published,
+        authorShare: 9000,
+        platformShare: 1000,
+        createdAt: DateTime.utc(2026, 10, 1),
+        updatedAt: DateTime.utc(2026, 10, 2),
+        publishedAt: DateTime.utc(2026, 10, 2),
+      ),
+    );
+  }
+
+  /// The page of the book [projectId], as the server answers it.
+  Future<Map<String, Object?>> pageOf(String projectId) async {
+    final http.Response response = await http.get(
+      Uri.parse('$baseUrl/v1/public/books/$projectId'),
+    );
+    final Map<String, Object?> envelope =
+        jsonDecode(response.body) as Map<String, Object?>;
+    return envelope['data']! as Map<String, Object?>;
+  }
+
   setUp(() async {
     projects = InMemoryProjectStore();
     sync = CountingSyncStore(InMemorySyncStore());
+    sales = InMemoryBookSaleStore();
+    kdp = InMemoryKdpDatabase();
     await startServer();
   });
 
@@ -315,6 +420,113 @@ void main() {
     });
   });
 
+  group('la couverture, les chapitres et les métadonnées', () {
+    test('la page porte l’adresse relative de la couverture', () async {
+      final String projectId = await publishBook();
+
+      final Map<String, Object?> data = await pageOf(projectId);
+
+      final Map<String, Object?> cover = data['cover']! as Map<String, Object?>;
+      expect(cover['url'], '/v1/public/books/$projectId/cover');
+      expect(
+        cover['url'],
+        isNot(contains('storage.test')),
+        reason: 'la réponse publique ne porte jamais une adresse de stockage',
+      );
+    });
+
+    test('la route de couverture sert le SVG du livre', () async {
+      final String projectId = await publishBook();
+
+      final http.Response response = await http.get(
+        Uri.parse('$baseUrl/v1/public/books/$projectId/cover'),
+      );
+
+      expect(response.statusCode, 200);
+      expect(response.headers['content-type'], contains('image/svg+xml'));
+      expect(response.body, contains(bookTitle));
+    });
+
+    test('la route de couverture répond 404 pour un livre privé', () async {
+      final String projectId = await publishBook(isPublic: false);
+
+      final http.Response response = await http.get(
+        Uri.parse('$baseUrl/v1/public/books/$projectId/cover'),
+      );
+
+      expect(response.statusCode, 404);
+    });
+
+    test('la page montre les chapitres du livre', () async {
+      final String projectId = await publishBook(
+        chapters: <String, (String, String)>{
+          'scene-1': ('chapter-1', 'Le sel'),
+          'scene-2': ('chapter-2', 'La cloche de Saint-Mérien'),
+        },
+      );
+
+      final Map<String, Object?> data = await pageOf(projectId);
+
+      final List<Object?> chapters = data['chapters']! as List<Object?>;
+      expect(chapters, hasLength(2));
+
+      final Map<String, Object?> first =
+          chapters.first! as Map<String, Object?>;
+      expect(first['id'], 'chapter-1');
+      expect(first['title'], 'Le sel');
+      expect(first['scenes'], hasLength(1));
+
+      final Map<String, Object?> second =
+          chapters.last! as Map<String, Object?>;
+      expect(second['id'], 'chapter-2');
+      expect(second['title'], 'La cloche de Saint-Mérien');
+    });
+
+    test('la page porte les métadonnées publiées', () async {
+      final String projectId = await publishBook();
+      await publishMetadata(projectId);
+
+      final Map<String, Object?> data = await pageOf(projectId);
+
+      final Map<String, Object?> metadata =
+          data['metadata']! as Map<String, Object?>;
+      expect(metadata['isbn'], '9782491503827');
+      expect(metadata['publisher'], 'Éditions du Nord');
+      expect(metadata['language'], 'fr-FR');
+      expect(metadata['contributors'], <String>['Aurélien Sandre']);
+      expect(metadata['categories'], <String>['FICTION / Général']);
+      expect(metadata['price'], <String, Object?>{
+        'amount': 890,
+        'currency': 'eur',
+      });
+      expect(metadata['publishedAt'], '2026-10-02T00:00:00.000Z');
+      expect(metadata.containsKey('user_id'), isFalse);
+    });
+
+    test(
+      'la page ne porte aucune métadonnée quand le livre n’en a pas',
+      () async {
+        final String projectId = await publishBook();
+
+        final Map<String, Object?> data = await pageOf(projectId);
+
+        expect(data.containsKey('metadata'), isFalse);
+      },
+    );
+
+    test('la page ne divulgue pas le compte de l’auteur', () async {
+      final String projectId = await publishBook();
+      await publishMetadata(projectId);
+
+      final http.Response response = await http.get(
+        Uri.parse('$baseUrl/v1/public/books/$projectId'),
+      );
+
+      expect(response.body, isNot(contains('user-1')));
+      expect(response.body, isNot(contains('owner_id')));
+    });
+  });
+
   group('l’extrait d’une scène', () {
     test('est le premier paragraphe de la scène', () async {
       final CrdtDocument document = _documentOf(<String>[
@@ -410,6 +622,28 @@ SyncOpRecord _paragraph({
       'type': 'paragraph',
       'content': content,
     },
+    schemaVersion: 1,
+    createdAt: DateTime.now().toUtc(),
+  );
+}
+
+/// Builds the operation that writes a metadata of a document.
+SyncOpRecord _meta({
+  required String projectId,
+  required String docId,
+  required int lamport,
+  required String key,
+  required String value,
+  required String authorId,
+}) {
+  return SyncOpRecord(
+    opId: 'meta-$lamport',
+    projectId: projectId,
+    docId: docId,
+    lamport: lamport,
+    authorId: authorId,
+    type: 'setMeta',
+    payload: <String, dynamic>{'key': key, 'value': value},
     schemaVersion: 1,
     createdAt: DateTime.now().toUtc(),
   );

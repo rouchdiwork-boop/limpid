@@ -7,7 +7,9 @@ import '../auth/auth_middleware.dart';
 import '../config/app_config.dart';
 import '../db/audit_entry.dart';
 import '../db/book_sale_store.dart';
+import '../db/bundle_record.dart';
 import '../db/entitlement_store.dart';
+import '../db/project_record.dart';
 import '../db/promo_code_store.dart';
 import '../dependencies.dart';
 import '../errors/app_exception.dart';
@@ -47,6 +49,7 @@ void registerBookSaleRoutes(
   required BookSaleStore sales,
   required EntitlementStore entitlements,
   required PromoCodeStore promoCodes,
+  BundleStore? bundles,
 }) {
   final BookSaleService service = BookSaleService(
     sales: sales,
@@ -157,6 +160,15 @@ void registerBookSaleRoutes(
         // apprendre qu'un livre existe.
         throw const NotFoundException(message: "Ce livre n'est pas en vente.");
       }
+      // Un livre en vente n'est pas pour autant dans la vitrine : son
+      // auteur peut le vendre sans l'avoir publié. La vitrine ne montre
+      // que les livres publiés.
+      final ProjectRecord? project = await service.projects.findPublic(
+        projectId: projectId,
+      );
+      if (project == null) {
+        throw const NotFoundException(message: "Ce livre n'est pas en vente.");
+      }
       // La réponse ne porte que ce qu'un lecteur a le droit de voir : le
       // prix, le titre et la devise. La part de l'auteur et l'identité du
       // propriétaire restent sur le serveur.
@@ -178,9 +190,21 @@ void registerBookSaleRoutes(
   router.get('/v1/purchases', (Request request) async {
     final AuthContext auth = requireAuthContext(request);
     final List<BookPurchase> purchases = await service.purchases(auth.userId);
+    // Un livre achete par un bundle montre le bundle qui l'a porte : c'est
+    // la provenance de l'achat, et l'acheteur la cherche.
+    final Map<String, String> bundleTitles = await _bundleTitlesOf(
+      bundles,
+      purchases,
+    );
     return ApiResponse.ok(
       purchases
-          .map((BookPurchase purchase) => purchase.toJson())
+          .map(
+            (BookPurchase purchase) => <String, Object?>{
+              ...purchase.toJson(),
+              if (bundleTitles[purchase.bundleId] != null)
+                'bundle_title': bundleTitles[purchase.bundleId],
+            },
+          )
           .toList(growable: false),
     );
   });
@@ -251,6 +275,26 @@ void registerBookSaleRoutes(
 
     return ApiResponse.ok(record.toJson(), status: HttpStatus.created);
   });
+}
+
+/// Les titres des bundles qui ont porté les achats [purchases].
+///
+/// Un bundle est relu une seule fois, même quand il a porté plusieurs
+/// livres : la liste des achats d'un compte est courte, et le serveur ne
+/// relit pas le même bundle pour chaque livre.
+Future<Map<String, String>> _bundleTitlesOf(
+  BundleStore? bundles,
+  List<BookPurchase> purchases,
+) async {
+  if (bundles == null) return const <String, String>{};
+  final Map<String, String> titles = <String, String>{};
+  for (final BookPurchase purchase in purchases) {
+    final String? bundleId = purchase.bundleId;
+    if (bundleId == null || titles.containsKey(bundleId)) continue;
+    final BundleRecord? bundle = await bundles.findById(bundleId);
+    if (bundle != null) titles[bundleId] = bundle.title;
+  }
+  return titles;
 }
 
 /// L'état de la vente demandé par le client.

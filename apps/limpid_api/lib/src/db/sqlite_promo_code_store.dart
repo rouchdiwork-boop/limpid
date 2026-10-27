@@ -139,6 +139,27 @@ final class SqlitePromoCodeStore implements PromoCodeStore {
     return PromoReservationGranted(updated);
   }
 
+  @override
+  Future<void> release({required String code, required String userId}) async {
+    final String key = normalizePromoCode(code);
+    await _database.run(() {
+      // L'usage du compte est rendu d'abord : sans lui, le quota global
+      // serait decremente pour une place qui n'existe pas.
+      _database.connection.execute(
+        'DELETE FROM promo_code_usages WHERE id = ('
+        'SELECT id FROM promo_code_usages WHERE code = ? AND user_id = ? '
+        'ORDER BY used_at DESC, id DESC LIMIT 1)',
+        <Object?>[key, userId],
+      );
+      final bool released = _database.connection.updatedRows > 0;
+      if (!released) return;
+      _database.connection.execute(
+        'UPDATE promo_codes SET uses = uses - 1 WHERE code = ? AND uses > 0',
+        <Object?>[key],
+      );
+    });
+  }
+
   /// Lit un code depuis une ligne.
   static PromoCodeRecord _read(Row row) {
     final PromoDiscountType type =

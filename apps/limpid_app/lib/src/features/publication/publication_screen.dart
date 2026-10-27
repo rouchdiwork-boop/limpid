@@ -6,9 +6,10 @@ import 'package:limpid_app/src/domain/publication_repository.dart';
 import 'package:limpid_app/src/editor/editor_statistics.dart';
 import 'package:limpid_app/src/features/dashboard/dashboard_providers.dart';
 import 'package:limpid_app/src/features/projects/formatters.dart';
-import 'package:limpid_app/src/features/projects/project_cover.dart';
 import 'package:limpid_app/src/features/projects/project_metrics.dart';
 import 'package:limpid_app/src/features/publication/publication_chapters.dart';
+import 'package:limpid_app/src/features/publication/publication_cover.dart';
+import 'package:limpid_app/src/features/publication/publication_metadata_card.dart';
 import 'package:limpid_app/src/features/publication/publication_providers.dart';
 import 'package:limpid_app/src/features/publication/publication_routes.dart';
 import 'package:limpid_app/src/features/publication/publication_states.dart';
@@ -36,6 +37,9 @@ const Key publicationTitleKey = Key('publication-title');
 
 /// The key of the summary of the public page.
 const Key publicationSummaryKey = Key('publication-summary');
+
+/// The key of the card of the published metadata.
+const Key publicationMetadataKey = Key('publication-metadata');
 
 /// The key of the button that offers to buy the book.
 const Key publicationBuyKey = Key('publication-buy');
@@ -90,10 +94,14 @@ class PublicationScreen extends ConsumerWidget {
             PublishedBook(
               :final Project project,
               :final List<PublicationChapter> chapters,
+              :final String coverUrl,
+              :final PublicationMetadata metadata,
             ) =>
               _PublishedView(
                 project: project,
                 chapters: chapters,
+                coverUrl: coverUrl,
+                metadata: metadata,
                 authorName: ref.watch(authorNameProvider),
                 onOpenReader: onOpenReader,
                 onOpenSale: onOpenSale,
@@ -114,6 +122,8 @@ class _PublishedView extends ConsumerWidget {
   const _PublishedView({
     required this.project,
     required this.chapters,
+    required this.coverUrl,
+    required this.metadata,
     required this.authorName,
     this.onOpenReader,
     this.onOpenSale,
@@ -121,6 +131,8 @@ class _PublishedView extends ConsumerWidget {
 
   final Project project;
   final List<PublicationChapter> chapters;
+  final String coverUrl;
+  final PublicationMetadata metadata;
   final String authorName;
   final ValueChanged<String>? onOpenReader;
   final ValueChanged<String>? onOpenSale;
@@ -142,6 +154,7 @@ class _PublishedView extends ConsumerWidget {
           key: publicationCoverKey,
           project: project,
           chapters: chapters,
+          coverUrl: coverUrl,
           authorName: authorName,
           width: isWide ? publicationCoverWidth : publicationNarrowCoverWidth,
           onOpenReader: onOpenReader,
@@ -153,10 +166,26 @@ class _PublishedView extends ConsumerWidget {
           project: project,
           authorName: authorName,
         );
+        final Widget metadataCard = PublicationMetadataCard(
+          key: publicationMetadataKey,
+          metadata: metadata,
+        );
         final Widget table = PublicationTableOfContents(
           key: publicationTableOfContentsKey,
           chapters: chapters,
         );
+
+        // Le résumé, les métadonnées publiées et le sommaire : la carte des
+        // métadonnées n'a pas de place quand le livre n'a rien publié.
+        final List<Widget> details = <Widget>[
+          summary,
+          if (!metadata.isEmpty) ...<Widget>[
+            SizedBox(height: scope.spacing.space32),
+            metadataCard,
+          ],
+          SizedBox(height: scope.spacing.space32),
+          table,
+        ];
 
         if (!isWide) {
           return SingleChildScrollView(
@@ -166,9 +195,7 @@ class _PublishedView extends ConsumerWidget {
               children: <Widget>[
                 cover,
                 SizedBox(height: scope.spacing.space24),
-                summary,
-                SizedBox(height: scope.spacing.space32),
-                table,
+                ...details,
               ],
             ),
           );
@@ -184,11 +211,7 @@ class _PublishedView extends ConsumerWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    summary,
-                    SizedBox(height: scope.spacing.space32),
-                    table,
-                  ],
+                  children: details,
                 ),
               ),
             ],
@@ -204,6 +227,7 @@ class _PublicationCoverPane extends StatelessWidget {
   const _PublicationCoverPane({
     required this.project,
     required this.chapters,
+    required this.coverUrl,
     required this.authorName,
     required this.width,
     required this.isForSale,
@@ -214,6 +238,7 @@ class _PublicationCoverPane extends StatelessWidget {
 
   final Project project;
   final List<PublicationChapter> chapters;
+  final String coverUrl;
   final String authorName;
   final double width;
   final bool isForSale;
@@ -234,10 +259,11 @@ class _PublicationCoverPane extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        ProjectCover(
+        PublicationCover(
           title: project.title,
           author: authorName,
           seed: coverSeedOf(project.id.value),
+          url: coverUrl,
           width: width,
         ),
         SizedBox(height: scope.spacing.space16),

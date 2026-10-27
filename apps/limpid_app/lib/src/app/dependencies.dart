@@ -7,8 +7,10 @@ import 'package:limpid_app/src/auth/auth_runtime.dart';
 import 'package:limpid_app/src/auth/two_factor_proof_holder.dart';
 import 'package:limpid_app/src/bootstrap/app_bootstrap.dart';
 import 'package:limpid_app/src/data/api_admin_repository.dart';
+import 'package:limpid_app/src/data/api_ai_consent_repository.dart';
 import 'package:limpid_app/src/data/api_ai_repository.dart';
 import 'package:limpid_app/src/data/api_book_sale_repository.dart';
+import 'package:limpid_app/src/data/api_bundle_repository.dart';
 import 'package:limpid_app/src/data/api_client.dart';
 import 'package:limpid_app/src/data/api_export_repository.dart';
 import 'package:limpid_app/src/data/api_gdpr_repository.dart';
@@ -30,7 +32,9 @@ import 'package:limpid_app/src/data/project_identity_store.dart';
 import 'package:limpid_app/src/data/project_ops_transport.dart';
 import 'package:limpid_app/src/data/real_time_transport.dart';
 import 'package:limpid_app/src/domain/admin_repository.dart';
+import 'package:limpid_app/src/domain/ai_consent_repository.dart';
 import 'package:limpid_app/src/domain/book_sale_repository.dart';
+import 'package:limpid_app/src/domain/bundle_repository.dart';
 import 'package:limpid_app/src/domain/fallbacks.dart';
 import 'package:limpid_app/src/domain/gdpr_repository.dart';
 import 'package:limpid_app/src/domain/kdp_repository.dart';
@@ -84,6 +88,8 @@ final class AppDependencies {
     required this.webhooks,
     required this.kdp,
     required this.sales,
+    required this.aiConsents,
+    required this.bundles,
     required this.localDataEraser,
     required this.author,
     required this.navigatorKey,
@@ -146,6 +152,12 @@ final class AppDependencies {
 
   /// The sale of the books and the purchases of the account.
   final BookSaleRepository sales;
+
+  /// The consent of the author to send their text to a third party.
+  final AiConsentRepository aiConsents;
+
+  /// The bundles of the books, and their purchase.
+  final BundleRepository bundles;
 
   /// The erasure of the local data of the author (D-19).
   final LocalDataEraser localDataEraser;
@@ -254,6 +266,18 @@ Future<AppDependencies> buildAppDependencies() async {
         )
       : const UnavailableBookSaleRepository();
 
+  // Le consentement a l'IA : l'assistant n'envoie rien tant que l'auteur
+  // n'a pas accepte. Sans serveur, l'accord est retire.
+  final AiConsentRepository aiConsents = AppBootstrap.isSupabaseConfigured
+      ? ApiAiConsentRepository(client: apiClient)
+      : const UnavailableAiConsentRepository();
+
+  // Les bundles vivent sur le serveur, comme la vente : le prix du bundle
+  // et les livres qui le composent y sont.
+  final BundleRepository bundles = AppBootstrap.isSupabaseConfigured
+      ? ApiBundleRepository(client: apiClient, checkoutOrigin: _publicOrigin())
+      : const UnavailableBundleRepository();
+
   AppDatabase? database;
   try {
     database = await AppDatabase.open();
@@ -289,6 +313,8 @@ Future<AppDependencies> buildAppDependencies() async {
       webhooks: webhooks,
       kdp: kdp,
       sales: sales,
+      aiConsents: aiConsents,
+      bundles: bundles,
       // Aucune base locale : rien à effacer, l'interface le dit.
       localDataEraser: _refuseTheErasure,
       author: author,
@@ -365,6 +391,8 @@ Future<AppDependencies> buildAppDependencies() async {
     webhooks: webhooks,
     kdp: kdp,
     sales: sales,
+    aiConsents: aiConsents,
+    bundles: bundles,
     localDataEraser: opened.wiper.wipe,
     author: author,
     navigatorKey: navigatorKey,

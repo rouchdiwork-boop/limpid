@@ -196,6 +196,18 @@
   "publicationAuthorTitle": "Published books",
   "publicationAuthorEmpty": "This author has published no book",
   "publicationAuthorEmptyMessage": "The page of an author opens when the first book is published.",
+  "publicationMetadataPublisher": "Publisher",
+  "publicationMetadataContributors": "Contributors",
+  "publicationMetadataRights": "Rights",
+  "publicationMetadataPublishedAt": "Published on {date}",
+  "@publicationMetadataPublishedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "publicationMetadataIsbn13": "ISBN-13",
   "publicationAuthorBookCount": "{count} published books",
   "@publicationAuthorBookCount": {
     "placeholders": {
@@ -221,6 +233,9 @@
   "purchasesEmptyMessage": "The books you buy appear here, with their file.",
   "purchasesDownloaded": "The book has been downloaded.",
   "purchasesDownloadFailed": "The download failed",
+  "bundlePageTitle": "Bundle",
+  "bundleNotForSale": "This bundle is not for sale",
+  "bundleFreeGranted": "This bundle is free: its books are in your purchases.",
   "purchasesBoughtOn": "Bought on {date}",
   "@purchasesBoughtOn": {
     "placeholders": {
@@ -400,6 +415,31 @@
   "settingsSectionDevices": "Devices",
   "settingsSectionSecurity": "Security",
   "settingsSectionData": "Data and privacy",
+  "settingsSectionPrivacy": "Privacy",
+  "settingsAiConsentTitle": "Send my text to the AI provider",
+  "settingsAiConsentSubtitle": "The text you give the assistant is sent to Anthropic, in the United States. The provider keeps it under its own terms of use.",
+  "settingsAiConsentRisk": "While this permission is withdrawn, the assistant does not answer: no word of your manuscripts leaves your device.",
+  "settingsAiConsentEnabled": "Permission granted: the assistant may send your text.",
+  "settingsAiConsentDisabled": "Permission withdrawn: the assistant sends nothing.",
+  "settingsAiConsentGrantedAt": "Permission granted on {date}.",
+  "@settingsAiConsentGrantedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAiConsentRevokedAt": "Permission withdrawn on {date}.",
+  "@settingsAiConsentRevokedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAiConsentLocal": "The assistant runs on your device: nothing leaves it, and no permission is required.",
+  "settingsAiConsentUnavailable": "This service is not configured on this device.",
+  "settingsAiConsentFailed": "The permission could not be saved.",
   "settingsTheme": "Theme",
   "settingsThemePaper": "Paper",
   "settingsThemeSepia": "Sepia",

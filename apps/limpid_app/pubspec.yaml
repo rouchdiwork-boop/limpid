@@ -42,6 +42,10 @@ dependencies:
   # Client HTTP de l'API (projets, synchronisation, IA, exports).
   http: ^1.6.0
 
+  # Rendu vectoriel : la couverture d'un livre est un document SVG produit
+  # par le moteur d'export, et la vitrine publique le montre tel quel.
+  flutter_svg: ^2.3.0
+
   # Interoperabilite avec le navigateur : le web n'a pas de systeme de
   # fichiers, et l'archive des donnees personnelles se telecharge par le
   # navigateur. Le paquet est deja dans l'arbre (transitif) ; il devient

@@ -45,6 +45,7 @@ const int otherSceneWords = 9;
 void main() {
   late InMemoryProjectStore projects;
   late CountingSyncStore sync;
+  late InMemoryBookSaleStore sales;
   late HttpServer server;
   late String baseUrl;
 
@@ -69,6 +70,7 @@ void main() {
       databaseProbe: const AlwaysHealthyProbe(),
       syncHub: SyncHub(),
       shutdown: () async {},
+      bookSales: sales,
     );
   }
 
@@ -144,9 +146,36 @@ void main() {
         .toList(growable: false);
   }
 
+  /// Met un livre en vente, à la date [publishedAt].
+  ///
+  /// La mise en vente est l'acte qui publie le livre : c'est sa date qui
+  /// place le livre sur la page de l'auteur.
+  Future<void> putOnSale(
+    String projectId, {
+    required DateTime publishedAt,
+    String owner = authorId,
+  }) async {
+    await sales.save(
+      BookSaleRecord(
+        projectId: projectId,
+        ownerId: owner,
+        title: 'Un livre',
+        priceInCents: 890,
+        currency: 'eur',
+        status: BookSaleStatus.published,
+        authorShare: 9000,
+        platformShare: 1000,
+        createdAt: publishedAt,
+        updatedAt: publishedAt,
+        publishedAt: publishedAt,
+      ),
+    );
+  }
+
   setUp(() async {
     projects = InMemoryProjectStore();
     sync = CountingSyncStore(InMemorySyncStore());
+    sales = InMemoryBookSaleStore();
     await startServer();
   });
 
@@ -184,7 +213,13 @@ void main() {
       expect(published['wordCount'], firstSceneWords + secondSceneWords);
       expect(
         published.keys,
-        unorderedEquals(<String>['id', 'title', 'synopsis', 'wordCount']),
+        unorderedEquals(<String>[
+          'id',
+          'title',
+          'synopsis',
+          'wordCount',
+          'coverUrl',
+        ]),
       );
 
       final Map<String, Object?> other = books.firstWhere(
@@ -319,6 +354,90 @@ void main() {
           (jsonDecode(limited!.body) as Map<String, Object?>)['error']!
               as Map<String, Object?>;
       expect(error['code'], 'rate_limited');
+    });
+  });
+
+  group('l’ordre des livres de l’auteur', () {
+    test('liste les livres du plus récemment publié au plus ancien', () async {
+      final String older = await publishBook(
+        title: firstTitle,
+        synopsis: firstSynopsis,
+      );
+      final String newer = await publishBook(
+        title: secondTitle,
+        synopsis: secondSynopsis,
+      );
+      await putOnSale(older, publishedAt: DateTime.utc(2026, 3, 1));
+      await putOnSale(newer, publishedAt: DateTime.utc(2026, 6, 1));
+
+      final http.Response response = await pageOf(authorId);
+
+      final List<Map<String, Object?>> books = booksOf(response);
+      expect(books.map((Map<String, Object?> book) => book['id']), <String>[
+        newer,
+        older,
+      ]);
+      expect(books.first['publishedAt'], '2026-06-01T00:00:00.000Z');
+    });
+
+    test('place un livre jamais vendu après les autres', () async {
+      final String sold = await publishBook(
+        title: firstTitle,
+        synopsis: firstSynopsis,
+      );
+      final String unsold = await publishBook(
+        title: secondTitle,
+        synopsis: secondSynopsis,
+      );
+      await putOnSale(sold, publishedAt: DateTime.utc(2026, 3, 1));
+
+      final http.Response response = await pageOf(authorId);
+
+      final List<Map<String, Object?>> books = booksOf(response);
+      expect(books.map((Map<String, Object?> book) => book['id']), <String>[
+        sold,
+        unsold,
+      ]);
+      expect(books.last.containsKey('publishedAt'), isFalse);
+    });
+
+    test('la modification d’un livre ne change pas l’ordre', () async {
+      final String older = await publishBook(
+        title: firstTitle,
+        synopsis: firstSynopsis,
+      );
+      final String newer = await publishBook(
+        title: secondTitle,
+        synopsis: secondSynopsis,
+      );
+      await putOnSale(older, publishedAt: DateTime.utc(2026, 3, 1));
+      await putOnSale(newer, publishedAt: DateTime.utc(2026, 6, 1));
+
+      final ProjectAccess access = (await projects.access(
+        projectId: older,
+        userId: authorId,
+      ))!;
+      await projects.update(access.project.copyWith(title: 'Titre corrigé'));
+
+      final http.Response response = await pageOf(authorId);
+
+      final List<Map<String, Object?>> books = booksOf(response);
+      expect(books.map((Map<String, Object?> book) => book['id']), <String>[
+        newer,
+        older,
+      ]);
+    });
+
+    test('porte l’adresse de la couverture de chaque livre', () async {
+      final String book = await publishBook(
+        title: firstTitle,
+        synopsis: firstSynopsis,
+      );
+
+      final http.Response response = await pageOf(authorId);
+
+      final List<Map<String, Object?>> books = booksOf(response);
+      expect(books.single['coverUrl'], '/v1/public/books/$book/cover');
     });
   });
 }

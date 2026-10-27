@@ -5,10 +5,6 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:limpid_api/limpid_api.dart';
-import 'package:limpid_api/src/db/sqlite_book_sale_store.dart';
-import 'package:limpid_api/src/db/sqlite_entitlement_store.dart';
-import 'package:limpid_api/src/db/sqlite_promo_code_store.dart';
-import 'package:limpid_api/src/routes/checkout_routes.dart';
 import 'package:limpid_core/limpid_core.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
@@ -135,6 +131,7 @@ void main() {
 
       test('le prix se lit sans compte', () async {
         await harness.publish(projectId, priceInCents: 1200);
+        await harness.showInShowcase(projectId);
 
         final http.Response response = await harness.get(
           '/v1/public/books/$projectId/sale',
@@ -150,6 +147,21 @@ void main() {
         expect(data.containsKey('author_share'), isFalse);
         expect(data.containsKey('owner_id'), isFalse);
       });
+
+      test(
+        'un livre en vente mais pas dans la vitrine na pas de prix public',
+        () async {
+          await harness.publish(projectId, priceInCents: 1200);
+
+          final http.Response response = await harness.get(
+            '/v1/public/books/$projectId/sale',
+          );
+
+          // Le livre est en vente, mais son auteur ne l'a pas publie : la
+          // vitrine ne dit rien de lui.
+          expect(response.statusCode, 404);
+        },
+      );
 
       test('un livre en preparation n\'a pas de prix public', () async {
         await harness.publish(
@@ -923,6 +935,19 @@ final class _Harness {
       contentType: 'application/epub+zip',
     );
     return project.id;
+  }
+
+  /// Montre le livre [projectId] dans la vitrine publique.
+  Future<void> showInShowcase(String projectId) async {
+    final List<ProjectRecord> owned = await projects.listAll(
+      userId: 'auteur-1',
+    );
+    final ProjectRecord project = owned
+        .where((ProjectRecord record) => record.id == projectId)
+        .first;
+    await projects.update(
+      project.copyWith(status: ManuscriptStatus.published, isPublic: true),
+    );
   }
 
   /// Met le livre [projectId] en vente.

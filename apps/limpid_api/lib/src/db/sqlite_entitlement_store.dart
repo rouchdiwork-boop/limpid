@@ -22,7 +22,7 @@ final class SqliteEntitlementStore implements EntitlementStore {
   static const String _columns =
       'id, user_id, project_id, source, granted_at, created_at, '
       'amount_cents, currency, author_share, platform_share, '
-      'author_amount_cents, platform_amount_cents, promo_code';
+      'author_amount_cents, platform_amount_cents, promo_code, bundle_id';
 
   @override
   Future<EntitlementRecord?> find({
@@ -59,8 +59,8 @@ final class SqliteEntitlementStore implements EntitlementStore {
         'INSERT OR IGNORE INTO entitlements '
         '(id, user_id, project_id, source, granted_at, created_at, '
         'amount_cents, currency, author_share, platform_share, '
-        'author_amount_cents, platform_amount_cents, promo_code) '
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'author_amount_cents, platform_amount_cents, promo_code, bundle_id) '
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         <Object?>[
           record.id,
           record.userId,
@@ -75,6 +75,7 @@ final class SqliteEntitlementStore implements EntitlementStore {
           record.authorAmountInCents,
           record.platformAmountInCents,
           record.promoCode,
+          record.bundleId,
         ],
       );
       return _database.connection.updatedRows > 0;
@@ -131,6 +132,7 @@ final class SqliteEntitlementStore implements EntitlementStore {
         row['platform_amount_cents'],
       ),
       promoCode: row['promo_code'] as String?,
+      bundleId: row['bundle_id'] as String?,
     );
   }
 }

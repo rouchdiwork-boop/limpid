@@ -196,6 +196,18 @@
   "publicationAuthorTitle": "Livres publiés",
   "publicationAuthorEmpty": "Cet auteur n’a publié aucun livre",
   "publicationAuthorEmptyMessage": "La page d’un auteur s’ouvre à la publication de son premier livre.",
+  "publicationMetadataPublisher": "Éditeur",
+  "publicationMetadataContributors": "Contributeurs",
+  "publicationMetadataRights": "Droits",
+  "publicationMetadataPublishedAt": "Publié le {date}",
+  "@publicationMetadataPublishedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "publicationMetadataIsbn13": "ISBN-13",
   "publicationAuthorBookCount": "{count} livres publiés",
   "@publicationAuthorBookCount": {
     "placeholders": {
@@ -221,6 +233,9 @@
   "purchasesEmptyMessage": "Les livres achetés apparaissent ici, avec leur fichier.",
   "purchasesDownloaded": "Le livre a été téléchargé.",
   "purchasesDownloadFailed": "Le téléchargement a échoué",
+  "bundlePageTitle": "Bundle",
+  "bundleNotForSale": "Ce bundle n’est pas en vente",
+  "bundleFreeGranted": "Ce bundle est gratuit : ses livres sont dans vos achats.",
   "purchasesBoughtOn": "Acheté le {date}",
   "@purchasesBoughtOn": {
     "placeholders": {
@@ -400,6 +415,31 @@
   "settingsSectionDevices": "Appareils",
   "settingsSectionSecurity": "Sécurité",
   "settingsSectionData": "Données et RGPD",
+  "settingsSectionPrivacy": "Confidentialité",
+  "settingsAiConsentTitle": "Envoyer mon texte au fournisseur d'IA",
+  "settingsAiConsentSubtitle": "Le texte que vous donnez à l'assistant part chez Anthropic, aux États-Unis. Le fournisseur le conserve selon ses propres conditions d'usage.",
+  "settingsAiConsentRisk": "Tant que cet accord est retiré, l'assistant ne répond pas : aucun mot de vos manuscrits ne quitte votre poste.",
+  "settingsAiConsentEnabled": "Accord donné : l'assistant peut envoyer votre texte.",
+  "settingsAiConsentDisabled": "Accord retiré : l'assistant n'envoie plus rien.",
+  "settingsAiConsentGrantedAt": "Accord donné le {date}.",
+  "@settingsAiConsentGrantedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAiConsentRevokedAt": "Accord retiré le {date}.",
+  "@settingsAiConsentRevokedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAiConsentLocal": "L'assistant tourne sur votre poste : rien ne part chez un tiers, et aucun accord n'est demandé.",
+  "settingsAiConsentUnavailable": "Ce service n'est pas configuré sur ce poste.",
+  "settingsAiConsentFailed": "L'accord n'a pas pu être enregistré.",
   "settingsTheme": "Thème",
   "settingsThemePaper": "Papier",
   "settingsThemeSepia": "Sépia",

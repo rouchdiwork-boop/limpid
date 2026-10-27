@@ -14,6 +14,8 @@ import 'package:limpid_app/src/features/library/library_screen.dart';
 import 'package:limpid_app/src/features/onboarding/onboarding_screen.dart';
 import 'package:limpid_app/src/features/project/project_picker_screen.dart';
 import 'package:limpid_app/src/features/project/project_screen.dart';
+import 'package:limpid_app/src/features/publication/bundle/bundle_routes.dart';
+import 'package:limpid_app/src/features/publication/bundle/bundle_screen.dart';
 import 'package:limpid_app/src/features/publication/kdp/kdp_screen.dart';
 import 'package:limpid_app/src/features/publication/kdp/kdp_submission_screen.dart';
 import 'package:limpid_app/src/features/publication/publication_author_screen.dart';
@@ -55,7 +57,9 @@ bool _isPublicLocation(String location) {
       location.startsWith(PublicationRoutes.readerPrefix) ||
       location.startsWith(PublicationRoutes.authorPrefix) ||
       location.startsWith(PublicationRoutes.salePrefix) ||
-      location.startsWith(PublicationRoutes.paymentReturnPrefix);
+      location.startsWith(PublicationRoutes.paymentReturnPrefix) ||
+      location.startsWith(BundleRoutes.bundlePrefix) ||
+      location.startsWith(BundleRoutes.paymentReturnPrefix);
 }
 
 /// The routes of the signed-in part of the application.
@@ -207,6 +211,19 @@ GoRouter appRouter(Ref ref) {
         path: PublicationRoutes.paymentReturnPattern,
         builder: (context, state) => PaymentReturnScreen(
           projectId: state.pathParameters['projectId'] ?? '',
+        ),
+      ),
+      // Les pages d'un bundle sont publiques comme la vitrine : un lecteur
+      // regarde le prix sans compte, et se connecte pour acheter.
+      GoRoute(
+        path: BundleRoutes.bundlePattern,
+        builder: (context, state) =>
+            BundleScreen(bundleId: state.pathParameters['bundleId'] ?? ''),
+      ),
+      GoRoute(
+        path: BundleRoutes.paymentReturnPattern,
+        builder: (context, state) => BundlePaymentReturnScreen(
+          bundleId: state.pathParameters['bundleId'] ?? '',
         ),
       ),
       // L'historique des versions porte sur un document : il a son propre
